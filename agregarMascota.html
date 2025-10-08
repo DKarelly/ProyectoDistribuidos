@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Mascota - Huella Feliz</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="CSS/estilos.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #dc3545;
+            background-color: #f8f9fa;
+        }
+        .upload-area.dragover {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">HUELLA FELIZ</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="adopciones.html">Adopciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="donaciones.html">Donaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+                    <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar Sesión</a></li>
+                    <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aquí</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="container" style="margin-top: 100px;">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-pink text-white">
+                        <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Agregar Nueva Mascota</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="formAgregarMascota" enctype="multipart/form-data">
+                            <div class="row g-3">
+                                <!-- Información básica -->
+                                <div class="col-12">
+                                    <h5 class="text-pink mb-3">Información Básica</h5>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="nombreAnimal" class="form-label">Nombre del Animal *</label>
+                                    <input type="text" class="form-control" id="nombreAnimal" name="nombreAnimal" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="especie" class="form-label">Especie *</label>
+                                    <select class="form-select" id="especie" name="especie" required>
+                                        <option value="">Seleccionar especie</option>
+                                        <option value="Perro">Perro</option>
+                                        <option value="Gato">Gato</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="raza" class="form-label">Raza *</label>
+                                    <input type="text" class="form-control" id="raza" name="raza" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="edadMeses" class="form-label">Edad (meses) *</label>
+                                    <input type="number" class="form-control" id="edadMeses" name="edadMeses" min="1" max="240" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="genero" class="form-label">Género *</label>
+                                    <select class="form-select" id="genero" name="genero" required>
+                                        <option value="">Seleccionar género</option>
+                                        <option value="M">Macho</option>
+                                        <option value="H">Hembra</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="peso" class="form-label">Peso (kg)</label>
+                                    <input type="number" class="form-control" id="peso" name="peso" min="0.1" step="0.1">
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="pelaje" class="form-label">Tipo de Pelaje</label>
+                                    <select class="form-select" id="pelaje" name="pelaje">
+                                        <option value="">Seleccionar pelaje</option>
+                                        <option value="Corto">Corto</option>
+                                        <option value="Medio">Medio</option>
+                                        <option value="Largo">Largo</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="tamaño" class="form-label">Tamaño</label>
+                                    <select class="form-select" id="tamaño" name="tamaño">
+                                        <option value="">Seleccionar tamaño</option>
+                                        <option value="Pequeño">Pequeño</option>
+                                        <option value="Mediano">Mediano</option>
+                                        <option value="Grande">Grande</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Subida de imagen -->
+                                <div class="col-12">
+                                    <h5 class="text-pink mb-3 mt-4">Foto del Animal *</h5>
+                                    <div class="upload-area" id="uploadArea">
+                                        <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                                        <p class="mt-2 mb-0">Arrastra y suelta una imagen aquí o haz clic para seleccionar</p>
+                                        <small class="text-muted">Formatos: JPG, PNG, GIF (máx. 5MB)</small>
+                                        <input type="file" id="imagenAnimal" name="imagenAnimal" accept="image/*" style="display: none;" required>
+                                    </div>
+                                    <div id="imagePreview" class="text-center" style="display: none;">
+                                        <img id="previewImg" class="image-preview" alt="Vista previa">
+                                        <p class="mt-2 text-success"><i class="bi bi-check-circle me-1"></i>Imagen seleccionada</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Información adicional -->
+                                <div class="col-12">
+                                    <h5 class="text-pink mb-3 mt-4">Información Adicional</h5>
+                                </div>
+                                
+                                <div class="col-12">
+                                    <label for="descripcion" class="form-label">Descripción / Historial</label>
+                                    <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Cuéntanos sobre el animal, su personalidad, historial médico, etc."></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12 text-center">
+                                    <button type="button" class="btn btn-secondary me-2" onclick="window.location.href='adopciones.html'">
+                                        <i class="bi bi-arrow-left me-1"></i>Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-pink">
+                                        <i class="bi bi-plus-circle me-1"></i>Agregar Mascota
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="JS/codigo.js"></script>
+    <script>
+        // Manejo de subida de imágenes
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('imagenAnimal');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+
+            // Click en el área de subida
+            uploadArea.addEventListener('click', () => fileInput.click());
+
+            // Arrastrar y soltar
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    handleFileSelect(files[0]);
+                }
+            });
+
+            // Cambio de archivo
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            function handleFileSelect(file) {
+                // Validar tipo de archivo
+                if (!file.type.startsWith('image/')) {
+                    alert('Por favor selecciona un archivo de imagen válido.');
+                    return;
+                }
+
+                // Validar tamaño (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('La imagen es demasiado grande. Máximo 5MB.');
+                    return;
+                }
+
+                // Mostrar vista previa
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Manejo del formulario
+            document.getElementById('formAgregarMascota').addEventListener('submit', function(e) {
+                e.preventDefault();
+                agregarMascota();
+            });
+        });
+
+        // Función para agregar mascota
+        async function agregarMascota() {
+            const form = document.getElementById('formAgregarMascota');
+            const formData = new FormData(form);
+
+            // Mostrar loading
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Agregando...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/animals/agregar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showMessage('¡Mascota agregada exitosamente!', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'adopciones.html';
+                    }, 2000);
+                } else {
+                    showMessage(data.message || 'Error al agregar la mascota', 'danger');
+                }
+            } catch (error) {
+                showMessage('Error de conexión. Intenta nuevamente.', 'danger');
+            } finally {
+                // Restaurar botón
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
+
