@@ -1,0 +1,673 @@
+/* Colores */
+footer .row > div {
+  border-right: none !important;
+}
+
+body{
+  line-height: 1.8;    /* mejor legibilidad */
+}
+
+:root {
+  --pink: #ff4d88;
+}
+
+.quienes-somos, .contacto, .gracias {
+  background-color: rgba(255, 244, 247, 1);
+}
+
+#iniciarSesion{
+  padding-left: 50px;
+}
+
+.btn-pink {
+  background: var(--pink);
+  color: white;
+  border-radius: 50px;
+  padding: 10px 25px;
+  transition: 0.3s;
+}
+.btn-pink:hover {
+  background: #e63c76;
+  color: #fff;
+}
+
+.hero {
+  background: linear-gradient(135deg, rgb(227, 242, 253), #fce4ec);
+  min-height: 90vh;
+  padding-top: 80px;
+}
+
+.hero img {
+  max-width: 300px;
+  max-height: 300px;
+}
+
+.bg-pink {
+  background-color: var(--pink);
+}
+
+footer ul li {
+  margin-bottom: 8px;
+}
+
+footer h5 {
+  margin-bottom: 15px;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+#adopcionCarousel img {
+  height: 350px;
+  object-fit: cover;
+}
+
+#texto{
+  margin: 30px;
+}
+
+.quienes-somos p {
+  text-align: justify;
+}
+
+.quienes-texto {
+  max-width: 800px;   /* ancho máximo */
+  margin: 0 auto 40px; /* centrado + espacio abajo */
+  line-height: 1.8;    /* mejor legibilidad */
+  font-weight: 400;
+  text-align: center;  /* centrado solo este párrafo */
+}
+
+.realidad p {
+  max-width: 800px; /* límite del ancho del texto */
+  margin: 0 auto;   /* lo centra */
+  text-align: justify; /* opcional: lo justifica */
+}
+
+/* ------------------------------------------------------------*/
+/* ------------------------------------------------------------*/
+/* PARA ADOPCIONES */
+:root{
+  --pink: #ff4d88;
+  --navbar-height: 56px; /* ajusta según tu navbar */
+}
+
+/* Línea decorativa */
+.section-title {
+  position: relative;
+  padding-bottom: 6px;
+}
+.section-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 5px;
+  background: var(--pink);
+  margin: 8px auto 0;
+  border-radius: 4px;
+}
+
+/* Filtros sticky */
+.filters-wrap {
+  position: sticky;
+  top: calc(var(--navbar-height) + 12px);
+  z-index: 1030;
+  background: rgba(255, 255, 255, 0.90);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(20, 20, 20, 0.06);
+}
+
+/* Cards animadas */
+.card-animal {
+  transition: transform 0.28s, box-shadow 0.28s;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.card-animal:hover {
+  transform: translateY(-8px) scale(1.04);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+}
+.card-animal img {
+  border-radius: 10px;
+  width: 100%;
+  height: auto;
+}
+
+/* Botones SOLO del carrusel historial */
+#historialAdopcionesCarousel .carousel-control-prev,
+#historialAdopcionesCarousel .carousel-control-next {
+  width: 50px;
+  height: 50px;
+  background-color: #F03A76;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 1;
+}
+
+#historialAdopcionesCarousel .carousel-control-prev-icon,
+#historialAdopcionesCarousel .carousel-control-next-icon {
+  filter: invert(1); /* flechas blancas */
+  width: 20px;
+  height: 20px;
+}
+
+/* Línea azul debajo del nombre */
+#historialAdopcionesCarousel .animal-name {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+#historialAdopcionesCarousel .animal-name::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60px;
+  height: 4px;
+  background: #2196F3; /* azul */
+  border-radius: 2px;
+}
+
+/* Fecha debajo del nombre */
+#historialAdopcionesCarousel .adopcion-fecha {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+
+/* ------------------------------------------------------------*/
+/* ------------------------------------------------------------*/
+/* PARA DONACIONES */
+
+/* HERO DONACIONES */
+.hero-donaciones {
+  position: relative;
+  height: 500px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.hero-donaciones .bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.hero-donaciones .overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.hero-donaciones .hero-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+.hero-donaciones h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+/* ------------------------------------------------------------*/
+/* TÍTULOS CON LÍNEA */
+.section-title {
+  position: relative;
+  font-weight: 700;
+  font-size: 2rem;
+  padding-bottom: 6px;
+  text-align: center;
+}
+.section-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 5px;
+  background: var(--pink);
+  margin: 8px auto 0;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------*/
+/* ¿QUÉ PUEDO DONAR? */
+.what-can-donate {
+  background: #fff;
+}
+.what-can-donate .card {
+  border-radius: 16px;
+  border: none;
+  background: #fff;
+  padding: 3rem 2rem;
+  min-height: 380px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.what-can-donate .card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+.what-can-donate .card img {
+  max-height: 160px;
+  object-fit: contain;
+}
+.what-can-donate h5 {
+  margin-top: 1.2rem;
+  font-size: 1.4rem;
+  color: var(--pink);
+  font-weight: 700;
+}
+.what-can-donate p {
+  color: #555;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+.what-can-donate .card a {
+  margin-top: auto;
+}
+
+/* ------------------------------------------------------------*/
+/* GRACIAS POR TUS DONACIONES */
+.gracias{
+  padding: 50px;
+}
+
+.logo-card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fff;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.logo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+/* ------------------------------------------------------------*/
+/* HISTORIAL DE DONACIONES */
+#historial {
+  background: #fafafa;
+}
+#historial .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+#historial .donaciones-table {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+#historial .donaciones-table th {
+  background: var(--pink);
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+}
+#historial .donaciones-table td {
+  vertical-align: middle;
+  text-align: center;
+}
+#historial .historial-controls .btn-pink {
+  background: var(--pink);
+  color: #fff;
+  border: none;
+  font-weight: 500;
+}
+#historial .historial-controls .btn-pink:hover {
+  background: #d43a6e;
+}
+
+
+/* ========================================= */
+/* SECCIÓN REPORTE */
+/* ========================================= */
+.reporte-section {
+  background-color: #fdeef5; /* rosado claro */
+  padding: 60px 0;
+}
+
+/* Banner de reporte */
+.container-fluid img[src*="reporte_banner"] {
+  width: 100%;
+  max-width: 1600px;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .container-fluid img[src*="reporte_banner"] {
+    height: 200px;
+  }
+}
+
+.reporte-section .section-title {
+  font-weight: bold;
+  font-size: 2rem;
+  text-transform: uppercase;
+  color: #333;
+}
+
+.reporte-section .linea {
+  width: 60px;
+  height: 3px;
+  background-color: #ff4f81; /* rosa fuerte */
+  margin: 0 auto 20px auto;
+  border-radius: 3px;
+}
+
+.reporte-section .form-control,
+.reporte-section .form-select {
+  border-radius: 10px;
+  padding: 10px 15px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+}
+
+.reporte-section .form-control:focus,
+.reporte-section .form-select:focus {
+  border-color: #ff4f81;
+  box-shadow: 0 0 5px rgba(255, 79, 129, 0.4);
+}
+
+.btn-pink {
+  background-color: #ff4f81;
+  color: #fff;
+  padding: 10px 25px;
+  border-radius: 25px;
+  border: none;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(255, 79, 129, 0.3);
+  transition: 0.3s ease-in-out;
+}
+
+.btn-pink:hover {
+  background-color: #e63e6f;
+  transform: translateY(-2px);
+}
+
+
+/* ===================================================== */
+/* ACERCA DE NOSOTROS */
+/* ===================================================== */
+
+/* HERO */
+.hero {
+  position: relative;
+  height: 400px;
+  background: url("img/hero-acerca.jpg") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+}
+.hero .hero-content {
+  position: relative;
+  z-index: 2;
+}
+.hero .hero-content h1 {
+  color: #fff;
+  font-size: 3rem;
+  font-weight: 800;
+}
+
+/* QUIÉNES SOMOS */
+.quienes-somos img {
+  max-width: 100%;
+  border-radius: 12px;
+}
+.quienes-somos p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+
+/* MÉTRICAS */
+.bg-pink .row > div {
+  border-right: 1px solid rgba(255,255,255,0.3);
+}
+.bg-pink .row > div:last-child {
+  border-right: none;
+}
+.bg-pink h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.bg-pink p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* VISIÓN / MISIÓN */
+.quienes-somos h2,
+section h2.section-title {
+  margin-bottom: 25px;
+}
+.quienes-somos img,
+section img {
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  transition: transform 0.25s ease;
+}
+.quienes-somos img:hover,
+section img:hover {
+  transform: translateY(-5px);
+}
+
+.equipo-portfolio {
+  padding: 60px 0;
+  background-color: #f9f9f9;
+}
+
+.equipo-portfolio .section-title {
+  margin-bottom: 40px;
+}
+
+.equipo-portfolio .row {
+  align-items: center;
+}
+
+/* EQUIPO - CARRUSEL */
+.equipo-portfolio #equipoCarousel {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.equipo-portfolio #equipoCarousel img {
+  width: 100%;
+  height: auto;
+}
+.equipo-portfolio #equipoCarousel .carousel-control-prev,
+.equipo-portfolio #equipoCarousel .carousel-control-next {
+  width: 50px;
+  height: 50px;
+  background-color: var(--pink);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.equipo-portfolio #equipoCarousel .carousel-control-prev-icon,
+.equipo-portfolio #equipoCarousel .carousel-control-next-icon {
+  filter: invert(1);
+  width: 20px;
+  height: 20px;
+}
+
+/* PORTFOLIO - TEXTO Y BOTÓN */
+.equipo-portfolio .portfolio-text {
+  padding: 20px;
+}
+.equipo-portfolio .portfolio-text p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #555;
+}
+.equipo-portfolio .btn-pink {
+  margin-top: 15px;
+}
+
+/* ===================================================== */
+/* LOGIN */
+/* ===================================================== */
+
+.login-page {
+  min-height: calc(100vh - var(--navbar-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff5f8, #ffe6ee);
+  padding: 60px 15px;
+}
+
+.login-card {
+  max-width: 420px;
+  width: 100%;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 40px 30px;
+}
+
+.login-card h2 {
+  font-weight: 700;
+  color: var(--pink);
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.login-card .form-label {
+  font-weight: 500;
+  color: #444;
+}
+
+/* ===== Inputs con iconos ===== */
+.login-card .input-group-text {
+  background: #ffe6ee;
+  border: 1px solid #ffd6e0;
+  border-right: none;
+  color: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 10px 0 0 10px;
+}
+
+.login-card .form-control {
+  border: 1px solid #ffd6e0;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  padding: 10px 14px;
+}
+
+.login-card .form-control:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 0.25rem rgba(255, 77, 136, 0.25);
+}
+
+/* ===== Botón ===== */
+.login-card .btn-primary {
+  background: var(--pink);
+  border: none;
+  border-radius: 50px;
+  padding: 10px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.login-card .btn-primary:hover {
+  background: #e63c76;
+}
+
+/* ===== Texto inferior ===== */
+.login-card p {
+  font-size: 0.9rem;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* ===================================================== */
+/* REGISTRO — versión corregida y responsiva            */
+/* Reemplazar las reglas antiguas de .register-page / .register-card */
+/* ===================================================== */
+
+.register-page {
+  
+  min-height: calc(100vh - var(--navbar-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--navbar-height) + 24px) 15px 60px;
+  background: linear-gradient(180deg, #fff5f8 0%, #ffe6ee 100%);
+}
+
+.register-card {
+  width: 100%;
+  max-width: 780px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+  padding: 28px;
+}
+
+.register-card h2 {
+  color: var(--pink);
+  font-weight: 700;
+  text-align: center;
+}
+
+.register-card .input-group-text {
+  
+  background: #ffe6ee;
+  border: 1px solid #ffd6e0;
+  border-right: 0;
+  color: var(--pink);
+  border-radius: 8px 0 0 8px;
+}
+
+.register-card .form-control {
+  
+  border: 1px solid #e6e6e6;
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+}
+
+.register-card .form-control:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 0.15rem rgba(255, 77, 136, 0.12);
+}
+
+.btn-toggle-pass {
+  border: 1px solid #e6e6e6;
+  border-left: 0;
+  border-radius: 0 8px 8px 0;
+  background: #fff;
+  color: var(--pink);
+}
+
+.register-card .btn-pink {
+  
+  border-radius: 50px;
+  font-weight: 600;
+}
