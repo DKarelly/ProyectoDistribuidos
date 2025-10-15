@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huella Feliz - Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tu hoja de estilos global -->
+    <link rel="stylesheet" href="css/estilos.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">HUELLA FELIZ</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="adopciones.html">Adopciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="donaciones.html">Donaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+
+                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
+                            Dashboard</a></li>
+                    <!-- <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Acerca de</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Mision</a></li>
+              <li><a class="dropdown-item" href="#">Vision</a></li>
+            </ul>
+          </li> -->
+                    <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
+                            Sesion</a></li>
+                    <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aqui</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- Contenedor principal -->
+    <!-- DASHBOARD -->
+    <section class="container py-5">
+        <div class="text-center mb-5 mt-5">
+            <h1 class="fw-bold titulo-dashboard">Panel de Administración</h1>
+            <p class="text-muted">Selecciona un módulo para gestionar</p>
+        </div>
+
+        <!-- USUARIOS -->
+        <h4 class="fw-bold mb-3 seccion-dashboard">USUARIOS</h4>
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/usuarios.png" alt="Usuarios" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Módulo de administración de usuarios</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/roles.png" alt="Roles" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Administrador de Roles</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- ANIMALES -->
+        <h4 class="fw-bold mb-3 seccion-dashboard">ANIMALES</h4>
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="agregarMascota.html" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/refugio-de-animales.png" alt="Animales" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Módulo de administración de animales</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/especie.png" alt="Especie y Raza" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Administrador de Especie y Raza</h5>
+                    </div>
+                </a>
+            </div>
+            
+        </div>
+
+        <!-- DONACIONES Y CAMPAÑAS -->
+        <h4 class="fw-bold mb-3 seccion-dashboard">DONACIONES Y CAMPAÑAS</h4>
+        <div class="row g-4 mb-5">
+            
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/adopcion.png" alt="Adopciones" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Módulo de adopciones</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/donacionesicono.png" alt="Donaciones" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Módulo de donaciones</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="files/donaciones.png" alt="Apadrinamientos" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Módulo de apadrinamientos</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- REPORTES Y CONFIG -->
+        <h4 class="fw-bold mb-3 seccion-dashboard">REPORTES Y CONFIGURACIÓN</h4>
+        <div class="row g-4 mb-5">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="img/reportes.png" alt="Reportes" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Reportes</h5>
+                    </div>
+                </a>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <a href="#" class="text-decoration-none">
+                    <div class="card card-dashboard text-center">
+                        <img src="img/configuracion.png" alt="Configuración" class="img-dashboard mx-auto">
+                        <h5 class="card-title mt-3">Configuración</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+    <footer class="py-5 bg-pink text-white">
+        <div class="container">
+            <div class="row">
+                <!-- Navegacion -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Navegacion</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="HUELLA FELIZ.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li><a href="donaciones.html" class="text-white text-decoration-none">Donaciones</a></li>
+                        <li><a href="adopciones.html" class="text-white text-decoration-none">Adopciones</a></li>
+                        <li><a href="reportar.html" class="text-white text-decoration-none">Reportar</a></li>
+                        <li><a href="acercaDe.html" class="text-white text-decoration-none">Acerca de</a></li>
+                    </ul>
+                </div>
+
+                <!-- Redes sociales -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Redes sociales</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none"><i
+                                    class="bi bi-facebook me-2"></i>Facebook</a></li>
+                        <li><a href="#" class="text-white text-decoration-none"><i
+                                    class="bi bi-instagram me-2"></i>Instagram</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- About -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">About</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Terms & Condition</a></li>
+                    </ul>
+                </div>
+
+                <!-- Info -->
+                <div class="col-12 col-md-3 mb-4">
+                    <h5 class="fw-bold">HUELLA FELIZ</h5>
+                    <p class="small">
+                        Somos una organizacion dedicada al rescate, adopcion y proteccion de animales en situacion de
+                        abandono.
+                        Unete como voluntario o apoyanos con tus donaciones.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Linea inferior -->
+            <div class="text-center border-top border-light pt-3 mt-3">
+                <p class="mb-0 small">&copy; 2025 Huella Feliz - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="JS/codigo.js"></script>
+</body>
+
+</html>
