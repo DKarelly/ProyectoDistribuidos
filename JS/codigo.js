@@ -70,9 +70,34 @@ function isAuthenticated() {
     return authToken && currentUser;
 }
 
+// ===================================================
+// PARA EL DASHBOARD
+// ===================================================
+
+// Verificar si el usuario tiene un rol específico
+function hasRole(allowedRoles) {
+    if (!isAuthenticated()) return false;
+    return allowedRoles.includes(currentUser.rolUsuario);
+}
+
+// Verificar acceso al dashboard (solo Administrador y trabajador)
+function checkDashboardAccess() {
+    const allowedRoles = ['Administrador', 'trabajador'];
+    if (!hasRole(allowedRoles)) {
+        showMessage('Acceso denegado. Solo administradores y trabajadores pueden acceder al dashboard.', 'danger');
+        setTimeout(() => {
+            window.location.href = 'HUELLA FELIZ.html';
+        }, 3000);
+        return false;
+    }
+    return true;
+}
+
 // Actualizar interfaz según estado de autenticación
 function updateAuthUI() {
     const loginLink = document.getElementById('iniciarSesion');
+    const dashboardLink = document.getElementById('boton');
+
     if (loginLink) {
         if (isAuthenticated()) {
             loginLink.textContent = `Hola, ${currentUser.aliasUsuario}`;
@@ -82,6 +107,16 @@ function updateAuthUI() {
             loginLink.textContent = 'Iniciar Sesión';
             loginLink.href = 'iniciarSesion.html';
             loginLink.onclick = null;
+        }
+    }
+
+    // Mostrar/ocultar dashboard según el rol
+    if (dashboardLink) {
+        const allowedRoles = ['Administrador', 'trabajador'];
+        if (hasRole(allowedRoles)) {
+            dashboardLink.style.display = 'block';
+        } else {
+            dashboardLink.style.display = 'none';
         }
     }
 }
@@ -497,6 +532,13 @@ async function sendAnimalReport(reportData) {
 // ===================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar acceso al dashboard si estamos en esa página
+    if (window.location.pathname.includes('dashboard')) {
+        if (!checkDashboardAccess()) {
+            return; // No continuar si no tiene acceso
+        }
+    }
+
     // Actualizar UI de autenticación
     updateAuthUI();
 
