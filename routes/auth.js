@@ -5,7 +5,7 @@ const { body, validationResult } = require('express-validator');
 const { query } = require('../config/database');
 const router = express.Router();
 
-// Middleware para verificar token JWT
+/* ------------------ MIDDLEWARE DE TOKEN ------------------ */
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -23,38 +23,38 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// POST /api/auth/registro
+/* ------------------ REGISTRO ------------------ */
 router.post('/registro', [
     body('aliasUsuario').notEmpty().withMessage('Alias es requerido'),
-    body('nombreUsuario').notEmpty().withMessage('Nombre es requerido'),
-    body('apellidoPaternoUsuario').notEmpty().withMessage('Apellido paterno es requerido'),
     body('correoUsuario').isEmail().withMessage('Email válido requerido'),
-    body('contrasenaUsuario').isLength({ min: 4 }).withMessage('Contraseña mínimo 4 caracteres')
+    body('contrasenaUsuario').isLength({ min: 4 }).withMessage('Contraseña mínimo 4 caracteres'),
+    body('numUsuario').notEmpty().withMessage('Número es requerido'),
+    body('direccionUsuario').notEmpty().withMessage('Dirección es requerida')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                message: 'Datos inválidos', 
-                errors: errors.array() 
+            return res.status(400).json({
+                message: 'Datos inválidos',
+                errors: errors.array()
             });
         }
 
-        const { 
-            aliasUsuario, 
-            nombreUsuario, 
-            apellidoPaternoUsuario, 
-            apellidoMaternoUsuario,
-            correoUsuario, 
+        const {
+            aliasUsuario,
+            correoUsuario,
             contrasenaUsuario,
-            numeroUsuario,
+            numUsuario,
             direccionUsuario
         } = req.body;
 
+        // Normalizar correo (minúsculas + trim)
+        const correoNormalizado = correoUsuario.trim().toLowerCase();
+
         // Verificar si el usuario ya existe
         const existingUser = await query(
-            'SELECT idUsuario FROM usuario WHERE correoUsuario = $1 OR aliasUsuario = $2',
-            [correoUsuario, aliasUsuario]
+            'SELECT idUsuario FROM usuario WHERE LOWER(correoUsuario) = $1 OR LOWER(aliasUsuario) = $2',
+            [correoNormalizado, aliasUsuario.trim().toLowerCase()]
         );
 
         if (existingUser.rows.length > 0) {
@@ -66,27 +66,24 @@ router.post('/registro', [
 
         // Insertar usuario (por defecto rol 2 = Adoptante)
         const result = await query(
-            `INSERT INTO usuario (idRol, aliasUsuario, nombreUsuario, apellidoPaternoUsuario, 
-             apellidoMaternoUsuario, correoUsuario, contrasenaUsuario, numeroUsuario, direccionUsuario)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING idUsuario, aliasUsuario, correoUsuario`,
-            [2, aliasUsuario, nombreUsuario, apellidoPaternoUsuario, apellidoMaternoUsuario,
-             correoUsuario, hashedPassword, numeroUsuario, direccionUsuario]
+            `INSERT INTO usuario (aliasUsuario, correoUsuario, claveUsuario, numUsuario, direccionUsuario, idRol)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING idUsuario, aliasUsuario, correoUsuario, idRol`,
+            [aliasUsuario, correoNormalizado, hashedPassword, numUsuario, direccionUsuario, 2]
         );
 
         res.status(201).json({
             message: 'Usuario registrado exitosamente',
-            data: {
-                usuario: result.rows[0]
-            }
+            data: { usuario: result.rows[0] }
         });
 
     } catch (error) {
-        console.error('Error en registro:', error);
+        console.error('❌ Error en registro:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 
-// POST /api/auth/login
+/* ------------------ LOGIN ------------------ */
 router.post('/login', [
     body('correoUsuario').isEmail().withMessage('Email válido requerido'),
     body('contrasenaUsuario').notEmpty().withMessage('Contraseña requerida')
@@ -94,37 +91,62 @@ router.post('/login', [
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                message: 'Datos inválidos', 
-                errors: errors.array() 
+            return res.status(400).json({
+                message: 'Datos inválidos',
+                errors: errors.array()
             });
         }
 
-        const { correoUsuario, contrasenaUsuario } = req.body;
+        let { correoUsuario, contrasenaUsuario } = req.body;
+        correoUsuario = correoUsuario.trim().toLowerCase();
 
-        // Buscar usuario
+        console.log('🟢 Intentando login con:', correoUsuario);
+
+        // Buscar usuario ignorando mayúsculas
         const userResult = await query(
-            `SELECT u.*, r.rolUsuario FROM usuario u 
-             JOIN rol r ON u.idRol = r.idRol 
-             WHERE u.correoUsuario = $1`,
+            `SELECT u.*, r.rolUsuario 
+             FROM usuario u 
+             JOIN ROL_USUARIO r ON u.idRol = r.idRol
+             WHERE LOWER(u.correoUsuario) = $1`,
             [correoUsuario]
         );
 
+        console.log('⏱️ Query ejecutada:', {
+            text: 'SELECT u.*, r.rolUsuario FROM usuario u JOIN ROL_USUARIO r ON u.idRol = r.idRol WHERE LOWER(u.correoUsuario) = $1',
+            rows: userResult.rowCount
+        });
+
         if (userResult.rows.length === 0) {
+            console.log('⚠️ Usuario no encontrado.');
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         const user = userResult.rows[0];
+        console.log('✅ Usuario encontrado:', user.correousuario);
 
         // Verificar contraseña
-        const validPassword = await bcrypt.compare(contrasenaUsuario, user.contrasenausuario);
+        //const validPassword = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
+        // Verificar contraseña
+        let validPassword = false;
+
+        // Si la contraseña guardada parece un hash bcrypt (empieza con "$2")
+        if (user.claveusuario.startsWith('$2')) {
+            validPassword = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
+        } else {
+            // Comparación directa si la contraseña está en texto plano (modo local)
+            validPassword = contrasenaUsuario === user.claveusuario;
+        }
+
+        console.log('🔑 Contraseña válida:', validPassword);
+
         if (!validPassword) {
+            console.log('❌ Contraseña incorrecta.');
             return res.status(401).json({ message: 'Credenciales inválidas' });
         }
 
         // Generar token JWT
         const token = jwt.sign(
-            { 
+            {
                 idUsuario: user.idusuario,
                 aliasUsuario: user.aliasusuario,
                 rolUsuario: user.rolusuario
@@ -140,27 +162,27 @@ router.post('/login', [
                 usuario: {
                     idUsuario: user.idusuario,
                     aliasUsuario: user.aliasusuario,
-                    nombreUsuario: user.nombreusuario,
-                    apellidoPaternoUsuario: user.apellidopaternousuario,
-                    apellidoMaternoUsuario: user.apellidomaternousuario,
                     correoUsuario: user.correousuario,
+                    numUsuario: user.numusuario,
+                    direccionUsuario: user.direccionusuario,
                     rolUsuario: user.rolusuario
                 }
             }
         });
 
     } catch (error) {
-        console.error('Error en login:', error);
+        console.error('❌ Error en login:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 
-// GET /api/auth/verify
+/* ------------------ VERIFY TOKEN ------------------ */
 router.get('/verify', authenticateToken, async (req, res) => {
     try {
         const userResult = await query(
-            `SELECT u.*, r.rolUsuario FROM usuario u 
-             JOIN rol r ON u.idRol = r.idRol 
+            `SELECT u.*, r.rolUsuario 
+             FROM usuario u 
+             JOIN ROL_USUARIO r ON u.idRol = r.idRol
              WHERE u.idUsuario = $1`,
             [req.user.idUsuario]
         );
@@ -176,20 +198,18 @@ router.get('/verify', authenticateToken, async (req, res) => {
                 usuario: {
                     idUsuario: user.idusuario,
                     aliasUsuario: user.aliasusuario,
-                    nombreUsuario: user.nombreusuario,
-                    apellidoPaternoUsuario: user.apellidopaternousuario,
-                    apellidoMaternoUsuario: user.apellidomaternousuario,
                     correoUsuario: user.correousuario,
+                    numUsuario: user.numusuario,
+                    direccionUsuario: user.direccionusuario,
                     rolUsuario: user.rolusuario
                 }
             }
         });
 
     } catch (error) {
-        console.error('Error verificando token:', error);
+        console.error('❌ Error verificando token:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 
 module.exports = { router, authenticateToken };
-
