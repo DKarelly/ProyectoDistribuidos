@@ -29,6 +29,9 @@
                     <li class="nav-item"><a class="nav-link" href="donaciones.html">Donaciones</a></li>
                     <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
                     <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+
+                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
+                            Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
                     <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aqui</a></li>
@@ -36,6 +39,7 @@
             </div>
         </div>
     </nav>
+
 
     <!-- MAIN: registro -->
     <main class="register-page">
@@ -47,14 +51,14 @@
                     Regístrate para adoptar, donar o reportar. Campos con * son obligatorios.
                 </p>
 
-                <form action="procesar_registro.php" method="POST" novalidate>
+                <form id="registroForm" novalidate>
                     <!-- alias -->
                     <div class="mb-3">
                         <label for="alias" class="form-label">Alias *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                            <input type="text" id="alias" name="alias" class="form-control" placeholder="Tu alias"
-                                required>
+                            <input type="text" id="alias" name="aliasUsuario" class="form-control"
+                                placeholder="Tu alias" required>
                         </div>
                     </div>
 
@@ -88,8 +92,8 @@
                             <label for="numero" class="form-label">Teléfono *</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                <input type="tel" id="numero" name="numero" class="form-control" placeholder="987654321"
-                                    required>
+                                <input type="tel" id="numero" name="numUsuario" class="form-control"
+                                    placeholder="987654321" required>
                             </div>
                         </div>
                     </div>
@@ -99,7 +103,7 @@
                         <label for="correo" class="form-label">Correo electrónico *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                            <input type="email" id="correo" name="correo" class="form-control"
+                            <input type="email" id="correo" name="correoUsuario" class="form-control"
                                 placeholder="ejemplo@email.com" required>
                         </div>
                     </div>
@@ -110,26 +114,27 @@
                             <label for="password" class="form-label">Contraseña *</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" id="password" name="password" class="form-control"
+                                <input type="password" id="password" name="contrasenaUsuario" class="form-control"
                                     placeholder="Crea una contraseña" required>
-                                <button class="btn btn-toggle-pass" type="button" id="togglePassword"><i
-                                        class="bi bi-eye"></i></button>
+                                <button class="btn btn-toggle-pass" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label for="password2" class="form-label">Confirmar contraseña *</label>
                             <div class="input-group">
-                                <span class="input-group-text "><i class="bi bi-lock-check"></i></span>
+                                <span class="input-group-text"><i class="bi bi-lock-check"></i></span>
                                 <input type="password" id="password2" name="password2" class="form-control"
                                     placeholder="Confirmar la contraseña" required>
                             </div>
                         </div>
                     </div>
 
-                    <!-- direccion -->
+                    <!-- dirección -->
                     <div class="mb-3 mt-3">
                         <label for="direccion" class="form-label">Dirección</label>
-                        <textarea id="direccion" name="direccion" class="form-control" rows="2"
+                        <textarea id="direccion" name="direccionUsuario" class="form-control" rows="2"
                             placeholder="Tu dirección completa"></textarea>
                     </div>
 
