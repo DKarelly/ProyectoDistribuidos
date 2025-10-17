@@ -68,3 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+// Manejar eliminación desde la tabla
+if (tablaUsuarios) {
+    tablaUsuarios.addEventListener("click", async (e) => {
+        if (e.target.closest(".btn-eliminar")) {
+            const id = e.target.closest(".btn-eliminar").dataset.id;
+            const confirmar = confirm(`¿Eliminar usuario con ID ${id}?`);
+            if (confirmar) {
+                try {
+                    await apiRequest(`/users/${id}`, { method: 'DELETE' });
+                    alert("Usuario eliminado correctamente.");
+                    loadUsersTable();
+                } catch (err) {
+                    alert("Error al eliminar: " + err.message);
+                }
+            }
+        }
+    });
+}
