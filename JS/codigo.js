@@ -527,6 +527,7 @@ async function sendAnimalReport(reportData) {
     }
 }
 
+
 // ===================================================
 // INICIALIZACIÓN Y EVENT LISTENERS
 // ===================================================
@@ -682,6 +683,74 @@ window.donar = function(amount, method) {
     const message = prompt('¿Quieres agregar un mensaje a tu donación? (opcional)');
     makeDonation(amount, method, message || '');
 };
+
+// ===================================================
+// DASHBOARD - TABLA DE USUARIOS
+// ===================================================
+
+async function loadUsersTable() {
+    if (!isAuthenticated()) {
+        showMessage('Debes iniciar sesión para ver los usuarios.', 'warning');
+        return;
+    }
+
+    try {
+        const data = await apiRequest('/users'); // usa tu API_BASE_URL + /users
+        const usuarios = data.data || [];
+        const tbody = document.getElementById('usuariosBody');
+
+        if (!tbody) {
+            console.warn('⚠️ No se encontró el tbody con id="usuariosBody"');
+            return;
+        }
+
+        tbody.innerHTML = ''; // Limpia tabla
+
+        if (usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay usuarios registrados</td></tr>';
+            return;
+        }
+
+        usuarios.forEach(user => {
+            const fila = document.createElement('tr');
+
+            fila.innerHTML = `
+                <td>${user.aliasusuario || '-'}</td>
+                <td>${user.correousuario || '-'}</td>
+                <td>${user.numusuario || '-'}</td>
+                <td>${user.direccionusuario || '-'}</td>
+                <td>${user.rolusuario || '-'}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm btn-editar" data-id="${user.idusuario}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm btn-eliminar" data-id="${user.idusuario}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(fila);
+        });
+
+    } catch (error) {
+        console.error('❌ Error al cargar usuarios:', error);
+        showMessage('Error cargando usuarios: ' + error.message, 'danger');
+    }
+}
+
+// Cargar tabla al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.pathname.includes('usuarios')) {
+        if (checkDashboardAccess()) {
+            loadUsersTable();
+        }
+    }
+});
+
+
 
 // Exponer funciones globales necesarias
 window.viewAnimalDetails = viewAnimalDetails;
