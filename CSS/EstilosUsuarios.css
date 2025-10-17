@@ -1,0 +1,117 @@
+/* ---------------------------------------------- */
+/* ESTILOS ÚNICOS PARA EL MÓDULO DE USUARIOS */
+/* ---------------------------------------------- */
+
+.admin-usuarios {
+  background-color: #ffe6ee;
+  min-height: 100vh;
+}
+
+.btn-pink {
+  background-color: #ff5c8d;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-pink:hover {
+  background-color: #ff3872;
+  color: #fff;
+}
+
+/* Tabla de usuarios */
+.usuarios-tabla {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.usuarios-tabla th {
+  background-color: #ffb6c1;
+  color: #333;
+  text-transform: uppercase;
+  font-size: 14px;
+  text-align: center;
+}
+
+.usuarios-tabla td {
+  vertical-align: middle;
+  font-size: 15px;
+  text-align: center; /* 🔥 Centra todo el contenido de las celdas */
+}
+
+/* Botones de acción */
+.btn-editar, .btn-eliminar {
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: inline-flex; /* 🔥 Centrado interno */
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-editar {
+  background-color: #d9ffd9;
+  color: #2e7d32;
+}
+
+.btn-eliminar {
+  background-color: #ffd6d6;
+  color: #c62828;
+}
+
+.btn-editar:hover {
+  background-color: #b3ffb3;
+}
+
+.btn-eliminar:hover {
+  background-color: #ffb3b3;
+}
+
+/* Inputs */
+.admin-usuarios .form-control, 
+.admin-usuarios .form-select {
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+/* Footer color fix */
+.bg-pink {
+  background-color: #ff5c8d !important;
+}
+
+/* ------------------------------------------------ */
+/* MODAL EDITAR USUARIO */
+/* ------------------------------------------------ */
+.modal-content {
+  border-radius: 20px;
+  background-color: #fffdfd;
+  box-shadow: 0 0 30px rgba(0,0,0,0.1);
+}
+
+.modal-title {
+  font-weight: 700;
+  color: #333;
+}
+
+.modal-header .btn-close {
+  background: none;
+  font-size: 1.5rem;
+}
+
+.btn-pink {
+  background-color: #ff5c8d;
+  color: white;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-pink:hover {
+  background-color: #ff3872;
+  color: white;
+}

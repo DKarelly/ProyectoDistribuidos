@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de administración de usuarios</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Tu CSS global -->
+    <link rel="stylesheet" href="CSS/estilos.css">
+    <!-- CSS exclusivo para usuarios -->
+    <link rel="stylesheet" href="CSS/EstilosUsuarios.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">HUELLA FELIZ</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="adopciones.html">Adopciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="donaciones.html">Donaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+
+                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
+                            Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
+                            Sesion</a></li>
+                    <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aqui</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SECCIÓN ADMIN USUARIOS -->
+    <section class="admin-usuarios text-center py-5 mt-5">
+        <div class="container">
+            <i class="bi bi-people-fill display-3 text-dark mb-3"></i>
+            <h2 class="fw-bold">Módulo de administración de usuarios</h2>
+            <hr class="mx-auto mb-4" style="width:60px; height:3px; background-color:#ff5c8d; border:none;">
+            <button class="btn btn-pink mb-4">
+                <i class="bi bi-plus-lg me-2"></i>Registrar nuevo usuario
+            </button>
+
+            <!-- Filtros -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-4 mb-2">
+                    <input type="text" class="form-control" placeholder="Buscar usuario" />
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select class="form-select">
+                        <option selected>Seleccionar rol</option>
+                        <option>Administrador</option>
+                        <option>Voluntario</option>
+                        <option>Usuario</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tabla dinámica -->
+            <div class="table-responsive">
+                <table id="tablaUsuarios" class="table usuarios-tabla align-middle">
+
+                    <thead>
+                        <tr>
+                            <th>Alias</th>
+                            <th>Correo</th>
+                            <th>Número</th>
+                            <th>Dirección</th>
+                            <th>Rol</th>
+                            <th>Editar</th>
+                            <th>Eliminar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuariosBody">
+                        <!-- Los usuarios se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- FOOTER -->
+    <footer class="py-5 bg-pink text-white">
+        <div class="container">
+            <div class="row">
+                <!-- Navegacion -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Navegacion</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="HUELLA FELIZ.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li><a href="donaciones.html" class="text-white text-decoration-none">Donaciones</a></li>
+                        <li><a href="adopciones.html" class="text-white text-decoration-none">Adopciones</a></li>
+                        <li><a href="reportar.html" class="text-white text-decoration-none">Reportar</a></li>
+                        <li><a href="acercaDe.html" class="text-white text-decoration-none">Acerca de</a></li>
+                    </ul>
+                </div>
+
+                <!-- Redes sociales -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Redes sociales</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none"><i
+                                    class="bi bi-facebook me-2"></i>Facebook</a></li>
+                        <li><a href="#" class="text-white text-decoration-none"><i
+                                    class="bi bi-instagram me-2"></i>Instagram</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- About -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">About</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Terms & Condition</a></li>
+                    </ul>
+                </div>
+
+                <!-- Info -->
+                <div class="col-12 col-md-3 mb-4">
+                    <h5 class="fw-bold">HUELLA FELIZ</h5>
+                    <p class="small">
+                        Somos una organizacion dedicada al rescate, adopcion y proteccion de animales en situacion de
+                        abandono.
+                        Unete como voluntario o apoyanos con tus donaciones.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Linea inferior -->
+            <div class="text-center border-top border-light pt-3 mt-3">
+                <p class="mb-0 small">&copy; 2025 Huella Feliz - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <!------------------------->
+    <!--PARA MOFIFCAR-->
+    <!------------------------->
+    <!-- Modal Editar Usuario -->
+    <div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content p-4">
+                <div class="modal-header border-0">
+                    <h3 class="modal-title w-100 text-center fw-bold">
+                        <i class="bi bi-people fs-1 d-block mb-2"></i>
+                        Modificar Datos
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form class="row g-3" id="formEditarUsuario">
+
+                        <!-- Alias e ID -->
+                        <div class="col-md-6">
+                            <label class="form-label">Alias</label>
+                            <input type="text" class="form-control" placeholder="Ingresar alias">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ID</label>
+                            <input type="text" class="form-control" disabled>
+                        </div>
+
+                        <!-- Correo y Rol -->
+                        <div class="col-md-6">
+                            <label class="form-label">Correo</label>
+                            <input type="email" class="form-control" placeholder="Ingresar correo">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Rol</label>
+                            <select class="form-select">
+                                <option>Seleccionar rol</option>
+                                <option>Administrador</option>
+                                <option>Usuario</option>
+                            </select>
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="col-md-6">
+                            <label class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" placeholder="Ingresar contraseña">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Confirmar contraseña</label>
+                            <input type="password" class="form-control" placeholder="Confirmar contraseña">
+                        </div>
+
+                        <!-- Teléfono y Dirección -->
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" class="form-control" placeholder="Ingresar teléfono">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" class="form-control" placeholder="Ingresar dirección">
+                        </div>
+
+                        <!-- Tipo de Persona -->
+                        <div class="col-12 mt-3">
+                            <label class="form-label d-block text-center">Tipo de persona</label>
+                            <div class="text-center">
+                                <input type="radio" name="tipoPersona" id="tipoPersona1" value="persona"> Persona
+                                <input type="radio" name="tipoPersona" id="tipoPersona2" value="empresa" class="ms-3">
+                                Empresa
+                            </div>
+                        </div>
+
+                        <!-- 🔹 Campos de Persona -->
+                        <div id="camposPersona" class="row g-3 mt-2 d-none">
+                            <div class="col-md-6">
+                                <label class="form-label">Código</label>
+                                <input type="text" class="form-control" placeholder="Ingresar código">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombres</label>
+                                <input type="text" class="form-control" placeholder="Ingresar nombres">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellidos Paternos</label>
+                                <input type="text" class="form-control" placeholder="Ingresar apellidos paternos">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellidos Maternos</label>
+                                <input type="text" class="form-control" placeholder="Ingresar apellidos maternos">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">DNI</label>
+                                <input type="text" class="form-control" placeholder="Ingresar DNI">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sexo</label>
+                                <select class="form-select">
+                                    <option>Seleccionar sexo</option>
+                                    <option>Masculino</option>
+                                    <option>Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 🔹 Campos de Empresa -->
+                        <div id="camposEmpresa" class="row g-3 mt-2 d-none">
+                            <div class="col-md-6">
+                                <label class="form-label">Código</label>
+                                <input type="text" class="form-control" placeholder="Ingresar código">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de la empresa</label>
+                                <input type="text" class="form-control" placeholder="Ingresar nombre de la empresa">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de persona</label>
+                                <select class="form-select">
+                                    <option>Jurídica</option>
+                                    <option>Natural</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RUC</label>
+                                <input type="text" class="form-control" placeholder="Ingresar RUC">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de creación</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="col-12 text-center mt-4">
+                            <button type="submit" class="btn btn-pink px-4 me-2">Guardar Datos</button>
+                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="JS/codigo.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="JS/paraVerModificarUsuario.js"></script>
+
+</body>
+
+</html>
