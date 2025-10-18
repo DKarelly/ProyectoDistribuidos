@@ -54,17 +54,12 @@
 
             <!-- Filtros -->
             <div class="row justify-content-center mb-4">
-                <div class="row justify-content-center mb-4">
-                    <div class="col-md-4 mb-2">
-                        <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar usuario">
-                    </div>
+                <div class="col-md-4 mb-2">
+                    <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar usuario">
                 </div>
                 <div class="col-md-3 mb-2">
-                    <select class="form-select">
-                        <option selected>Seleccionar rol</option>
-                        <option>Administrador</option>
-                        <option>Voluntario</option>
-                        <option>Usuario</option>
+                    <select class="form-select" id="filtroRol">
+                        <option value="">Todos los roles</option>
                     </select>
                 </div>
             </div>
@@ -72,9 +67,9 @@
             <!-- Tabla dinámica -->
             <div class="table-responsive">
                 <table id="tablaUsuarios" class="table usuarios-tabla align-middle">
-
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Alias</th>
                             <th>Correo</th>
                             <th>Número</th>
@@ -221,8 +216,8 @@
                             <input type="text" class="form-control" placeholder="Ingresar alias">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">ID</label>
-                            <input type="text" class="form-control" disabled>
+                            <label for="idEditar" class="form-label">ID Usuario</label>
+                            <input type="text" class="form-control" id="idEditar" placeholder="ID" readonly>
                         </div>
 
                         <!-- Correo y Rol -->
@@ -342,9 +337,9 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
+    <script src="JS/paraVerModificarUsuario.js"></script>
     <script src="JS/codigo.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="JS/paraVerModificarUsuario.js"></script>
 
 </body>
 
