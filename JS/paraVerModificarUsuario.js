@@ -1,260 +1,444 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // ==========================
-    // Modales y elementos
-    // ==========================
-    const modalEditarElement = document.getElementById("modalEditarUsuario");
-    const modalEditar = new bootstrap.Modal(modalEditarElement);
-    const modalRegistrarElement = document.getElementById("modalRegistrarUsuario");
-    const modalRegistrar = new bootstrap.Modal(modalRegistrarElement);
+console.log("paraVerModificarUsuario.js cargado correctamente");
 
-    const camposPersona = document.getElementById("camposPersona");
-    const camposEmpresa = document.getElementById("camposEmpresa");
-    const radios = document.getElementsByName("tipoPersona");
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("DOM cargado - Inicializando módulo de usuarios");
 
-    const tablaUsuarios = document.getElementById("tablaUsuarios");
-    let datosGuardados = false;
+    const usuariosBody = document.getElementById("usuariosBody");
+    const inputBuscar = document.getElementById("buscarUsuario");
+    const filtroRol = document.getElementById("filtroRol");
+    const formEditar = document.getElementById("formEditarUsuario");
 
-    // ==========================
-    // Cargar roles desde backend
-    // ==========================
+    let usuarios = [];
+
+    /* ============================================================
+         FUNCIÓN GENÉRICA PARA HACER PETICIONES AL BACKEND
+    ============================================================ */
+    async function apiRequest(endpoint, method = "GET", body) {
+        try {
+            const headers = { "Content-Type": "application/json" };
+            const token = localStorage.getItem("authToken");
+            if (token) headers.Authorization = `Bearer ${token}`;
+
+            const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : undefined,
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Error en la petición");
+            return data;
+        } catch (err) {
+            console.error("apiRequest error:", err);
+            Swal.fire("Error", err.message, "error");
+            throw err;
+        }
+    }
+
+    /* ============================================================
+         CARGAR ROLES
+    ============================================================ */
     async function loadRoles() {
         try {
-            const response = await apiRequest('/roles');
-            const roles = (response.data || []).map(r => ({
-                idRol: r.idrol,
-                rolUsuario: r.rolusuario
-            }));
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+                console.warn("No se encontró token de autenticación en localStorage.");
+                Swal.fire("Advertencia", "Debes iniciar sesión para cargar los roles.", "warning");
+                return;
+            }
 
-            const selectRegistrar = document.getElementById('selectRolRegistrar');
-            const selectEditar = document.getElementById('selectRolEditar');
-            [selectRegistrar, selectEditar].forEach(select => {
-                if (select) {
-                    select.innerHTML = '<option value="">Seleccione rol</option>';
-                    roles.forEach(r => {
-                        const option = document.createElement('option');
-                        option.value = r.idRol;
-                        option.textContent = r.rolUsuario;
-                        select.appendChild(option);
-                    });
-                }
+            console.log("Solicitando roles a:", `${API_BASE_URL}/roles`);
+            const response = await fetch(`${API_BASE_URL}/roles`, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
             });
-        } catch (error) {
-            console.error('Error cargando roles:', error);
-        }
-    }
 
-    // ==========================
-    // Cargar tabla de usuarios
-    // ==========================
-    async function loadUsersTable() {
-        if (!tablaUsuarios) return;
-        try {
-            const response = await apiRequest('/usuarios');
-            const users = (response.data || []).map(u => ({
-                idUsuario: u.idusuario,
-                aliasUsuario: u.aliasusuario,
-                correoUsuario: u.correousuario,
-                numUsuario: u.numusuario,
-                direccionUsuario: u.direccionusuario,
-                rolUsuario: u.rolusuario,
-                idRol: u.idrol
-            }));
+            console.log("Respuesta HTTP:", response.status);
+            const data = await response.json();
+            console.log("Datos recibidos:", data);
 
-            const tbody = document.getElementById('usuariosBody');
-            tbody.innerHTML = '';
+            if (!response.ok) throw new Error(data.message || "Error al obtener roles.");
 
-            users.forEach(u => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${u.idUsuario}</td>
-                    <td>${u.aliasUsuario}</td>
-                    <td>${u.correoUsuario}</td>
-                    <td>${u.numUsuario}</td>
-                    <td>${u.direccionUsuario}</td>
-                    <td>${u.rolUsuario}</td>
-                    <td>
-                        <button class="btn btn-sm btn-warning btn-editar" data-id="${u.idUsuario}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger btn-eliminar" data-id="${u.idUsuario}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+            const roles = data.data || [];
+            if (!roles.length) {
+                console.warn("No hay roles en la base de datos.");
+            }
+
+            // Rellenar filtro superior
+            filtroRol.innerHTML = `<option value="">Todos los roles</option>`;
+            roles.forEach((r) => {
+                const opt = document.createElement("option");
+                opt.value = r.rolusuario;
+                opt.textContent = r.rolusuario;
+                filtroRol.appendChild(opt);
             });
+
+            // Rellenar selects del modal
+            const selectRegistrar = document.getElementById("selectRolRegistrar");
+            const selectEditar = document.getElementById("selectRolEditar");
+            [selectRegistrar, selectEditar].forEach((sel) => {
+                if (!sel) return;
+                sel.innerHTML = `<option value="">Seleccione rol</option>`;
+                roles.forEach((r) => {
+                    const o = document.createElement("option");
+                    o.value = r.idrol;
+                    o.textContent = r.rolusuario;
+                    sel.appendChild(o);
+                });
+            });
+
+            console.log("Roles cargados correctamente.");
+
         } catch (err) {
-            console.error('Error cargando usuarios:', err);
+            console.error("Error cargando roles:", err);
+            Swal.fire("Error", "No se pudieron cargar los roles", "error");
         }
     }
 
-    // ==========================
-    // Abrir modal editar usuario
-    // ==========================
-    if (tablaUsuarios) {
-        tablaUsuarios.addEventListener("click", async (e) => {
-            const btn = e.target.closest(".btn-editar");
-            if (!btn) return;
+    /* ============================================================
+       CARGAR USUARIOS
+    ============================================================ */
+    async function loadUsersTable() {
+        try {
+            const response = await apiRequest("/users");
+            usuarios = response.data || [];
+            renderTable(usuarios);
+        } catch (err) {
+            console.error("Error cargando usuarios:", err);
+        }
+    }
 
-            const id = btn.dataset.id;
-            datosGuardados = false;
+    /* ============================================================
+       RENDERIZAR TABLA DE USUARIOS
+    ============================================================ */
+    function renderTable(data) {
+        usuariosBody.innerHTML = "";
+        if (data.length === 0) {
+            usuariosBody.innerHTML = `
+                <tr><td colspan="8" class="text-center text-muted">No hay usuarios registrados</td></tr>`;
+            return;
+        }
 
-            radios.forEach(r => r.checked = false);
-            camposPersona?.classList.add("d-none");
-            camposEmpresa?.classList.add("d-none");
+        data.forEach((u) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${u.idusuario}</td>
+                <td>${u.aliasusuario}</td>
+                <td>${u.correousuario}</td>
+                <td>${u.numusuario || "-"}</td>
+                <td>${u.direccionusuario || "-"}</td>
+                <td>${u.rolusuario}</td>
+                <td>
+                    <button class="btn btn-warning btn-sm btn-editar" data-id="${u.idusuario}">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-danger btn-sm btn-eliminar" data-id="${u.idusuario}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            usuariosBody.appendChild(tr);
+        });
 
-            try {
-                const response = await apiRequest(`/usuarios/${id}`);
-                const u = response.data;
-
-                const form = document.getElementById('formEditarUsuario');
-                form.elements[0].value = u.idUsuario;
-                form.elements[1].value = u.aliasUsuario;
-                form.elements[2].value = u.correoUsuario;
-                form.elements[3].value = u.numUsuario;
-                form.elements[4].value = u.direccionUsuario;
-                if (form.elements[5]) form.elements[5].value = u.idRol;
-
-                modalEditar.show();
-            } catch (err) {
-                alert('Error al cargar usuario: ' + err.message);
-            }
+        // Eventos dinámicos
+        document.querySelectorAll(".btn-editar").forEach((btn) => {
+            btn.addEventListener("click", () => abrirModalEdicion(btn.dataset.id));
+        });
+        document.querySelectorAll(".btn-eliminar").forEach((btn) => {
+            btn.addEventListener("click", () => eliminarUsuario(btn.dataset.id));
         });
     }
 
-    // ==========================
-    // Cambiar campos según tipo persona
-    // ==========================
-    radios.forEach(radio => {
-        radio.addEventListener("change", () => {
-            if (radio.value === "persona" && radio.checked) {
-                camposPersona?.classList.remove("d-none");
-                camposEmpresa?.classList.add("d-none");
-            } else if (radio.value === "empresa" && radio.checked) {
-                camposEmpresa?.classList.remove("d-none");
-                camposPersona?.classList.add("d-none");
-            }
+    /* ============================================================
+       FILTROS DE BÚSQUEDA Y ROL
+    ============================================================ */
+    function aplicarFiltros() {
+        const texto = inputBuscar.value.toLowerCase();
+        const rolSel = filtroRol.value;
+
+        const filtrados = usuarios.filter((u) => {
+            const alias = u.aliasusuario?.toLowerCase() || "";
+            const correo = u.correousuario?.toLowerCase() || "";
+            const rol = u.rolusuario;
+            const textoCoincide = alias.includes(texto) || correo.includes(texto);
+            const rolCoincide = rolSel ? rolSel === rol : true;
+            return textoCoincide && rolCoincide;
         });
-    });
 
-    document.addEventListener("click", () => {
-        const personaSeleccionada = document.getElementById("tipoPersona1")?.checked;
-        const empresaSeleccionada = document.getElementById("tipoPersona2")?.checked;
-        if (!personaSeleccionada && !empresaSeleccionada) {
-            camposPersona?.classList.add("d-none");
-            camposEmpresa?.classList.add("d-none");
-        }
-    });
+        renderTable(filtrados);
+    }
 
-    // ==========================
-    // Editar usuario
-    // ==========================
-    document.getElementById("formEditarUsuario").addEventListener("submit", async e => {
-        e.preventDefault();
-        const form = e.target;
+    inputBuscar.addEventListener("input", aplicarFiltros);
+    filtroRol.addEventListener("change", aplicarFiltros);
 
-        const data = {
-            aliasusuario: form.elements[1].value.trim(),
-            correousuario: form.elements[2].value.trim(),
-            numusuario: form.elements[3].value.trim(),
-            direccionusuario: form.elements[4].value.trim(),
-            idrol: parseInt(form.elements[5].value)
-        };
+    /* ============================================================
+       ELIMINAR USUARIO
+    ============================================================ */
+    async function eliminarUsuario(id) {
+        const confirm = await Swal.fire({
+            title: "¿Eliminar usuario?",
+            text: "Esta acción no se puede deshacer",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+        });
+
+        if (!confirm.isConfirmed) return;
 
         try {
-            await apiRequest(`/usuarios/${form.elements[0].value}`, { method: 'PUT', body: JSON.stringify(data) });
-            alert("Usuario actualizado correctamente.");
-            datosGuardados = true;
-            modalEditar.hide();
+            await apiRequest(`/users/${id}`, "DELETE");
+            Swal.fire("Eliminado", "Usuario eliminado correctamente", "success");
             loadUsersTable();
         } catch (err) {
-            alert("Error al actualizar usuario: " + err.message);
+            console.error("Error eliminando usuario:", err);
         }
-    });
+    }
 
-    modalEditarElement.addEventListener("hide.bs.modal", (event) => {
-        if (!datosGuardados) {
-            const confirmar = confirm("¿Estás seguro de cerrar sin guardar?");
-            if (!confirmar) event.preventDefault();
-        }
-    });
+    /* ============================================================
+       EDITAR USUARIO - ABRIR MODAL
+    ============================================================ */
+    async function abrirModalEdicion(id) {
+        try {
+            const res = await apiRequest(`/users/${id}`);
+            const usuario = res.usuario;
+            const persona = res.persona;
+            const empresa = res.empresa;
 
-    // ==========================
-    // Registrar usuario
-    // ==========================
-    const formRegistrarUsuario = document.getElementById('formRegistrarUsuario');
-    if (formRegistrarUsuario) {
-        formRegistrarUsuario.addEventListener('submit', async e => {
-            e.preventDefault();
-            const form = formRegistrarUsuario;
+            const form = formEditar;
 
-            const data = {
-                aliasusuario: form.elements[0].value.trim(),
-                correousuario: form.elements[1].value.trim(),
-                claveusuario: form.elements[2].value.trim(),
-                numusuario: form.elements[3].value.trim(),
-                direccionusuario: form.elements[4].value.trim(),
-                idrol: parseInt(form.elements[5].value)
+            // Usuario
+            form.querySelector('#idEditar').value = usuario.idusuario;
+            form.querySelector('#idEditar').readOnly = true;
+            form.querySelector('input[placeholder="Ingresar alias"]').value = usuario.aliasusuario || "";
+            form.querySelector('input[placeholder="Ingresar correo"]').value = usuario.correousuario || "";
+            form.querySelector('input[placeholder="Ingresar teléfono"]').value = usuario.numusuario || "";
+            form.querySelector('input[placeholder="Ingresar dirección"]').value = usuario.direccionusuario || "";
+            form.querySelector('#selectRolEditar').value = usuario.idrol || "";
+
+            // Persona
+            if (persona) {
+                document.getElementById("tipoPersona1").checked = true;
+                const camposPersona = document.getElementById("camposPersona");
+                camposPersona.classList.remove("d-none");
+
+                document.getElementById("idPersonaEditar").value = persona.idpersona;
+                document.getElementById("nombresPersonaEditar").value = persona.nombres || "";
+                document.getElementById("apepaternoPersonaEditar").value = persona.apepaterno || "";
+                document.getElementById("apematernoPersonaEditar").value = persona.apematerno || "";
+                document.getElementById("dniPersonaEditar").value = persona.dni || "";
+                document.getElementById("sexoPersonaEditar").value = persona.sexo || "";
+            } else {
+                document.getElementById("camposPersona").classList.add("d-none");
+            }
+
+            if (empresa) {
+                document.getElementById("tipoPersona2").checked = true;
+                const camposEmpresa = document.getElementById("camposEmpresa");
+                camposEmpresa.classList.remove("d-none");
+
+                document.getElementById("idEmpresaEditar").value = empresa.idempresa;
+                document.getElementById("nombreEmpresaEditar").value = empresa.nombreempresa || "";
+                document.getElementById("tipoPersonaEmpresaEditar").value = empresa.tipopersona || "";
+                document.getElementById("rucEmpresaEditar").value = empresa.ruc || "";
+                document.getElementById("fechaCreacionEmpresaEditar").value = empresa.f_creacion || "";
+            } else {
+                document.getElementById("camposEmpresa").classList.add("d-none");
+            }
+
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById("modalEditarUsuario"));
+            modal.show();
+
+            // Enviar formulario
+            form.onsubmit = async e => {
+                e.preventDefault();
+                const payload = {
+                    aliasusuario: form.querySelector('input[placeholder="Ingresar alias"]').value.trim(),
+                    correousuario: form.querySelector('input[placeholder="Ingresar correo"]').value.trim(),
+                    numusuario: form.querySelector('input[placeholder="Ingresar teléfono"]').value.trim(),
+                    direccionusuario: form.querySelector('input[placeholder="Ingresar dirección"]').value.trim(),
+                    idrol: form.querySelector('#selectRolEditar').value,
+                    persona: persona ? {
+                        idpersona: persona.idpersona,
+                        nombres: document.getElementById("nombresPersonaEditar").value.trim(),
+                        apepaterno: document.getElementById("apepaternoPersonaEditar").value.trim(),
+                        apematerno: document.getElementById("apematernoPersonaEditar").value.trim(),
+                        dni: document.getElementById("dniPersonaEditar").value.trim(),
+                        sexo: document.getElementById("sexoPersonaEditar").value
+                    } : null,
+                    empresa: empresa ? {
+                        idempresa: empresa.idempresa,
+                        nombreempresa: document.getElementById("nombreEmpresaEditar").value.trim(),
+                        ruc: document.getElementById("rucEmpresaEditar").value.trim(),
+                        f_creacion: document.getElementById("fechaCreacionEmpresaEditar").value,
+                        tipopersona: document.getElementById("tipoPersonaEmpresaEditar").value
+                    } : null
+                };
+
+                try {
+                    const result = await apiRequest(`/users/${id}`, 'PUT', payload);
+                    Swal.fire('Éxito', result.message || 'Usuario actualizado', 'success');
+                    modal.hide();
+                    loadUsersTable();
+                } catch (error) {
+                    Swal.fire('Error', error.message || 'Error al actualizar usuario', 'error');
+                }
             };
 
-            if (!data.aliasusuario || !data.correousuario || !data.claveusuario || !data.idrol) {
-                return alert('Completa todos los campos obligatorios');
-            }
+        } catch (err) {
+            console.error("Error abriendo modal edición:", err);
+            Swal.fire("Error", err.message || "No se pudo abrir el modal", "error");
+        }
+    }
 
-            try {
-                await apiRequest('/usuarios', { method: 'POST', body: JSON.stringify(data) });
-                alert('Usuario registrado correctamente.');
-                modalRegistrar.hide();
-                form.reset();
-                loadUsersTable();
-            } catch (err) {
-                alert('Error al registrar: ' + err.message);
+    /* ============================================================
+       MOSTRAR / OCULTAR CAMPOS (PERSONA / EMPRESA)
+    ============================================================ */
+    function configurarFormularioPersonaEmpresa(idModal, idRadioPersona, idRadioEmpresa, idFormPersona, idFormEmpresa) {
+        const modal = document.getElementById(idModal);
+        const radioPersona = document.getElementById(idRadioPersona);
+        const radioEmpresa = document.getElementById(idRadioEmpresa);
+        const formPersona = document.getElementById(idFormPersona);
+        const formEmpresa = document.getElementById(idFormEmpresa);
+
+        if (!modal || !radioPersona || !radioEmpresa || !formPersona || !formEmpresa) return;
+
+        // Función para mostrar según selección
+        function actualizarFormulario() {
+            if (radioPersona.checked) {
+                formPersona.classList.remove("d-none");
+                formEmpresa.classList.add("d-none");
+            } else if (radioEmpresa.checked) {
+                formEmpresa.classList.remove("d-none");
+                formPersona.classList.add("d-none");
+            } else {
+                formPersona.classList.add("d-none");
+                formEmpresa.classList.add("d-none");
             }
+        }
+
+        // Eventos de cambio de tipo
+        radioPersona.addEventListener("change", actualizarFormulario);
+        radioEmpresa.addEventListener("change", actualizarFormulario);
+
+        // 🔹 Al abrir el modal: limpiar y ocultar campos
+        modal.addEventListener("show.bs.modal", () => {
+            radioPersona.checked = false;
+            radioEmpresa.checked = false;
+            formPersona.classList.add("d-none");
+            formEmpresa.classList.add("d-none");
+        });
+
+        // 🔹 Al cerrar el modal: limpiar y ocultar campos
+        modal.addEventListener("hidden.bs.modal", () => {
+            radioPersona.checked = false;
+            radioEmpresa.checked = false;
+            formPersona.classList.add("d-none");
+            formEmpresa.classList.add("d-none");
         });
     }
 
-    // ==========================
-    // Eliminar usuario
-    // ==========================
-    if (tablaUsuarios) {
-        tablaUsuarios.addEventListener("click", async (e) => {
-            const btn = e.target.closest(".btn-eliminar");
-            if (!btn) return;
+    // Configurar ambos modales
+    configurarFormularioPersonaEmpresa(
+        "modalRegistrarUsuario",
+        "tipoPersonaRegistrar1",
+        "tipoPersonaRegistrar2",
+        "camposPersonaRegistrar",
+        "camposEmpresaRegistrar"
+    );
 
-            const id = btn.dataset.id;
-            const confirmar = confirm(`¿Eliminar usuario con ID ${id}?`);
-            if (!confirmar) return;
+    configurarFormularioPersonaEmpresa(
+        "modalEditarUsuario",
+        "tipoPersona1",
+        "tipoPersona2",
+        "camposPersona",
+        "camposEmpresa"
+    );
 
-            try {
-                await apiRequest(`/usuarios/${id}`, { method: 'DELETE' });
-                alert("Usuario eliminado correctamente.");
-                loadUsersTable();
-            } catch (err) {
-                alert("Error al eliminar: " + err.message);
-            }
-        });
-    }
 
-    // ==========================
-    // Filtro dinámico en la tabla
-    // ==========================
-    const inputBuscar = document.getElementById('buscarUsuario');
-    if (inputBuscar) {
-        inputBuscar.addEventListener('input', () => {
-            const filtro = inputBuscar.value.toLowerCase();
-            const filas = document.querySelectorAll('#usuariosBody tr');
+    /* ============================================================
+      REGISTRAR NUEVO USUARIO
+    ============================================================ */
+    const formRegistrar = document.getElementById("formRegistrarUsuario");
 
-            filas.forEach(fila => {
-                const alias = fila.cells[1].textContent.toLowerCase();
-                const rol = fila.cells[5].textContent.toLowerCase();
-                fila.style.display = alias.includes(filtro) || rol.includes(filtro) ? '' : 'none';
+    formRegistrar.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Obtener valores
+        const aliasusuario = document.getElementById("aliasRegistrar").value.trim();
+        const correousuario = document.getElementById("correoRegistrar").value.trim();
+        const claveusuario = document.getElementById("claveRegistrar").value.trim();
+        const confirmarClave = document.getElementById("confirmarClaveRegistrar").value.trim();
+        const numusuario = document.getElementById("telefonoRegistrar").value.trim();
+        const direccionusuario = document.getElementById("direccionRegistrar").value.trim();
+        const idrol = document.getElementById("selectRolRegistrar").value;
+
+        const tipoPersona = document.querySelector('input[name="tipoPersonaRegistrar"]:checked').value;
+        let persona = null;
+        let empresa = null;
+
+        if (tipoPersona === "persona") {
+            persona = {
+                nombres: document.getElementById("nombrePersonaRegistrar").value.trim(),
+                apepaterno: document.getElementById("apepaternoRegistrar").value.trim(),
+                apematerno: document.getElementById("apematernoRegistrar").value.trim(),
+                dni: document.getElementById("dniRegistrar").value.trim(),
+                sexo: document.getElementById("sexoRegistrar").value,
+            };
+        } else {
+            empresa = {
+                nombreempresa: document.getElementById("nombreEmpresaRegistrar").value.trim(),
+                tipopersona: document.getElementById("tipoPersonaEmpresaRegistrar").value,
+                ruc: document.getElementById("rucRegistrar").value.trim(),
+                f_creacion: document.getElementById("fechaCreacionRegistrar").value,
+            };
+        }
+
+        if (claveusuario !== confirmarClave) {
+            Swal.fire("Error", "Las contraseñas no coinciden", "error");
+            return;
+        }
+
+        try {
+            const res = await apiRequest("/users", "POST", {
+                aliasusuario,
+                correousuario,
+                claveusuario,
+                numusuario,
+                direccionusuario,
+                idrol,
+                tipoPersona,
+                persona,
+                empresa,
             });
-        });
-    }
 
-    // ==========================
-    // Inicialización
-    // ==========================
-    loadRoles();
-    loadUsersTable();
+            Swal.fire("Éxito", res.message || "Usuario registrado correctamente", "success");
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById("modalRegistrarUsuario"));
+            modal.hide();
+
+            // Reset formulario
+            formRegistrar.reset();
+
+            // Refrescar tabla
+            await loadUsersTable();
+
+        } catch (err) {
+            console.error("Error registrando usuario:", err);
+            Swal.fire("Error", err.message || "No se pudo registrar el usuario", "error");
+        }
+    });
+
+    /* ============================================================
+        INICIALIZAR
+    ============================================================ */
+    await loadRoles();
+    await loadUsersTable();
+    console.log("Módulo de administración de usuarios inicializado");
 });

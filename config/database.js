@@ -23,7 +23,7 @@ async function testConnection() {
   }
 }
 
-// 🔹 Ejecutar consultas
+// 🔹 Ejecutar consultas normales
 async function query(text, params) {
   const start = Date.now();
   try {
@@ -37,4 +37,10 @@ async function query(text, params) {
   }
 }
 
-module.exports = { pool, query, testConnection };
+// 🔹 Obtener cliente para transacciones
+async function getClient() {
+  const client = await pool.connect();
+  return client;
+}
+
+module.exports = { pool, query, testConnection, getClient };

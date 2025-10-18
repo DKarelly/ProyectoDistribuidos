@@ -11,6 +11,7 @@ const animalsRouter = require('./routes/animals');
 const donationsRouter = require('./routes/donations');
 const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
+const rolesRouter = require('./routes/roles');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,6 +34,7 @@ app.use('/api/animals', animalsRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/roles', rolesRouter);
 
 // Ruta para servir el archivo principal
 app.get('/', (req, res) => {

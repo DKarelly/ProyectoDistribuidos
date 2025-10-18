@@ -1,11 +1,10 @@
 /* ---------------------------------------------- */
 /* ESTILOS ÚNICOS PARA EL MÓDULO DE USUARIOS */
 /* ---------------------------------------------- */
-
 .admin-usuarios {
   background-color: #ffe6ee;
   min-height: 100vh;
-}
+} 
 
 .btn-pink {
   background-color: #ff5c8d;
