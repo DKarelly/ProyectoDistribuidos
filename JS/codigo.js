@@ -75,22 +75,15 @@ function isAuthenticated() {
 // ===================================================
 
 // Verificar si el usuario tiene un rol específico
-/* function hasRole(allowedRoles) {
+function hasRole(allowedRoleIds) {
     if (!isAuthenticated()) return false;
-    return allowedRoles.includes(currentUser.rolUsuario);
-} */
-function hasRole(allowedRoles) {
-    if (!isAuthenticated()) return false;
-    // Normalizar a minúsculas para evitar problemas de mayúsculas/minúsculas
-    const userRole = currentUser.rolUsuario.toLowerCase();
-    return allowedRoles.some(role => role.toLowerCase() === userRole);
+    return allowedRoleIds.includes(currentUser.idRol);
 }
-
 
 // Verificar acceso al dashboard (solo Administrador y trabajador)
 function checkDashboardAccess() {
-    const allowedRoles = ['Administrador', 'trabajador'];
-    if (!hasRole(allowedRoles)) {
+    const allowedRoleIds = [1, 2]; // 1=Administrador, 2=Trabajador
+    if (!hasRole(allowedRoleIds)) {
         showMessage('Acceso denegado. Solo administradores y trabajadores pueden acceder al dashboard.', 'danger');
         setTimeout(() => {
             window.location.href = 'HUELLA FELIZ.html';
@@ -119,8 +112,8 @@ function updateAuthUI() {
 
     // Mostrar/ocultar dashboard según el rol
     if (dashboardLink) {
-        const allowedRoles = ['Administrador', 'trabajador'];
-        if (hasRole(allowedRoles)) {
+        // Mostrar dash solo para admin (1) o trabajador (2)
+        if (hasRole([1, 2])) {
             dashboardLink.style.display = 'block';
         } else {
             dashboardLink.style.display = 'none';
@@ -174,41 +167,7 @@ async function handleRegistration(formData) {
     }
 }
 
-// Manejo del formulario de login
-/* async function handleLogin(email, password) {
-    try {
-        const data = await apiRequest('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({
-                correoUsuario: email,
-                contrasenaUsuario: password
-            })
-        });
 
-        authToken = data.data.token;
-
-        // Normalizar usuario
-        const u = data.data.usuario;
-        currentUser = {
-            idUsuario: u.idusuario || u.idUsuario,
-            aliasUsuario: u.aliasusuario || u.aliasUsuario,
-            rolUsuario: u.rolusuario || u.rolUsuario,
-            correoUsuario: u.correousuario || u.correoUsuario
-        };
-
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-        showMessage(`¡Bienvenido, ${currentUser.aliasUsuario}!`, 'success');
-        
-        setTimeout(() => {
-            window.location.href = 'HUELLA FELIZ.html';
-        }, 1500);
-
-    } catch (error) {
-        showMessage(error.message, 'danger');
-    }
-} */
 async function handleLogin(email, password) {
     try {
         const data = await apiRequest('/auth/login', {
@@ -226,7 +185,7 @@ async function handleLogin(email, password) {
         currentUser = {
             idUsuario: u.idusuario || u.idUsuario,
             aliasUsuario: u.aliasusuario || u.aliasUsuario,
-            rolUsuario: (u.rolusuario || u.rolUsuario || '').trim(),
+            idRol: Number(u.idrol), // ahora usamos idRol directamente
             correoUsuario: u.correousuario || u.correoUsuario
         };
 
@@ -237,7 +196,7 @@ async function handleLogin(email, password) {
         
         // Redirigir según rol
         setTimeout(() => {
-            if (hasRole(['Administrador', 'trabajador'])) {
+            if (hasRole([1, 2])) {
                 window.location.href = 'dashboard.html';
             } else {
                 window.location.href = 'HUELLA FELIZ.html';
@@ -248,6 +207,7 @@ async function handleLogin(email, password) {
         showMessage(error.message, 'danger');
     }
 }
+
 
 
 

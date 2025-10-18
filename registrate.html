@@ -52,7 +52,7 @@
                 </p>
 
                 <form id="registroForm" novalidate>
-                    <!-- alias -->
+                    <!-- Alias -->
                     <div class="mb-3">
                         <label for="alias" class="form-label">Alias *</label>
                         <div class="input-group">
@@ -62,43 +62,7 @@
                         </div>
                     </div>
 
-                    <!-- nombre / apellidos -->
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label for="nombre" class="form-label">Nombre *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                <input type="text" id="nombre" name="nombre" class="form-control"
-                                    placeholder="Tu nombre" required>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="apellidoP" class="form-label">Apellido paterno *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
-                                <input type="text" id="apellidoP" name="apellido_paterno" class="form-control"
-                                    placeholder="Apellido paterno" required>
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="apellidoM" class="form-label">Apellido materno</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-person-bounding-box"></i></span>
-                                <input type="text" id="apellidoM" name="apellido_materno" class="form-control"
-                                    placeholder="Apellido materno">
-                            </div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label for="numero" class="form-label">Teléfono *</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                                <input type="tel" id="numero" name="numUsuario" class="form-control"
-                                    placeholder="987654321" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- correo -->
+                    <!-- Correo -->
                     <div class="mb-3 mt-3">
                         <label for="correo" class="form-label">Correo electrónico *</label>
                         <div class="input-group">
@@ -108,7 +72,7 @@
                         </div>
                     </div>
 
-                    <!-- contraseña / confirmar -->
+                    <!-- Contraseña -->
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label for="password" class="form-label">Contraseña *</label>
@@ -131,14 +95,128 @@
                         </div>
                     </div>
 
-                    <!-- dirección -->
-                    <div class="mb-3 mt-3">
-                        <label for="direccion" class="form-label">Dirección</label>
-                        <textarea id="direccion" name="direccionUsuario" class="form-control" rows="2"
-                            placeholder="Tu dirección completa"></textarea>
+                    <!-- Teléfono y Dirección -->
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <label for="numero" class="form-label">Teléfono *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" id="numero" name="numUsuario" class="form-control"
+                                    placeholder="987654321" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="direccion" class="form-label">Dirección</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                <textarea id="direccion" name="direccionUsuario" class="form-control" rows="2"
+                                    placeholder="Tu dirección completa"></textarea>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- submit -->
+                    <!-- Tipo de Persona -->
+                    <div class="col-12 mt-3 text-center">
+                        <label class="form-label d-block">Tipo de persona</label>
+                        <div class="form-check form-check-inline">
+                            <input type="radio" name="tipoPersonaRegistrar" id="tipoPersonaRegistrar1" value="persona"
+                                class="form-check-input" checked>
+                            <label class="form-check-label" for="tipoPersonaRegistrar1">Persona</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input type="radio" name="tipoPersonaRegistrar" id="tipoPersonaRegistrar2" value="empresa"
+                                class="form-check-input">
+                            <label class="form-check-label" for="tipoPersonaRegistrar2">Empresa</label>
+                        </div>
+                    </div>
+
+                    <!-- Campos de Persona -->
+                    <div id="camposPersonaRegistrar" class="row g-3 mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombres</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" id="nombrePersonaRegistrar" name="nombrePersona" class="form-control"
+                                    placeholder="Ingresar nombres">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellido Paterno</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
+                                <input type="text" id="apepaternoRegistrar" name="apepaterno" class="form-control"
+                                    placeholder="Ingresar apellido paterno">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Apellido Materno</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person-bounding-box"></i></span>
+                                <input type="text" id="apematernoRegistrar" name="apematerno" class="form-control"
+                                    placeholder="Ingresar apellido materno">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">DNI</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+                                <input type="text" id="dniRegistrar" name="dni" class="form-control"
+                                    placeholder="Ingresar DNI">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sexo</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-gender-ambiguous"></i></span>
+                                <select class="form-select" id="sexoRegistrar" name="sexo">
+                                    <option value="">Seleccionar sexo</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos de Empresa -->
+                    <div id="camposEmpresaRegistrar" class="row g-3 mt-2 d-none">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de la empresa</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                <input type="text" id="nombreEmpresaRegistrar" name="nombreEmpresa" class="form-control"
+                                    placeholder="Ingresar nombre de la empresa">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de empresa</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-card-list"></i></span>
+                                <select class="form-select" id="tipoPersonaEmpresaRegistrar" name="tipoPersonaEmpresa">
+                                    <option value="">Seleccionar tipo</option>
+                                    <option>Jurídica</option>
+                                    <option>Natural</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">RUC</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-credit-card-2-back"></i></span>
+                                <input type="text" id="rucRegistrar" name="ruc" class="form-control"
+                                    placeholder="Ingresar RUC">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de creación</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar-date"></i></span>
+                                <input type="date" id="fechaCreacionRegistrar" name="fechaCreacion"
+                                    class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
                     <div class="d-grid mt-3">
                         <button type="submit" class="btn btn-pink btn-lg">Registrarme</button>
                     </div>
@@ -209,8 +287,10 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
+    <script src="JS/registrar.js"></script>
 </body>
 
 </html>

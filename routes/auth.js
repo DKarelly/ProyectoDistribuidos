@@ -1,12 +1,12 @@
 const express = require('express');
+const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { query, getClient } = require('../config/database');
-const router = express.Router();
 
 /* ------------------ MIDDLEWARE DE TOKEN ------------------ */
-const authenticateToken = (req, res, next) => {
+function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Token requerido' });
@@ -16,7 +16,7 @@ const authenticateToken = (req, res, next) => {
         req.user = user;
         next();
     });
-};
+}
 
 /* ------------------ REGISTRO CLIENTE ------------------ */
 router.post('/registro', [
@@ -25,18 +25,18 @@ router.post('/registro', [
     body('contrasenaUsuario').isLength({ min: 4 }),
     body('numUsuario').notEmpty(),
     body('direccionUsuario').notEmpty(),
-    body('esEmpresa').isBoolean(),
+    body('tipoPersona').isIn(['persona','empresa']), // ahora depende de tipoPersona
     // Persona
-    body('nombreUsuario').if(body('esEmpresa').equals(false)).notEmpty(),
-    body('apellidoPaternoUsuario').if(body('esEmpresa').equals(false)).notEmpty(),
-    body('apellidoMaternoUsuario').if(body('esEmpresa').equals(false)).notEmpty(),
-    body('dni').if(body('esEmpresa').equals(false)).isLength({ min: 8, max: 8 }),
-    body('sexo').if(body('esEmpresa').equals(false)).isIn(['M','F']),
+    body('nombreUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
+    body('apellidoPaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
+    body('apellidoMaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
+    body('dni').if(body('tipoPersona').equals('persona')).isLength({ min: 8, max: 8 }),
+    body('sexo').if(body('tipoPersona').equals('persona')).isIn(['M','F']),
     // Empresa
-    body('nombreEmpresa').if(body('esEmpresa').equals(true)).notEmpty(),
-    body('tipoPersona').if(body('esEmpresa').equals(true)).notEmpty(),
-    body('ruc').if(body('esEmpresa').equals(true)).notEmpty(),
-    body('f_creacion').if(body('esEmpresa').equals(true)).isDate()
+    body('nombreEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty(),
+    body('tipoPersonaEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty(),
+    body('ruc').if(body('tipoPersona').equals('empresa')).notEmpty(),
+    body('fechaCreacion').if(body('tipoPersona').equals('empresa')).isDate()
 ], async (req, res) => {
     const client = await getClient();
     try {
@@ -45,20 +45,20 @@ router.post('/registro', [
 
         const {
             aliasUsuario, correoUsuario, contrasenaUsuario,
-            numUsuario, direccionUsuario, esEmpresa,
+            numUsuario, direccionUsuario, tipoPersona,
             nombreUsuario, apellidoPaternoUsuario, apellidoMaternoUsuario, dni, sexo,
-            nombreEmpresa, tipoPersona, ruc, f_creacion
+            nombreEmpresa, tipoPersonaEmpresa, ruc, fechaCreacion
         } = req.body;
 
-        // Solo clientes
-        const idRolCliente = 3; // ejemplo: Cliente = 3
-
+        const esEmpresa = tipoPersona === "empresa";
+        const idRolCliente = 3; // Cliente por defecto
         const correoNormalizado = correoUsuario.trim().toLowerCase();
+        const aliasNormalizado = aliasUsuario.trim().toLowerCase();
 
         // Verificar duplicados
         const existingUser = await client.query(
             'SELECT idusuario FROM usuario WHERE LOWER(correousuario) = $1 OR LOWER(aliasusuario) = $2',
-            [correoNormalizado, aliasUsuario.trim().toLowerCase()]
+            [correoNormalizado, aliasNormalizado]
         );
         if (existingUser.rows.length > 0) return res.status(400).json({ message: 'Usuario o email ya registrado' });
 
@@ -81,7 +81,7 @@ router.post('/registro', [
             await client.query(`
                 INSERT INTO empresa(nombreempresa, tipopersona, ruc, f_creacion, idusuario)
                 VALUES ($1,$2,$3,$4,$5)
-            `, [nombreEmpresa, tipoPersona, ruc, f_creacion, idUsuario]);
+            `, [nombreEmpresa, tipoPersonaEmpresa, ruc, fechaCreacion, idUsuario]);
         }
 
         await client.query('COMMIT');
@@ -100,18 +100,45 @@ router.post('/registro', [
 router.post('/login', async (req, res) => {
     try {
         const { correoUsuario, contrasenaUsuario } = req.body;
-        const userResult = await query('SELECT * FROM usuario WHERE correousuario = $1', [correoUsuario]);
+
+        if (!correoUsuario || !contrasenaUsuario) {
+            return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
+        }
+
+        const correoNormalizado = correoUsuario.trim().toLowerCase();
+
+        const userResult = await query('SELECT * FROM usuario WHERE LOWER(correousuario) = $1', [correoNormalizado]);
         if (!userResult.rows.length) return res.status(400).json({ message: 'Usuario no encontrado' });
 
         const user = userResult.rows[0];
+        console.log('Usuario logeado:', user.aliasusuario, 'Rol:', user.idrol);
+
         const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
         if (!passwordMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
-        const token = jwt.sign({ idusuario: user.idusuario, idrol: user.idrol }, process.env.JWT_SECRET, { expiresIn: '12h' });
-        res.json({ message: 'Login exitoso', data: { usuario: user, token } });
+        const token = jwt.sign(
+            { idusuario: user.idusuario, idrol: user.idrol },
+            process.env.JWT_SECRET,
+            { expiresIn: '12h' }
+        );
+
+        // Solo enviar campos necesarios
+        const usuarioData = {
+            idusuario: user.idusuario,
+            aliasusuario: user.aliasusuario,
+            correousuario: user.correousuario,
+            numusuario: user.numusuario,
+            direccionusuario: user.direccionusuario,
+            idrol: user.idrol
+        };
+
+        res.json({
+            message: 'Login exitoso',
+            data: { usuario: usuarioData, token }
+        });
 
     } catch (error) {
-        console.error(error);
+        console.error('Error login:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
