@@ -204,47 +204,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     ============================================================ */
     async function abrirModalEdicion(id) {
         try {
-            // Buscar el usuario localmente
-            let usuario = usuarios.find(u => String(u.idusuario) === String(id));
-
-            if (!usuario) {
-                // Como fallback, intentar pedir al backend (solo si existe la ruta)
-                const res = await apiRequest(`/users/${id}`);
-                usuario = res.data || res;
-                if (!usuario) throw new Error('Usuario no encontrado');
-            }
+            const res = await apiRequest(`/users/${id}`);
+            const usuario = res.usuario;
+            const persona = res.persona;
+            const empresa = res.empresa;
 
             const form = formEditar;
 
-            // 🔹 Asignar valores a los campos
-            form.querySelector('#idEditar').value = usuario.idusuario || "";
+            // Usuario
+            form.querySelector('#idEditar').value = usuario.idusuario;
+            form.querySelector('#idEditar').readOnly = true;
             form.querySelector('input[placeholder="Ingresar alias"]').value = usuario.aliasusuario || "";
             form.querySelector('input[placeholder="Ingresar correo"]').value = usuario.correousuario || "";
             form.querySelector('input[placeholder="Ingresar teléfono"]').value = usuario.numusuario || "";
             form.querySelector('input[placeholder="Ingresar dirección"]').value = usuario.direccionusuario || "";
             form.querySelector('#selectRolEditar').value = usuario.idrol || "";
 
-            // 🔹 Abrir el modal
+            // Persona
+            if (persona) {
+                document.getElementById("tipoPersona1").checked = true;
+                const camposPersona = document.getElementById("camposPersona");
+                camposPersona.classList.remove("d-none");
+
+                document.getElementById("idPersonaEditar").value = persona.idpersona;
+                document.getElementById("nombresPersonaEditar").value = persona.nombres || "";
+                document.getElementById("apepaternoPersonaEditar").value = persona.apepaterno || "";
+                document.getElementById("apematernoPersonaEditar").value = persona.apematerno || "";
+                document.getElementById("dniPersonaEditar").value = persona.dni || "";
+                document.getElementById("sexoPersonaEditar").value = persona.sexo || "";
+            } else {
+                document.getElementById("camposPersona").classList.add("d-none");
+            }
+
+            if (empresa) {
+                document.getElementById("tipoPersona2").checked = true;
+                const camposEmpresa = document.getElementById("camposEmpresa");
+                camposEmpresa.classList.remove("d-none");
+
+                document.getElementById("idEmpresaEditar").value = empresa.idempresa;
+                document.getElementById("nombreEmpresaEditar").value = empresa.nombreempresa || "";
+                document.getElementById("tipoPersonaEmpresaEditar").value = empresa.tipopersona || "";
+                document.getElementById("rucEmpresaEditar").value = empresa.ruc || "";
+                document.getElementById("fechaCreacionEmpresaEditar").value = empresa.f_creacion || "";
+            } else {
+                document.getElementById("camposEmpresa").classList.add("d-none");
+            }
+
+            // Abrir modal
             const modal = new bootstrap.Modal(document.getElementById("modalEditarUsuario"));
             modal.show();
 
-            // 🔹 Configurar envío del formulario
+            // Enviar formulario
             form.onsubmit = async e => {
                 e.preventDefault();
-
                 const payload = {
                     aliasusuario: form.querySelector('input[placeholder="Ingresar alias"]').value.trim(),
                     correousuario: form.querySelector('input[placeholder="Ingresar correo"]').value.trim(),
                     numusuario: form.querySelector('input[placeholder="Ingresar teléfono"]').value.trim(),
                     direccionusuario: form.querySelector('input[placeholder="Ingresar dirección"]').value.trim(),
-                    idrol: form.querySelector('#selectRolEditar').value
+                    idrol: form.querySelector('#selectRolEditar').value,
+                    persona: persona ? {
+                        idpersona: persona.idpersona,
+                        nombres: document.getElementById("nombresPersonaEditar").value.trim(),
+                        apepaterno: document.getElementById("apepaternoPersonaEditar").value.trim(),
+                        apematerno: document.getElementById("apematernoPersonaEditar").value.trim(),
+                        dni: document.getElementById("dniPersonaEditar").value.trim(),
+                        sexo: document.getElementById("sexoPersonaEditar").value
+                    } : null,
+                    empresa: empresa ? {
+                        idempresa: empresa.idempresa,
+                        nombreempresa: document.getElementById("nombreEmpresaEditar").value.trim(),
+                        ruc: document.getElementById("rucEmpresaEditar").value.trim(),
+                        f_creacion: document.getElementById("fechaCreacionEmpresaEditar").value,
+                        tipopersona: document.getElementById("tipoPersonaEmpresaEditar").value
+                    } : null
                 };
 
                 try {
                     const result = await apiRequest(`/users/${id}`, 'PUT', payload);
                     Swal.fire('Éxito', result.message || 'Usuario actualizado', 'success');
                     modal.hide();
-                    loadUsersTable(); // refrescar tabla
+                    loadUsersTable();
                 } catch (error) {
                     Swal.fire('Error', error.message || 'Error al actualizar usuario', 'error');
                 }
