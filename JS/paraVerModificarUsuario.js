@@ -1,9 +1,8 @@
-console.log("✅ paraVerModificarUsuario.js cargado correctamente");
+console.log("paraVerModificarUsuario.js cargado correctamente");
 
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOM cargado - Inicializando módulo de usuarios");
 
-    //const API_BASE_URL = "http://localhost:3000/api"; // Ajusta si tu backend usa otro puerto o ruta
     const usuariosBody = document.getElementById("usuariosBody");
     const inputBuscar = document.getElementById("buscarUsuario");
     const filtroRol = document.getElementById("filtroRol");
@@ -12,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let usuarios = [];
 
     /* ============================================================
-       🔹 FUNCIÓN GENÉRICA PARA HACER PETICIONES AL BACKEND
+         FUNCIÓN GENÉRICA PARA HACER PETICIONES AL BACKEND
     ============================================================ */
     async function apiRequest(endpoint, method = "GET", body) {
         try {
@@ -30,25 +29,25 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!res.ok) throw new Error(data.message || "Error en la petición");
             return data;
         } catch (err) {
-            console.error("❌ apiRequest error:", err);
+            console.error("apiRequest error:", err);
             Swal.fire("Error", err.message, "error");
             throw err;
         }
     }
 
     /* ============================================================
-       🔹 CARGAR ROLES
+         CARGAR ROLES
     ============================================================ */
     async function loadRoles() {
         try {
             const token = localStorage.getItem("authToken");
             if (!token) {
-                console.warn("⚠️ No se encontró token de autenticación en localStorage.");
+                console.warn("No se encontró token de autenticación en localStorage.");
                 Swal.fire("Advertencia", "Debes iniciar sesión para cargar los roles.", "warning");
                 return;
             }
 
-            console.log("🌐 Solicitando roles a:", `${API_BASE_URL}/roles`);
+            console.log("Solicitando roles a:", `${API_BASE_URL}/roles`);
             const response = await fetch(`${API_BASE_URL}/roles`, {
                 headers: {
                     "Content-Type": "application/json",
@@ -56,15 +55,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 },
             });
 
-            console.log("📥 Respuesta HTTP:", response.status);
+            console.log("Respuesta HTTP:", response.status);
             const data = await response.json();
-            console.log("📦 Datos recibidos:", data);
+            console.log("Datos recibidos:", data);
 
             if (!response.ok) throw new Error(data.message || "Error al obtener roles.");
 
             const roles = data.data || [];
             if (!roles.length) {
-                console.warn("⚠️ No hay roles en la base de datos.");
+                console.warn("No hay roles en la base de datos.");
             }
 
             // Rellenar filtro superior
@@ -90,16 +89,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 });
             });
 
-            console.log("✅ Roles cargados correctamente.");
+            console.log("Roles cargados correctamente.");
 
         } catch (err) {
-            console.error("❌ Error cargando roles:", err);
+            console.error("Error cargando roles:", err);
             Swal.fire("Error", "No se pudieron cargar los roles", "error");
         }
     }
 
     /* ============================================================
-       🔹 CARGAR USUARIOS
+       CARGAR USUARIOS
     ============================================================ */
     async function loadUsersTable() {
         try {
@@ -112,7 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-       🔹 RENDERIZAR TABLA DE USUARIOS
+       RENDERIZAR TABLA DE USUARIOS
     ============================================================ */
     function renderTable(data) {
         usuariosBody.innerHTML = "";
@@ -155,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-       🔹 FILTROS DE BÚSQUEDA Y ROL
+       FILTROS DE BÚSQUEDA Y ROL
     ============================================================ */
     function aplicarFiltros() {
         const texto = inputBuscar.value.toLowerCase();
@@ -177,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     filtroRol.addEventListener("change", aplicarFiltros);
 
     /* ============================================================
-       🔹 ELIMINAR USUARIO
+       ELIMINAR USUARIO
     ============================================================ */
     async function eliminarUsuario(id) {
         const confirm = await Swal.fire({
@@ -201,7 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-       🔹 EDITAR USUARIO - ABRIR MODAL
+       EDITAR USUARIO - ABRIR MODAL
     ============================================================ */
     async function abrirModalEdicion(id) {
         try {
@@ -243,11 +242,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 try {
                     const result = await apiRequest(`/users/${id}`, 'PUT', payload);
-                    Swal.fire('✅ Éxito', result.message || 'Usuario actualizado', 'success');
+                    Swal.fire('Éxito', result.message || 'Usuario actualizado', 'success');
                     modal.hide();
                     loadUsersTable(); // refrescar tabla
                 } catch (error) {
-                    Swal.fire('❌ Error', error.message || 'Error al actualizar usuario', 'error');
+                    Swal.fire('Error', error.message || 'Error al actualizar usuario', 'error');
                 }
             };
 
@@ -258,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-   🔹 MOSTRAR / OCULTAR CAMPOS (PERSONA / EMPRESA)
+       MOSTRAR / OCULTAR CAMPOS (PERSONA / EMPRESA)
     ============================================================ */
     function configurarFormularioPersonaEmpresa(idModal, idRadioPersona, idRadioEmpresa, idFormPersona, idFormEmpresa) {
         const modal = document.getElementById(idModal);
@@ -323,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     /* ============================================================
-   🔹 REGISTRAR NUEVO USUARIO
+      REGISTRAR NUEVO USUARIO
     ============================================================ */
     const formRegistrar = document.getElementById("formRegistrarUsuario");
 
@@ -378,7 +377,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 empresa,
             });
 
-            Swal.fire("✅ Éxito", res.message || "Usuario registrado correctamente", "success");
+            Swal.fire("Éxito", res.message || "Usuario registrado correctamente", "success");
 
             // Cerrar modal
             const modal = bootstrap.Modal.getInstance(document.getElementById("modalRegistrarUsuario"));
@@ -392,14 +391,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         } catch (err) {
             console.error("Error registrando usuario:", err);
-            Swal.fire("❌ Error", err.message || "No se pudo registrar el usuario", "error");
+            Swal.fire("Error", err.message || "No se pudo registrar el usuario", "error");
         }
     });
 
     /* ============================================================
-       🔹 INICIALIZAR
+        INICIALIZAR
     ============================================================ */
     await loadRoles();
     await loadUsersTable();
-    console.log("✅ Módulo de administración de usuarios inicializado");
+    console.log("Módulo de administración de usuarios inicializado");
 });
