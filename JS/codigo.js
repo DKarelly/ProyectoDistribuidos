@@ -685,65 +685,6 @@ window.donar = function(amount, method) {
 };
 
 
-// ===================================================
-// DASHBOARD - ADMINISTRADOR DE ROLES
-// ===================================================
-
-async function loadRolesTable() {
-    try {
-        const data = await apiRequest('/users/roles'); // debe coincidir con tu backend
-        const roles = data.data || [];
-        const tbody = document.getElementById('rolesBody');
-
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        if (roles.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="2" class="text-center">No hay roles registrados</td></tr>';
-            return;
-        }
-
-        roles.forEach(rol => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${rol.id}</td>
-                <td>${rol.nombre}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm btn-editar-rol" data-id="${rol.id}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                </td>
-                <td>
-                    <button class="btn btn-danger btn-sm btn-eliminar-rol" data-id="${rol.id}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        // Agregar event listeners
-        document.querySelectorAll('.btn-editar-rol').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const rolId = btn.dataset.id;
-                editRole(rolId);
-            });
-        });
-
-        document.querySelectorAll('.btn-eliminar-rol').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const rolId = btn.dataset.id;
-                deleteRole(rolId);
-            });
-        });
-
-    } catch (error) {
-        console.error('Error cargando roles:', error);
-        showMessage('Error cargando roles: ' + error.message, 'danger');
-    }
-}
-
 // Exponer funciones globales necesarias
 window.viewAnimalDetails = viewAnimalDetails;
 window.adoptAnimal = adoptAnimal;
