@@ -353,58 +353,59 @@
                         <div id="camposPersona" class="row g-3 mt-2 d-none">
                             <div class="col-md-6">
                                 <label class="form-label">Código</label>
-                                <input type="text" class="form-control" placeholder="Ingresar código">
+                                <input type="text" class="form-control" id="idPersonaEditar" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nombres</label>
-                                <input type="text" class="form-control" placeholder="Ingresar nombres">
+                                <input type="text" class="form-control" id="nombresPersonaEditar">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Apellidos Paternos</label>
-                                <input type="text" class="form-control" placeholder="Ingresar apellidos paternos">
+                                <label class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="apepaternoPersonaEditar">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Apellidos Maternos</label>
-                                <input type="text" class="form-control" placeholder="Ingresar apellidos maternos">
+                                <label class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="apematernoPersonaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">DNI</label>
-                                <input type="text" class="form-control" placeholder="Ingresar DNI">
+                                <input type="text" class="form-control" id="dniPersonaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Sexo</label>
-                                <select class="form-select">
-                                    <option>Seleccionar sexo</option>
-                                    <option>Masculino</option>
-                                    <option>Femenino</option>
+                                <select class="form-select" id="sexoPersonaEditar">
+                                    <option value="">Seleccionar sexo</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- 🔹 Campos de Empresa -->
+                        <!-- Campos de Empresa -->
                         <div id="camposEmpresa" class="row g-3 mt-2 d-none">
                             <div class="col-md-6">
                                 <label class="form-label">Código</label>
-                                <input type="text" class="form-control" placeholder="Ingresar código">
+                                <input type="text" class="form-control" id="idEmpresaEditar" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nombre de la empresa</label>
-                                <input type="text" class="form-control" placeholder="Ingresar nombre de la empresa">
+                                <input type="text" class="form-control" id="nombreEmpresaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tipo de persona</label>
-                                <select class="form-select">
-                                    <option>Jurídica</option>
-                                    <option>Natural</option>
+                                <select class="form-select" id="tipoPersonaEmpresaEditar">
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="Jurídica">Jurídica</option>
+                                    <option value="Natural">Natural</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">RUC</label>
-                                <input type="text" class="form-control" placeholder="Ingresar RUC">
+                                <input type="text" class="form-control" id="rucEmpresaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Fecha de creación</label>
-                                <input type="date" class="form-control">
+                                <input type="date" class="form-control" id="fechaCreacionEmpresaEditar">
                             </div>
                         </div>
 
