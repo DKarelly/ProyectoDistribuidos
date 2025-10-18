@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================
     async function loadRoles() {
         try {
-            const response = await apiRequest('/roles');
+            const response = await apiRequest('/roles'); // ✅ ruta correcta
             rolesData = (response.data || []).map(r => ({
                 idRol: r.idrol,
                 rolUsuario: r.rolusuario
@@ -105,7 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!nuevoNombre) return alert('El nombre del rol no puede estar vacío');
 
             try {
-                await apiRequest(`/roles/${rolActual.idRol}`, { method: 'PUT', body: JSON.stringify({ rolusuario: nuevoNombre }) });
+                await apiRequest(`/roles/${rolActual.idRol}`, { 
+                    method: 'PUT', 
+                    body: JSON.stringify({ rolusuario: nuevoNombre }) 
+                });
                 alert('Rol actualizado correctamente');
                 bootstrap.Modal.getInstance(document.getElementById('modalEditarRol')).hide();
                 loadRoles();
@@ -123,7 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!nombreRol) return alert('El nombre del rol es obligatorio');
 
             try {
-                await apiRequest('/roles', { method: 'POST', body: JSON.stringify({ rolusuario: nombreRol }) });
+                await apiRequest('/roles', { 
+                    method: 'POST', 
+                    body: JSON.stringify({ rolusuario: nombreRol }) 
+                });
                 alert('Rol registrado correctamente');
                 bootstrap.Modal.getInstance(document.getElementById('modalRegistrarRol')).hide();
                 formRegistrarRol.reset();
