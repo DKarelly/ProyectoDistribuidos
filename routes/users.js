@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const { query } = require('../config/database');
+//const { query } = require('../config/database');
+const { query, getClient } = require('../config/database');
 const { authenticateToken } = require('./auth');
 const router = express.Router();
 
@@ -129,13 +130,12 @@ router.get('/', authenticateToken, async (req, res) => {
 
 // Registrar nuevo usuario con persona o empresa
 router.post('/', authenticateToken, isAdmin, async (req, res) => {
-    const client = await getClient();
+    const client = await getClient(); // obtenemos el client para la transacción
     try {
+        await client.query('BEGIN'); // inicio de transacción
+
         const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, tipoPersona, persona, empresa } = req.body;
 
-        await client.query('BEGIN');
-
-        // Hashear contraseña
         const hashedPassword = await bcrypt.hash(claveusuario, 10);
 
         // Insertar usuario
@@ -159,15 +159,15 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
             `, [empresa.nombreempresa, empresa.tipopersona, empresa.ruc, empresa.f_creacion, idusuario]);
         }
 
-        await client.query('COMMIT');
-        res.status(201).json({ message: 'Usuario interno registrado correctamente', idusuario });
+        await client.query('COMMIT'); // confirmamos transacción
+        res.status(201).json({ message: 'Usuario registrado correctamente', idusuario });
 
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('❌ Error registrando usuario interno:', error);
+        await client.query('ROLLBACK'); // revertimos en caso de error
+        console.error('❌ Error registrando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     } finally {
-        client.release();
+        client.release(); // liberamos el client
     }
 });
 
