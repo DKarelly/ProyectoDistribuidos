@@ -75,10 +75,17 @@ function isAuthenticated() {
 // ===================================================
 
 // Verificar si el usuario tiene un rol específico
-function hasRole(allowedRoles) {
+/* function hasRole(allowedRoles) {
     if (!isAuthenticated()) return false;
     return allowedRoles.includes(currentUser.rolUsuario);
+} */
+function hasRole(allowedRoles) {
+    if (!isAuthenticated()) return false;
+    // Normalizar a minúsculas para evitar problemas de mayúsculas/minúsculas
+    const userRole = currentUser.rolUsuario.toLowerCase();
+    return allowedRoles.some(role => role.toLowerCase() === userRole);
 }
+
 
 // Verificar acceso al dashboard (solo Administrador y trabajador)
 function checkDashboardAccess() {
@@ -168,7 +175,7 @@ async function handleRegistration(formData) {
 }
 
 // Manejo del formulario de login
-async function handleLogin(email, password) {
+/* async function handleLogin(email, password) {
     try {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
@@ -179,8 +186,16 @@ async function handleLogin(email, password) {
         });
 
         authToken = data.data.token;
-        currentUser = data.data.usuario;
-        
+
+        // Normalizar usuario
+        const u = data.data.usuario;
+        currentUser = {
+            idUsuario: u.idusuario || u.idUsuario,
+            aliasUsuario: u.aliasusuario || u.aliasUsuario,
+            rolUsuario: u.rolusuario || u.rolUsuario,
+            correoUsuario: u.correousuario || u.correoUsuario
+        };
+
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
@@ -193,7 +208,54 @@ async function handleLogin(email, password) {
     } catch (error) {
         showMessage(error.message, 'danger');
     }
+} */
+async function handleLogin(email, password) {
+    try {
+        const data = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+                correoUsuario: email,
+                contrasenaUsuario: password
+            })
+        });
+
+        authToken = data.data.token;
+
+        // Normalizar usuario y roles
+        const u = data.data.usuario;
+        currentUser = {
+            idUsuario: u.idusuario || u.idUsuario,
+            aliasUsuario: u.aliasusuario || u.aliasUsuario,
+            rolUsuario: (u.rolusuario || u.rolUsuario || '').trim(),
+            correoUsuario: u.correousuario || u.correoUsuario
+        };
+
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        showMessage(`¡Bienvenido, ${currentUser.aliasUsuario}!`, 'success');
+        
+        // Redirigir según rol
+        setTimeout(() => {
+            if (hasRole(['Administrador', 'trabajador'])) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'HUELLA FELIZ.html';
+            }
+        }, 1500);
+
+    } catch (error) {
+        showMessage(error.message, 'danger');
+    }
 }
+
+
+
+
+
+
+
+
 
 // ===================================================
 // ADOPCIONES

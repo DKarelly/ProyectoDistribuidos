@@ -1,7 +1,14 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { query } = require('../config/database');
 const { authenticateToken } = require('./auth');
 const router = express.Router();
+
+/* ------------------ MIDDLEWARE DE ADMIN ------------------ */
+const isAdmin = (req, res, next) => {
+    if (req.user.idrol !== 1) return res.status(403).json({ message: 'Solo administradores' });
+    next();
+};
 
 /* ============================================================
    🔹 PERFIL DEL USUARIO AUTENTICADO
@@ -119,21 +126,50 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Registrar nuevo usuario
-router.post('/', authenticateToken, async (req, res) => {
+
+// Registrar nuevo usuario con persona o empresa
+router.post('/', authenticateToken, isAdmin, async (req, res) => {
+    const client = await getClient();
     try {
-        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol } = req.body;
-        const result = await query(`
+        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, tipoPersona, persona, empresa } = req.body;
+
+        await client.query('BEGIN');
+
+        // Hashear contraseña
+        const hashedPassword = await bcrypt.hash(claveusuario, 10);
+
+        // Insertar usuario
+        const resultUser = await client.query(`
             INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol)
-            VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
-        `, [aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol]);
-        res.status(201).json({ message: 'Usuario creado', data: result.rows[0] });
+            VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
+        `, [aliasusuario, correousuario, hashedPassword, numusuario, direccionusuario, idrol]);
+
+        const idusuario = resultUser.rows[0].idusuario;
+
+        // Insertar persona o empresa
+        if (tipoPersona === 'persona' && persona) {
+            await client.query(`
+                INSERT INTO persona(nombres, apepaterno, apematerno, dni, sexo, idusuario)
+                VALUES ($1,$2,$3,$4,$5,$6)
+            `, [persona.nombres, persona.apepaterno, persona.apematerno, persona.dni, persona.sexo, idusuario]);
+        } else if (tipoPersona === 'empresa' && empresa) {
+            await client.query(`
+                INSERT INTO empresa(nombreempresa, tipopersona, ruc, f_creacion, idusuario)
+                VALUES ($1,$2,$3,$4,$5)
+            `, [empresa.nombreempresa, empresa.tipopersona, empresa.ruc, empresa.f_creacion, idusuario]);
+        }
+
+        await client.query('COMMIT');
+        res.status(201).json({ message: 'Usuario interno registrado correctamente', idusuario });
+
     } catch (error) {
-        console.error('❌ Error creando usuario:', error);
+        await client.query('ROLLBACK');
+        console.error('❌ Error registrando usuario interno:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        client.release();
     }
 });
-
 
 
 // Editar cualquier usuario

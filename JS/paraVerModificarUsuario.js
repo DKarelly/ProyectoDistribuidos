@@ -258,26 +258,146 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-       🔹 MOSTRAR / OCULTAR CAMPOS (PERSONA / EMPRESA)
+   🔹 MOSTRAR / OCULTAR CAMPOS (PERSONA / EMPRESA)
     ============================================================ */
-    const tipoPersonaRadios = document.querySelectorAll('input[name="tipoPersona"]');
-    const camposPersona = document.getElementById("camposPersona");
-    const camposEmpresa = document.getElementById("camposEmpresa");
+    function configurarFormularioPersonaEmpresa(idModal, idRadioPersona, idRadioEmpresa, idFormPersona, idFormEmpresa) {
+        const modal = document.getElementById(idModal);
+        const radioPersona = document.getElementById(idRadioPersona);
+        const radioEmpresa = document.getElementById(idRadioEmpresa);
+        const formPersona = document.getElementById(idFormPersona);
+        const formEmpresa = document.getElementById(idFormEmpresa);
 
-    tipoPersonaRadios.forEach((radio) => {
-        radio.addEventListener("change", () => {
-            if (radio.value === "persona") {
-                camposPersona.classList.remove("d-none");
-                camposEmpresa.classList.add("d-none");
+        if (!modal || !radioPersona || !radioEmpresa || !formPersona || !formEmpresa) return;
+
+        // Función para mostrar según selección
+        function actualizarFormulario() {
+            if (radioPersona.checked) {
+                formPersona.classList.remove("d-none");
+                formEmpresa.classList.add("d-none");
+            } else if (radioEmpresa.checked) {
+                formEmpresa.classList.remove("d-none");
+                formPersona.classList.add("d-none");
             } else {
-                camposEmpresa.classList.remove("d-none");
-                camposPersona.classList.add("d-none");
+                formPersona.classList.add("d-none");
+                formEmpresa.classList.add("d-none");
             }
+        }
+
+        // Eventos de cambio de tipo
+        radioPersona.addEventListener("change", actualizarFormulario);
+        radioEmpresa.addEventListener("change", actualizarFormulario);
+
+        // 🔹 Al abrir el modal: limpiar y ocultar campos
+        modal.addEventListener("show.bs.modal", () => {
+            radioPersona.checked = false;
+            radioEmpresa.checked = false;
+            formPersona.classList.add("d-none");
+            formEmpresa.classList.add("d-none");
         });
+
+        // 🔹 Al cerrar el modal: limpiar y ocultar campos
+        modal.addEventListener("hidden.bs.modal", () => {
+            radioPersona.checked = false;
+            radioEmpresa.checked = false;
+            formPersona.classList.add("d-none");
+            formEmpresa.classList.add("d-none");
+        });
+    }
+
+    // Configurar ambos modales
+    configurarFormularioPersonaEmpresa(
+        "modalRegistrarUsuario",
+        "tipoPersonaRegistrar1",
+        "tipoPersonaRegistrar2",
+        "camposPersonaRegistrar",
+        "camposEmpresaRegistrar"
+    );
+
+    configurarFormularioPersonaEmpresa(
+        "modalEditarUsuario",
+        "tipoPersona1",
+        "tipoPersona2",
+        "camposPersona",
+        "camposEmpresa"
+    );
+
+
+    /* ============================================================
+   🔹 REGISTRAR NUEVO USUARIO
+    ============================================================ */
+    const formRegistrar = document.getElementById("formRegistrarUsuario");
+
+    formRegistrar.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Obtener valores
+        const aliasusuario = document.getElementById("aliasRegistrar").value.trim();
+        const correousuario = document.getElementById("correoRegistrar").value.trim();
+        const claveusuario = document.getElementById("claveRegistrar").value.trim();
+        const confirmarClave = document.getElementById("confirmarClaveRegistrar").value.trim();
+        const numusuario = document.getElementById("telefonoRegistrar").value.trim();
+        const direccionusuario = document.getElementById("direccionRegistrar").value.trim();
+        const idrol = document.getElementById("selectRolRegistrar").value;
+
+        const tipoPersona = document.querySelector('input[name="tipoPersonaRegistrar"]:checked').value;
+        let persona = null;
+        let empresa = null;
+
+        if (tipoPersona === "persona") {
+            persona = {
+                nombres: document.getElementById("nombrePersonaRegistrar").value.trim(),
+                apepaterno: document.getElementById("apepaternoRegistrar").value.trim(),
+                apematerno: document.getElementById("apematernoRegistrar").value.trim(),
+                dni: document.getElementById("dniRegistrar").value.trim(),
+                sexo: document.getElementById("sexoRegistrar").value,
+            };
+        } else {
+            empresa = {
+                nombreempresa: document.getElementById("nombreEmpresaRegistrar").value.trim(),
+                tipopersona: document.getElementById("tipoPersonaEmpresaRegistrar").value,
+                ruc: document.getElementById("rucRegistrar").value.trim(),
+                f_creacion: document.getElementById("fechaCreacionRegistrar").value,
+            };
+        }
+
+        if (claveusuario !== confirmarClave) {
+            Swal.fire("Error", "Las contraseñas no coinciden", "error");
+            return;
+        }
+
+        try {
+            const res = await apiRequest("/users", "POST", {
+                aliasusuario,
+                correousuario,
+                claveusuario,
+                numusuario,
+                direccionusuario,
+                idrol,
+                tipoPersona,
+                persona,
+                empresa,
+            });
+
+            Swal.fire("✅ Éxito", res.message || "Usuario registrado correctamente", "success");
+
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById("modalRegistrarUsuario"));
+            modal.hide();
+
+            // Reset formulario
+            formRegistrar.reset();
+
+            // Refrescar tabla
+            await loadUsersTable();
+
+        } catch (err) {
+            console.error("Error registrando usuario:", err);
+            Swal.fire("❌ Error", err.message || "No se pudo registrar el usuario", "error");
+        }
     });
 
     /* ============================================================
-       🔹 INICIALIZAR MÓDULO
+       🔹 INICIALIZAR
     ============================================================ */
     await loadRoles();
     await loadUsersTable();
