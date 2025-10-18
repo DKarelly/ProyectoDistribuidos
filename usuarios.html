@@ -54,17 +54,12 @@
 
             <!-- Filtros -->
             <div class="row justify-content-center mb-4">
-                <div class="row justify-content-center mb-4">
-                    <div class="col-md-4 mb-2">
-                        <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar usuario">
-                    </div>
+                <div class="col-md-4 mb-2">
+                    <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar usuario">
                 </div>
                 <div class="col-md-3 mb-2">
-                    <select class="form-select">
-                        <option selected>Seleccionar rol</option>
-                        <option>Administrador</option>
-                        <option>Voluntario</option>
-                        <option>Usuario</option>
+                    <select class="form-select" id="filtroRol">
+                        <option value="">Todos los roles</option>
                     </select>
                 </div>
             </div>
@@ -72,9 +67,9 @@
             <!-- Tabla dinámica -->
             <div class="table-responsive">
                 <table id="tablaUsuarios" class="table usuarios-tabla align-middle">
-
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Alias</th>
                             <th>Correo</th>
                             <th>Número</th>
@@ -150,7 +145,7 @@
 
     <!-- MODAL REGISTRAR USUARIO -->
     <div class="modal fade" id="modalRegistrarUsuario" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content p-4">
                 <div class="modal-header border-0">
                     <h3 class="modal-title w-100 text-center fw-bold">
@@ -159,34 +154,121 @@
                     </h3>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
+
                 <div class="modal-body">
                     <form id="formRegistrarUsuario" class="row g-3">
-                        <div class="col-12">
+
+                        <!-- Alias, Correo y Contraseña -->
+                        <div class="col-md-6">
                             <label class="form-label">Alias</label>
-                            <input type="text" class="form-control" placeholder="Alias de usuario" required>
+                            <input type="text" class="form-control" id="aliasRegistrar" placeholder="Alias de usuario"
+                                required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label">Correo</label>
-                            <input type="email" class="form-control" placeholder="Correo" required>
+                            <input type="email" class="form-control" id="correoRegistrar"
+                                placeholder="Correo electrónico" required>
                         </div>
-                        <div class="col-12">
+
+                        <div class="col-md-6">
                             <label class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" placeholder="Contraseña" required>
+                            <input type="password" class="form-control" id="claveRegistrar" placeholder="Contraseña"
+                                required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
+                            <label class="form-label">Confirmar contraseña</label>
+                            <input type="password" class="form-control" id="confirmarClaveRegistrar"
+                                placeholder="Confirmar contraseña" required>
+                        </div>
+
+                        <!-- Teléfono y Dirección -->
+                        <div class="col-md-6">
                             <label class="form-label">Número</label>
-                            <input type="text" class="form-control" placeholder="Número de teléfono" required>
+                            <input type="text" class="form-control" id="telefonoRegistrar"
+                                placeholder="Número de teléfono" required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-md-6">
                             <label class="form-label">Dirección</label>
-                            <input type="text" class="form-control" placeholder="Dirección" required>
+                            <input type="text" class="form-control" id="direccionRegistrar" placeholder="Dirección"
+                                required>
                         </div>
-                        <div class="col-12">
+
+                        <!-- Rol -->
+                        <div class="col-md-6">
                             <label class="form-label">Rol</label>
                             <select class="form-select" id="selectRolRegistrar" required>
                                 <option value="">Cargando roles...</option>
                             </select>
                         </div>
+
+                        <!-- Tipo de Persona -->
+                        <div class="col-12 mt-3">
+                            <label class="form-label d-block text-center">Tipo de persona</label>
+                            <div class="text-center">
+                                <input type="radio" name="tipoPersonaRegistrar" id="tipoPersonaRegistrar1"
+                                    value="persona" checked> Persona
+                                <input type="radio" name="tipoPersonaRegistrar" id="tipoPersonaRegistrar2"
+                                    value="empresa" class="ms-3"> Empresa
+                            </div>
+                        </div>
+
+                        <!-- 🔹 Campos de Persona -->
+                        <div id="camposPersonaRegistrar" class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombres</label>
+                                <input type="text" class="form-control" id="nombrePersonaRegistrar"
+                                    placeholder="Ingresar nombres">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="apepaternoRegistrar"
+                                    placeholder="Ingresar apellido paterno">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="apematernoRegistrar"
+                                    placeholder="Ingresar apellido materno">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">DNI</label>
+                                <input type="text" class="form-control" id="dniRegistrar" placeholder="Ingresar DNI">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sexo</label>
+                                <select class="form-select" id="sexoRegistrar">
+                                    <option value="">Seleccionar sexo</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 🔹 Campos de Empresa -->
+                        <div id="camposEmpresaRegistrar" class="row g-3 mt-2 d-none">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre de la empresa</label>
+                                <input type="text" class="form-control" id="nombreEmpresaRegistrar"
+                                    placeholder="Ingresar nombre de la empresa">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de persona</label>
+                                <select class="form-select" id="tipoPersonaEmpresaRegistrar">
+                                    <option value="">Seleccionar tipo</option>
+                                    <option>Jurídica</option>
+                                    <option>Natural</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">RUC</label>
+                                <input type="text" class="form-control" id="rucRegistrar" placeholder="Ingresar RUC">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de creación</label>
+                                <input type="date" class="form-control" id="fechaCreacionRegistrar">
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
                         <div class="col-12 text-center mt-4">
                             <button type="submit" class="btn btn-pink px-4 me-2">Registrar</button>
                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
@@ -221,8 +303,8 @@
                             <input type="text" class="form-control" placeholder="Ingresar alias">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">ID</label>
-                            <input type="text" class="form-control" disabled>
+                            <label for="idEditar" class="form-label">ID Usuario</label>
+                            <input type="text" class="form-control" id="idEditar" placeholder="ID" readonly>
                         </div>
 
                         <!-- Correo y Rol -->
@@ -267,62 +349,63 @@
                             </div>
                         </div>
 
-                        <!-- 🔹 Campos de Persona -->
+                        <!-- Campos de Persona -->
                         <div id="camposPersona" class="row g-3 mt-2 d-none">
                             <div class="col-md-6">
                                 <label class="form-label">Código</label>
-                                <input type="text" class="form-control" placeholder="Ingresar código">
+                                <input type="text" class="form-control" id="idPersonaEditar" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nombres</label>
-                                <input type="text" class="form-control" placeholder="Ingresar nombres">
+                                <input type="text" class="form-control" id="nombresPersonaEditar">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Apellidos Paternos</label>
-                                <input type="text" class="form-control" placeholder="Ingresar apellidos paternos">
+                                <label class="form-label">Apellido Paterno</label>
+                                <input type="text" class="form-control" id="apepaternoPersonaEditar">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Apellidos Maternos</label>
-                                <input type="text" class="form-control" placeholder="Ingresar apellidos maternos">
+                                <label class="form-label">Apellido Materno</label>
+                                <input type="text" class="form-control" id="apematernoPersonaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">DNI</label>
-                                <input type="text" class="form-control" placeholder="Ingresar DNI">
+                                <input type="text" class="form-control" id="dniPersonaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Sexo</label>
-                                <select class="form-select">
-                                    <option>Seleccionar sexo</option>
-                                    <option>Masculino</option>
-                                    <option>Femenino</option>
+                                <select class="form-select" id="sexoPersonaEditar">
+                                    <option value="">Seleccionar sexo</option>
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- 🔹 Campos de Empresa -->
+                        <!-- Campos de Empresa -->
                         <div id="camposEmpresa" class="row g-3 mt-2 d-none">
                             <div class="col-md-6">
                                 <label class="form-label">Código</label>
-                                <input type="text" class="form-control" placeholder="Ingresar código">
+                                <input type="text" class="form-control" id="idEmpresaEditar" readonly>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Nombre de la empresa</label>
-                                <input type="text" class="form-control" placeholder="Ingresar nombre de la empresa">
+                                <input type="text" class="form-control" id="nombreEmpresaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Tipo de persona</label>
-                                <select class="form-select">
-                                    <option>Jurídica</option>
-                                    <option>Natural</option>
+                                <select class="form-select" id="tipoPersonaEmpresaEditar">
+                                    <option value="">Seleccionar tipo</option>
+                                    <option value="Jurídica">Jurídica</option>
+                                    <option value="Natural">Natural</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">RUC</label>
-                                <input type="text" class="form-control" placeholder="Ingresar RUC">
+                                <input type="text" class="form-control" id="rucEmpresaEditar">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Fecha de creación</label>
-                                <input type="date" class="form-control">
+                                <input type="date" class="form-control" id="fechaCreacionEmpresaEditar">
                             </div>
                         </div>
 
@@ -342,9 +425,9 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
+    <script src="JS/paraVerModificarUsuario.js"></script>
     <script src="JS/codigo.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="JS/paraVerModificarUsuario.js"></script>
 
 </body>
 

@@ -75,10 +75,17 @@ function isAuthenticated() {
 // ===================================================
 
 // Verificar si el usuario tiene un rol específico
-function hasRole(allowedRoles) {
+/* function hasRole(allowedRoles) {
     if (!isAuthenticated()) return false;
     return allowedRoles.includes(currentUser.rolUsuario);
+} */
+function hasRole(allowedRoles) {
+    if (!isAuthenticated()) return false;
+    // Normalizar a minúsculas para evitar problemas de mayúsculas/minúsculas
+    const userRole = currentUser.rolUsuario.toLowerCase();
+    return allowedRoles.some(role => role.toLowerCase() === userRole);
 }
+
 
 // Verificar acceso al dashboard (solo Administrador y trabajador)
 function checkDashboardAccess() {
@@ -168,7 +175,7 @@ async function handleRegistration(formData) {
 }
 
 // Manejo del formulario de login
-async function handleLogin(email, password) {
+/* async function handleLogin(email, password) {
     try {
         const data = await apiRequest('/auth/login', {
             method: 'POST',
@@ -179,8 +186,16 @@ async function handleLogin(email, password) {
         });
 
         authToken = data.data.token;
-        currentUser = data.data.usuario;
-        
+
+        // Normalizar usuario
+        const u = data.data.usuario;
+        currentUser = {
+            idUsuario: u.idusuario || u.idUsuario,
+            aliasUsuario: u.aliasusuario || u.aliasUsuario,
+            rolUsuario: u.rolusuario || u.rolUsuario,
+            correoUsuario: u.correousuario || u.correoUsuario
+        };
+
         localStorage.setItem('authToken', authToken);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
@@ -193,7 +208,54 @@ async function handleLogin(email, password) {
     } catch (error) {
         showMessage(error.message, 'danger');
     }
+} */
+async function handleLogin(email, password) {
+    try {
+        const data = await apiRequest('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({
+                correoUsuario: email,
+                contrasenaUsuario: password
+            })
+        });
+
+        authToken = data.data.token;
+
+        // Normalizar usuario y roles
+        const u = data.data.usuario;
+        currentUser = {
+            idUsuario: u.idusuario || u.idUsuario,
+            aliasUsuario: u.aliasusuario || u.aliasUsuario,
+            rolUsuario: (u.rolusuario || u.rolUsuario || '').trim(),
+            correoUsuario: u.correousuario || u.correoUsuario
+        };
+
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        showMessage(`¡Bienvenido, ${currentUser.aliasUsuario}!`, 'success');
+        
+        // Redirigir según rol
+        setTimeout(() => {
+            if (hasRole(['Administrador', 'trabajador'])) {
+                window.location.href = 'dashboard.html';
+            } else {
+                window.location.href = 'HUELLA FELIZ.html';
+            }
+        }, 1500);
+
+    } catch (error) {
+        showMessage(error.message, 'danger');
+    }
 }
+
+
+
+
+
+
+
+
 
 // ===================================================
 // ADOPCIONES
@@ -683,73 +745,6 @@ window.donar = function(amount, method) {
     const message = prompt('¿Quieres agregar un mensaje a tu donación? (opcional)');
     makeDonation(amount, method, message || '');
 };
-
-// ===================================================
-// DASHBOARD - TABLA DE USUARIOS
-// ===================================================
-
-async function loadUsersTable() {
-    if (!isAuthenticated()) {
-        showMessage('Debes iniciar sesión para ver los usuarios.', 'warning');
-        return;
-    }
-
-    try {
-        const data = await apiRequest('/users'); // usa tu API_BASE_URL + /users
-        const usuarios = data.data || [];
-        const tbody = document.getElementById('usuariosBody');
-
-        if (!tbody) {
-            console.warn('⚠️ No se encontró el tbody con id="usuariosBody"');
-            return;
-        }
-
-        tbody.innerHTML = ''; // Limpia tabla
-
-        if (usuarios.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay usuarios registrados</td></tr>';
-            return;
-        }
-
-        usuarios.forEach(user => {
-            const fila = document.createElement('tr');
-
-            fila.innerHTML = `
-                <td>${user.aliasusuario || '-'}</td>
-                <td>${user.correousuario || '-'}</td>
-                <td>${user.numusuario || '-'}</td>
-                <td>${user.direccionusuario || '-'}</td>
-                <td>${user.rolusuario || '-'}</td>
-                <td>
-                    <button class="btn btn-warning btn-sm btn-editar" data-id="${user.idusuario}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                </td>
-                <td>
-                    <button class="btn btn-danger btn-sm btn-eliminar" data-id="${user.idusuario}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-
-            tbody.appendChild(fila);
-        });
-
-    } catch (error) {
-        console.error('❌ Error al cargar usuarios:', error);
-        showMessage('Error cargando usuarios: ' + error.message, 'danger');
-    }
-}
-
-// Cargar tabla al iniciar
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.pathname.includes('usuarios')) {
-        if (checkDashboardAccess()) {
-            loadUsersTable();
-        }
-    }
-});
-
 
 
 // Exponer funciones globales necesarias

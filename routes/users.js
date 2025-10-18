@@ -1,7 +1,15 @@
 const express = require('express');
-const { query } = require('../config/database');
+const bcrypt = require('bcryptjs');
+//const { query } = require('../config/database');
+const { query, getClient } = require('../config/database');
 const { authenticateToken } = require('./auth');
 const router = express.Router();
+
+/* ------------------ MIDDLEWARE DE ADMIN ------------------ */
+const isAdmin = (req, res, next) => {
+    if (req.user.idrol !== 1) return res.status(403).json({ message: 'Solo administradores' });
+    next();
+};
 
 /* ============================================================
    🔹 PERFIL DEL USUARIO AUTENTICADO
@@ -111,6 +119,7 @@ router.get('/', authenticateToken, async (req, res) => {
             JOIN rol_usuario r ON u.idrol = r.idrol
             ORDER BY u.idusuario ASC
         `);
+        console.log(result.rows);  // <--- VERIFICA
         res.json({ message: 'Usuarios obtenidos correctamente', data: result.rows });
     } catch (error) {
         console.error('❌ Error obteniendo usuarios:', error);
@@ -118,47 +127,147 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// Registrar nuevo usuario
-router.post('/', authenticateToken, async (req, res) => {
+
+// Registrar nuevo usuario con persona o empresa
+router.post('/', authenticateToken, isAdmin, async (req, res) => {
+    const client = await getClient(); // obtenemos el client para la transacción
     try {
-        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol } = req.body;
-        const result = await query(`
+        await client.query('BEGIN'); // inicio de transacción
+
+        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, tipoPersona, persona, empresa } = req.body;
+
+        const hashedPassword = await bcrypt.hash(claveusuario, 10);
+
+        // Insertar usuario
+        const resultUser = await client.query(`
             INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol)
-            VALUES ($1,$2,$3,$4,$5,$6) RETURNING *
-        `, [aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol]);
-        res.status(201).json({ message: 'Usuario creado', data: result.rows[0] });
+            VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
+        `, [aliasusuario, correousuario, hashedPassword, numusuario, direccionusuario, idrol]);
+
+        const idusuario = resultUser.rows[0].idusuario;
+
+        // Insertar persona o empresa
+        if (tipoPersona === 'persona' && persona) {
+            await client.query(`
+                INSERT INTO persona(nombres, apepaterno, apematerno, dni, sexo, idusuario)
+                VALUES ($1,$2,$3,$4,$5,$6)
+            `, [persona.nombres, persona.apepaterno, persona.apematerno, persona.dni, persona.sexo, idusuario]);
+        } else if (tipoPersona === 'empresa' && empresa) {
+            await client.query(`
+                INSERT INTO empresa(nombreempresa, tipopersona, ruc, f_creacion, idusuario)
+                VALUES ($1,$2,$3,$4,$5)
+            `, [empresa.nombreempresa, empresa.tipopersona, empresa.ruc, empresa.f_creacion, idusuario]);
+        }
+
+        await client.query('COMMIT'); // confirmamos transacción
+        res.status(201).json({ message: 'Usuario registrado correctamente', idusuario });
+
     } catch (error) {
-        console.error('❌ Error creando usuario:', error);
+        await client.query('ROLLBACK'); // revertimos en caso de error
+        console.error('❌ Error registrando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        client.release(); // liberamos el client
     }
 });
 
+
 // Editar cualquier usuario
 router.put('/:id', authenticateToken, async (req, res) => {
+    const client = await getClient();
     try {
+        await client.query('BEGIN');
         const { id } = req.params;
-        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol } = req.body;
+        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, persona, empresa } = req.body;
 
-        const result = await query(`
+        // Obtener datos actuales
+        const resultUser = await client.query(`SELECT * FROM usuario WHERE idusuario = $1`, [id]);
+        if (!resultUser.rows.length) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+        const usuarioActual = resultUser.rows[0];
+
+        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.claveusuario;
+
+        // Actualizar usuario
+        const updatedUser = await client.query(`
             UPDATE usuario
             SET aliasusuario = COALESCE($2, aliasusuario),
                 correousuario = COALESCE($3, correousuario),
-                claveusuario = COALESCE($4, claveusuario),
+                claveusuario = $4,
                 numusuario = COALESCE($5, numusuario),
                 direccionusuario = COALESCE($6, direccionusuario),
                 idrol = COALESCE($7, idrol)
             WHERE idusuario = $1
             RETURNING *
-        `, [id, aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol]);
+        `, [
+            id,
+            aliasusuario || usuarioActual.aliasusuario,
+            correousuario || usuarioActual.correousuario,
+            hashedPassword,
+            numusuario || usuarioActual.numusuario,
+            direccionusuario || usuarioActual.direccionusuario,
+            idrol || usuarioActual.idrol
+        ]);
 
-        if (!result.rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+        // Actualizar persona si existe
+        if (persona) {
+            const resultPersona = await client.query(`SELECT * FROM persona WHERE idpersona = $1`, [persona.idpersona]);
+            if (resultPersona.rows.length) {
+                const personaActual = resultPersona.rows[0];
+                await client.query(`
+                    UPDATE persona
+                    SET nombres = COALESCE($2, nombres),
+                        apepaterno = COALESCE($3, apepaterno),
+                        apematerno = COALESCE($4, apematerno),
+                        dni = COALESCE($5, dni),
+                        sexo = COALESCE($6, sexo)
+                    WHERE idpersona = $1
+                `, [
+                    persona.idpersona,
+                    persona.nombres || personaActual.nombres,
+                    persona.apepaterno || personaActual.apepaterno,
+                    persona.apematerno || personaActual.apematerno,
+                    persona.dni || personaActual.dni,
+                    persona.sexo || personaActual.sexo
+                ]);
+            }
+        }
 
-        res.json({ message: 'Usuario actualizado', data: result.rows[0] });
+        // Actualizar empresa si existe
+        if (empresa) {
+            const resultEmpresa = await client.query(`SELECT * FROM empresa WHERE idempresa = $1`, [empresa.idempresa]);
+            if (resultEmpresa.rows.length) {
+                const empresaActual = resultEmpresa.rows[0];
+                await client.query(`
+                    UPDATE empresa
+                    SET nombreempresa = COALESCE($2, nombreempresa),
+                        ruc = COALESCE($3, ruc),
+                        f_creacion = COALESCE($4, f_creacion),
+                        tipopersona = COALESCE($5, tipopersona)
+                    WHERE idempresa = $1
+                `, [
+                    empresa.idempresa,
+                    empresa.nombreempresa || empresaActual.nombreempresa,
+                    empresa.ruc || empresaActual.ruc,
+                    empresa.f_creacion || empresaActual.f_creacion,
+                    empresa.tipopersona || empresaActual.tipopersona
+                ]);
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Usuario actualizado correctamente', data: updatedUser.rows[0] });
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('❌ Error editando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
+    } finally {
+        client.release();
     }
 });
+
 
 // Eliminar usuario
 router.delete('/:id', authenticateToken, async (req, res) => {
@@ -173,60 +282,34 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-/* ============================================================
-   🔹 ROLES (ROL_USUARIO)
-============================================================ */
-// Listar roles
-router.get('/roles', authenticateToken, async (req, res) => {
-    try {
-        const result = await query('SELECT * FROM rol_usuario ORDER BY idrol ASC');
-        res.json({ message: 'Roles obtenidos', data: result.rows });
-    } catch (error) {
-        console.error('❌ Error obteniendo roles:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-});
 
-// Registrar rol
-router.post('/roles', authenticateToken, async (req, res) => {
-    try {
-        const { rolusuario } = req.body;
-        const result = await query('INSERT INTO rol_usuario(rolusuario) VALUES ($1) RETURNING *', [rolusuario]);
-        res.status(201).json({ message: 'Rol creado', data: result.rows[0] });
-    } catch (error) {
-        console.error('❌ Error creando rol:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-});
-
-// Editar rol
-router.put('/roles/:id', authenticateToken, async (req, res) => {
+// Obtener usuario por ID (con persona o empresa)
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { rolusuario } = req.body;
-        const result = await query(`
-            UPDATE rol_usuario
-            SET rolusuario = COALESCE($2, rolusuario)
-            WHERE idrol = $1
-            RETURNING *
-        `, [id, rolusuario]);
-        if (!result.rows.length) return res.status(404).json({ message: 'Rol no encontrado' });
-        res.json({ message: 'Rol actualizado', data: result.rows[0] });
-    } catch (error) {
-        console.error('❌ Error editando rol:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-});
 
-// Eliminar rol
-router.delete('/roles/:id', authenticateToken, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const result = await query('DELETE FROM rol_usuario WHERE idrol = $1 RETURNING *', [id]);
-        if (!result.rows.length) return res.status(404).json({ message: 'Rol no encontrado' });
-        res.json({ message: 'Rol eliminado', data: result.rows[0] });
+        // Usuario
+        const resultUser = await query(`
+            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numusuario, u.direccionusuario, u.idrol, r.rolusuario
+            FROM usuario u
+            JOIN rol_usuario r ON u.idrol = r.idrol
+            WHERE u.idusuario = $1
+        `, [id]);
+
+        if (!resultUser.rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
+        const usuario = resultUser.rows[0];
+
+        // Persona
+        const resultPersona = await query(`SELECT * FROM persona WHERE idusuario = $1`, [id]);
+        const persona = resultPersona.rows[0] || null;
+
+        // Empresa
+        const resultEmpresa = await query(`SELECT * FROM empresa WHERE idusuario = $1`, [id]);
+        const empresa = resultEmpresa.rows[0] || null;
+
+        res.json({ usuario, persona, empresa });
     } catch (error) {
-        console.error('❌ Error eliminando rol:', error);
+        console.error('❌ Error obteniendo usuario completo:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
