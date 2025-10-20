@@ -12,7 +12,7 @@ const isAdmin = (req, res, next) => {
 };
 
 /* ============================================================
-   🔹 PERFIL DEL USUARIO AUTENTICADO
+   PERFIL DEL USUARIO AUTENTICADO
 ============================================================ */
 router.get('/perfil', authenticateToken, async (req, res) => {
     try {
@@ -20,9 +20,9 @@ router.get('/perfil', authenticateToken, async (req, res) => {
 
         const result = await query(`
             SELECT u.idusuario, u.aliasusuario, u.correousuario, 
-                   u.numusuario, u.direccionusuario, r.rolusuario
+                   u.numerousuario, u.direccionusuario, r.rolusuario
             FROM usuario u
-            JOIN rol_usuario r ON u.idrol = r.idrol
+            JOIN rol r ON u.idrol = r.idrol
             WHERE u.idusuario = $1
         `, [idUsuario]);
 
@@ -33,7 +33,7 @@ router.get('/perfil', authenticateToken, async (req, res) => {
 
         res.json({ message: 'Perfil obtenido exitosamente', data: { usuario: user } });
     } catch (error) {
-        console.error('❌ Error obteniendo perfil:', error);
+        console.error('Error obteniendo perfil:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
@@ -46,42 +46,42 @@ router.put('/perfil', authenticateToken, async (req, res) => {
         const result = await query(`
             UPDATE usuario
             SET aliasusuario = COALESCE($2, aliasusuario),
-                numusuario = COALESCE($3, numusuario),
+                numerousuario = COALESCE($3, numerousuario),
                 direccionusuario = COALESCE($4, direccionusuario)
             WHERE idusuario = $1
-            RETURNING idusuario, aliasusuario, correousuario, numusuario, direccionusuario
+            RETURNING idusuario, aliasusuario, correousuario, numerousuario, direccionusuario
         `, [idUsuario, aliasusuario, numusuario, direccionusuario]);
 
         if (!result.rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
 
         res.json({ message: 'Perfil actualizado exitosamente', data: { usuario: result.rows[0] } });
     } catch (error) {
-        console.error('❌ Error actualizando perfil:', error);
+        console.error('Error actualizando perfil:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 
 /* ============================================================
-   🔹 ADOPCIONES Y DONACIONES DEL USUARIO
+   ADOPCIONES Y DONACIONES DEL USUARIO
 ============================================================ */
 router.get('/adopciones', authenticateToken, async (req, res) => {
     try {
         const idUsuario = req.user.idusuario;
         const result = await query(`
-            SELECT a.idadopcion, a.fechaadopcion, a.horaadopcion, a.estadoadopcion,
+            SELECT a.idadopcion, a.f_adopcion, a.estadoadopcion,
                    an.nombreanimal, an.edadmesesanimal, an.generoanimal,
                    r.razaanimal, e.especieanimal
             FROM adopcion a
             JOIN animal an ON a.idanimal = an.idanimal
             JOIN raza r ON an.idraza = r.idraza
             JOIN especie e ON r.idespecie = e.idespecie
-            WHERE a.idusuario = $1
-            ORDER BY a.fechaadopcion DESC, a.horaadopcion DESC
+            WHERE a.idpersona = $1
+            ORDER BY a.f_adopcion DESC
         `, [idUsuario]);
 
         res.json({ message: 'Adopciones obtenidas exitosamente', data: result.rows });
     } catch (error) {
-        console.error('❌ Error obteniendo adopciones:', error);
+        console.error('Error obteniendo adopciones:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
@@ -91,38 +91,38 @@ router.get('/donaciones', authenticateToken, async (req, res) => {
         const idUsuario = req.user.idusuario;
         const result = await query(`
             SELECT dd.iddetalledonacion, dd.cantidaddonacion, dd.detalledonacion,
-                   cd.nombcategoria, d.f_donacion, d.h_donacion
+                   cd.categoria, d.fechadonacion, d.horadonacion
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
             WHERE d.idusuario = $1
-            ORDER BY d.f_donacion DESC, d.h_donacion DESC
+            ORDER BY d.fechadonacion DESC, d.horadonacion DESC
         `, [idUsuario]);
 
         res.json({ message: 'Donaciones obtenidas exitosamente', data: result.rows });
     } catch (error) {
-        console.error('❌ Error obteniendo donaciones:', error);
+        console.error('Error obteniendo donaciones:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 
 /* ============================================================
-   🔹 USUARIOS (ADMIN)
+   USUARIOS (ADMIN)
 ============================================================ */
 // Listar todos los usuarios
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const result = await query(`
-            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numusuario, 
+            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, 
                    u.direccionusuario, r.rolusuario, u.idrol
             FROM usuario u
-            JOIN rol_usuario r ON u.idrol = r.idrol
+            JOIN rol r ON u.idrol = r.idrol
             ORDER BY u.idusuario ASC
         `);
         console.log(result.rows);  // <--- VERIFICA
         res.json({ message: 'Usuarios obtenidos correctamente', data: result.rows });
     } catch (error) {
-        console.error('❌ Error obteniendo usuarios:', error);
+        console.error('Error obteniendo usuarios:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
@@ -134,15 +134,15 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
     try {
         await client.query('BEGIN'); // inicio de transacción
 
-        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, tipoPersona, persona, empresa } = req.body;
+        const { aliasusuario, correousuario, claveusuario, numerousuario, direccionusuario, idrol, tipoPersona, persona, empresa } = req.body;
 
         const hashedPassword = await bcrypt.hash(claveusuario, 10);
 
         // Insertar usuario
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol)
+            INSERT INTO usuario(aliasusuario, correousuario, contrasenausual, numerousuario, direccionusuario, idrol)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
-        `, [aliasusuario, correousuario, hashedPassword, numusuario, direccionusuario, idrol]);
+        `, [aliasusuario, correousuario, hashedPassword, numerousuario, direccionusuario, idrol]);
 
         const idusuario = resultUser.rows[0].idusuario;
 
@@ -164,7 +164,7 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
 
     } catch (error) {
         await client.query('ROLLBACK'); // revertimos en caso de error
-        console.error('❌ Error registrando usuario:', error);
+        console.error('Error registrando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     } finally {
         client.release(); // liberamos el client
@@ -178,7 +178,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
         const { id } = req.params;
-        const { aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol, persona, empresa } = req.body;
+        const { aliasusuario, correousuario, claveusuario, numerousuario, direccionusuario, idrol, persona, empresa } = req.body;
 
         // Obtener datos actuales
         const resultUser = await client.query(`SELECT * FROM usuario WHERE idusuario = $1`, [id]);
@@ -188,15 +188,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
         const usuarioActual = resultUser.rows[0];
 
-        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.claveusuario;
+        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.contrasenausual;
 
         // Actualizar usuario
         const updatedUser = await client.query(`
             UPDATE usuario
             SET aliasusuario = COALESCE($2, aliasusuario),
                 correousuario = COALESCE($3, correousuario),
-                claveusuario = $4,
-                numusuario = COALESCE($5, numusuario),
+                contrasenausual = $4,
+                numerousuario = COALESCE($5, numerousuario),
                 direccionusuario = COALESCE($6, direccionusuario),
                 idrol = COALESCE($7, idrol)
             WHERE idusuario = $1
@@ -206,7 +206,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
             aliasusuario || usuarioActual.aliasusuario,
             correousuario || usuarioActual.correousuario,
             hashedPassword,
-            numusuario || usuarioActual.numusuario,
+            numerousuario || usuarioActual.numerousuario,
             direccionusuario || usuarioActual.direccionusuario,
             idrol || usuarioActual.idrol
         ]);
@@ -261,7 +261,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         res.json({ message: 'Usuario actualizado correctamente', data: updatedUser.rows[0] });
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('❌ Error editando usuario:', error);
+        console.error('Error editando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     } finally {
         client.release();
@@ -277,7 +277,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         if (!result.rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
         res.json({ message: 'Usuario eliminado', data: result.rows[0] });
     } catch (error) {
-        console.error('❌ Error eliminando usuario:', error);
+        console.error('Error eliminando usuario:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
@@ -290,9 +290,9 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         // Usuario
         const resultUser = await query(`
-            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numusuario, u.direccionusuario, u.idrol, r.rolusuario
+            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, u.direccionusuario, u.idrol, r.rolusuario
             FROM usuario u
-            JOIN rol_usuario r ON u.idrol = r.idrol
+            JOIN rol r ON u.idrol = r.idrol
             WHERE u.idusuario = $1
         `, [id]);
 
@@ -309,7 +309,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         res.json({ usuario, persona, empresa });
     } catch (error) {
-        console.error('❌ Error obteniendo usuario completo:', error);
+        console.error('Error obteniendo usuario completo:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });

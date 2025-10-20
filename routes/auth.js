@@ -66,7 +66,7 @@ router.post('/registro', [
 
         const hashedPassword = await bcrypt.hash(contrasenaUsuario, 10);
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numusuario, direccionusuario, idrol)
+            INSERT INTO usuario(aliasusuario, correousuario, contrasenausual, numerousuario, direccionusuario, idrol)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
         `, [aliasUsuario, correoNormalizado, hashedPassword, numUsuario, direccionUsuario, idRolCliente]);
 
@@ -113,7 +113,7 @@ router.post('/login', async (req, res) => {
         const user = userResult.rows[0];
         console.log('Usuario logeado:', user.aliasusuario, 'Rol:', user.idrol);
 
-        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
+        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.contrasenausual);
         if (!passwordMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
         const token = jwt.sign(
@@ -127,7 +127,7 @@ router.post('/login', async (req, res) => {
             idusuario: user.idusuario,
             aliasusuario: user.aliasusuario,
             correousuario: user.correousuario,
-            numusuario: user.numusuario,
+            numerousuario: user.numerousuario,
             direccionusuario: user.direccionusuario,
             idrol: user.idrol
         };
