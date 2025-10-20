@@ -28,6 +28,13 @@ body{
   border-radius: 20px;
 }
 
+/* Estilos para el icono del navbar */
+.navbar-brand img {
+  vertical-align: middle;
+  object-fit: contain;
+  display: inline-block !important;
+}
+
 .btn-pink {
   background: var(--pink);
   color: white;

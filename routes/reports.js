@@ -1,40 +1,34 @@
 const express = require('express');
 const { query } = require('../config/database');
+const { authenticateToken } = require('./auth');
 const router = express.Router();
 
 // POST /api/reports/crear
-router.post('/crear', async (req, res) => {
+router.post('/crear', authenticateToken, async (req, res) => {
     try {
-        const { direccion, generoAnimal, gravedad, especieAnimal, situacion } = req.body;
+        const { tipocaso, descripcioncom, direccion, idanimal } = req.body;
+        const idUsuario = req.user.idusuario;
 
-        if (!direccion || !generoAnimal || !gravedad || !especieAnimal || !situacion) {
+        if (!tipocaso || !descripcioncom || !direccion) {
             return res.status(400).json({ 
-                message: 'Todos los campos son requeridos' 
+                message: 'Los campos tipo de caso, descripción y dirección son requeridos' 
             });
         }
 
-        // Generar código único para el reporte
-        const codigoReporte = `REP-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+        // Crear el caso animal en la base de datos
+        const result = await query(`
+            INSERT INTO caso_animal (tipocaso, descripcioncom, direccion, f_entrada, idanimal, idusuario)
+            VALUES ($1, $2, $3, CURRENT_DATE, $4, $5)
+            RETURNING idcaso
+        `, [tipocaso, descripcioncom, direccion, idanimal || null, idUsuario]);
 
-        // Por ahora guardamos en una tabla temporal o en una nueva tabla
-        // Como no tenemos una tabla específica para reportes, usaremos una tabla temporal
-        // En una implementación real, deberías crear una tabla 'reportes' en tu base de datos
-        
-        // Simulamos el guardado del reporte
-        console.log('Reporte recibido:', {
-            codigoReporte,
-            direccion,
-            generoAnimal,
-            gravedad,
-            especieAnimal,
-            situacion,
-            fechaReporte: new Date()
-        });
+        const idCaso = result.rows[0].idcaso;
 
         res.status(201).json({
-            message: 'Reporte enviado exitosamente',
+            message: 'Reporte creado exitosamente',
             data: {
-                codigoReporte,
+                idCaso,
+                codigoReporte: `REP-${idCaso}-${Date.now()}`,
                 fechaReporte: new Date().toISOString(),
                 estado: 'Recibido'
             }
@@ -47,13 +41,53 @@ router.post('/crear', async (req, res) => {
 });
 
 // GET /api/reports/lista
-router.get('/lista', async (req, res) => {
+router.get('/lista', authenticateToken, async (req, res) => {
     try {
-        // En una implementación real, esto consultaría la tabla de reportes
-        // Por ahora devolvemos una lista vacía
+        const { tipocaso, fecha } = req.query;
+        
+        let whereConditions = [];
+        let params = [];
+        let paramCount = 0;
+
+        if (tipocaso) {
+            paramCount++;
+            whereConditions.push(`ca.tipocaso = $${paramCount}`);
+            params.push(tipocaso);
+        }
+
+        if (fecha) {
+            paramCount++;
+            whereConditions.push(`ca.f_entrada = $${paramCount}`);
+            params.push(fecha);
+        }
+
+        const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+        const sql = `
+            SELECT 
+                ca.idcaso,
+                ca.tipocaso,
+                ca.descripcioncom,
+                ca.direccion,
+                ca.f_entrada,
+                u.aliasusuario,
+                a.nombreanimal,
+                r.razaanimal,
+                e.especieanimal
+            FROM caso_animal ca
+            LEFT JOIN usuario u ON ca.idusuario = u.idusuario
+            LEFT JOIN animal a ON ca.idanimal = a.idanimal
+            LEFT JOIN raza r ON a.idraza = r.idraza
+            LEFT JOIN especie e ON r.idespecie = e.idespecie
+            ${whereClause}
+            ORDER BY ca.f_entrada DESC
+        `;
+
+        const result = await query(sql, params);
+
         res.json({
             message: 'Lista de reportes obtenida exitosamente',
-            data: []
+            data: result.rows
         });
 
     } catch (error) {
@@ -63,14 +97,42 @@ router.get('/lista', async (req, res) => {
 });
 
 // GET /api/reports/:id
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
-        // En una implementación real, esto consultaría la tabla de reportes por ID
-        res.status(404).json({ 
-            message: 'Reporte no encontrado',
-            data: null
+        const result = await query(`
+            SELECT 
+                ca.idcaso,
+                ca.tipocaso,
+                ca.descripcioncom,
+                ca.direccion,
+                ca.f_entrada,
+                u.aliasusuario,
+                u.correousuario,
+                a.nombreanimal,
+                a.edadmesesanimal,
+                a.generoanimal,
+                r.razaanimal,
+                e.especieanimal
+            FROM caso_animal ca
+            LEFT JOIN usuario u ON ca.idusuario = u.idusuario
+            LEFT JOIN animal a ON ca.idanimal = a.idanimal
+            LEFT JOIN raza r ON a.idraza = r.idraza
+            LEFT JOIN especie e ON r.idespecie = e.idespecie
+            WHERE ca.idcaso = $1
+        `, [id]);
+
+        if (!result.rows.length) {
+            return res.status(404).json({ 
+                message: 'Reporte no encontrado',
+                data: null
+            });
+        }
+
+        res.json({
+            message: 'Reporte obtenido exitosamente',
+            data: result.rows[0]
         });
 
     } catch (error) {

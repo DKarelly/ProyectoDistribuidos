@@ -707,6 +707,89 @@ window.donar = function(amount, method) {
 };
 
 
+// ===================================================
+// FUNCIONALIDAD DE CONTACTO POR WHATSAPP
+// ===================================================
+
+// Función para validar email
+function validarEmail(email) {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+}
+
+// Función para manejar el envío del formulario de contacto
+function manejarContacto(event) {
+    event.preventDefault();
+    
+    // Obtener valores del formulario
+    const email = document.getElementById('emailContacto').value.trim();
+    const numero = document.getElementById('numeroContacto').value.trim();
+    const titulo = document.getElementById('tituloContacto').value.trim();
+    const mensaje = document.getElementById('mensajeContacto').value.trim();
+    
+    // Ocultar errores previos
+    document.getElementById('emailError').style.display = 'none';
+    document.getElementById('tituloError').style.display = 'none';
+    document.getElementById('mensajeError').style.display = 'none';
+    
+    // Validaciones
+    let hayErrores = false;
+    
+    if (!email || !validarEmail(email)) {
+        document.getElementById('emailError').style.display = 'block';
+        hayErrores = true;
+    }
+    
+    if (!titulo) {
+        document.getElementById('tituloError').style.display = 'block';
+        hayErrores = true;
+    }
+    
+    if (!mensaje) {
+        document.getElementById('mensajeError').style.display = 'block';
+        hayErrores = true;
+    }
+    
+    if (hayErrores) {
+        return;
+    }
+    
+    // Crear mensaje para WhatsApp
+    const numeroWhatsApp = '51952225506'; // Tu número sin el + y sin espacios
+    let mensajeWhatsApp = `*Nuevo mensaje desde Huella Feliz*\n\n`;
+    mensajeWhatsApp += `*Email:* ${email}\n`;
+    if (numero) {
+        mensajeWhatsApp += `*Teléfono:* ${numero}\n`;
+    }
+    mensajeWhatsApp += `*Título:* ${titulo}\n\n`;
+    mensajeWhatsApp += `*Mensaje:*\n${mensaje}`;
+    
+    // Codificar el mensaje para URL
+    const mensajeCodificado = encodeURIComponent(mensajeWhatsApp);
+    
+    // Crear URL de WhatsApp
+    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`;
+    
+    // Abrir WhatsApp
+    window.open(urlWhatsApp, '_blank');
+    
+    // Mostrar mensaje de confirmación
+    showMessage('Redirigiendo a WhatsApp... ¡Tu mensaje será enviado!', 'success');
+    
+    // Limpiar formulario después de un breve delay
+    setTimeout(() => {
+        document.getElementById('contactoForm').reset();
+    }, 2000);
+}
+
+// Inicializar funcionalidad de contacto cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    const contactoForm = document.getElementById('contactoForm');
+    if (contactoForm) {
+        contactoForm.addEventListener('submit', manejarContacto);
+    }
+});
+
 // Exponer funciones globales necesarias
 window.viewAnimalDetails = viewAnimalDetails;
 window.adoptAnimal = adoptAnimal;

@@ -38,26 +38,25 @@ router.get('/disponibles', async (req, res) => {
         let params = [];
         let paramCount = 0;
 
-        if (especie) { paramCount++; whereConditions.push(`e.especieAnimal = $${paramCount}`); params.push(especie); }
+        if (especie) { paramCount++; whereConditions.push(`e.especieanimal = $${paramCount}`); params.push(especie); }
         if (pelaje) { paramCount++; whereConditions.push(`a.pelaje = $${paramCount}`); params.push(pelaje); }
         if (tamaño) { paramCount++; whereConditions.push(`a.tamaño = $${paramCount}`); params.push(tamaño); }
-        if (genero) { paramCount++; whereConditions.push(`a.generoAnimal = $${paramCount}`); params.push(genero); }
-        if (edad) { paramCount++; whereConditions.push(`a.edadMesesAnimal <= $${paramCount}`); params.push(parseInt(edad)); }
+        if (genero) { paramCount++; whereConditions.push(`a.generoanimal = $${paramCount}`); params.push(genero); }
+        if (edad) { paramCount++; whereConditions.push(`a.edadmesesanimal <= $${paramCount}`); params.push(parseInt(edad)); }
 
         // Excluir animales ya adoptados
-        whereConditions.push(`a.idAnimal NOT IN (SELECT idAnimal FROM adopcion WHERE estadoAdopcion = 'Aprobada')`);
+        whereConditions.push(`a.idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')`);
         const whereClause = whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
         const sql = `
-            SELECT a.idAnimal, a.nombreAnimal, a.edadMesesAnimal, a.generoAnimal,
-                   a.pesoAnimal, a.pelaje, a.tamaño, r.razaAnimal, e.especieAnimal, g.imagen as imagenAnimal
+            SELECT a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal,
+                   a.pesoanimal, a.pelaje, a.tamaño, r.razaanimal, e.especieanimal, g.imagen as imagenAnimal
             FROM animal a
-            JOIN raza r ON a.idRaza = r.idRaza
-            JOIN especie e ON r.idEspecie = e.idEspecie
-            LEFT JOIN historial_animal ha ON a.idAnimal = ha.idAnimal
-            LEFT JOIN galeria g ON ha.idHistorial = g.idHistorial
+            JOIN raza r ON a.idraza = r.idraza
+            JOIN especie e ON r.idespecie = e.idespecie
+            LEFT JOIN galeria g ON a.idanimal = g.idanimal
             ${whereClause}
-            ORDER BY a.idAnimal DESC
+            ORDER BY a.idanimal DESC
         `;
         const result = await query(sql, params);
         res.json({ message: 'Animales disponibles obtenidos exitosamente', data: result.rows });
@@ -72,14 +71,13 @@ router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const animalResult = await query(`
-            SELECT a.idAnimal, a.nombreAnimal, a.edadMesesAnimal, a.generoAnimal,
-                   a.pesoAnimal, a.pelaje, a.tamaño, r.razaAnimal, e.especieAnimal, g.imagen as imagenAnimal
+            SELECT a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal,
+                   a.pesoanimal, a.pelaje, a.tamaño, r.razaanimal, e.especieanimal, g.imagen as imagenAnimal
             FROM animal a
-            JOIN raza r ON a.idRaza = r.idRaza
-            JOIN especie e ON r.idEspecie = e.idEspecie
-            LEFT JOIN historial_animal ha ON a.idAnimal = ha.idAnimal
-            LEFT JOIN galeria g ON ha.idHistorial = g.idHistorial
-            WHERE a.idAnimal = $1
+            JOIN raza r ON a.idraza = r.idraza
+            JOIN especie e ON r.idespecie = e.idespecie
+            LEFT JOIN galeria g ON a.idanimal = g.idanimal
+            WHERE a.idanimal = $1
             LIMIT 1
         `, [id]);
 
@@ -87,10 +85,10 @@ router.get('/:id', async (req, res) => {
 
         const animal = animalResult.rows[0];
         const historialResult = await query(`
-            SELECT idHistorial, pesoHistorial, fechaHistorial, horaHistorial, descripcionHistorial
+            SELECT idhistorial, pesohistorial, fechahistorial, horahistorial, descripcionhisto
             FROM historial_animal
-            WHERE idAnimal = $1
-            ORDER BY fechaHistorial DESC, horaHistorial DESC
+            WHERE idanimal = $1
+            ORDER BY fechahistorial DESC, horahistorial DESC
         `, [id]);
 
         animal.historial = historialResult.rows;
@@ -110,25 +108,25 @@ router.post('/adoptar', authenticateToken, async (req, res) => {
         if (!idAnimal) return res.status(400).json({ message: 'ID del animal es requerido' });
 
         const animalResult = await query(`
-            SELECT idAnimal, nombreAnimal
+            SELECT idanimal, nombreanimal
             FROM animal
-            WHERE idAnimal = $1
-              AND idAnimal NOT IN (SELECT idAnimal FROM adopcion WHERE estadoAdopcion = 'Aprobada')
+            WHERE idanimal = $1
+              AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
         `, [idAnimal]);
 
         if (!animalResult.rows.length) return res.status(400).json({ message: 'Animal no disponible para adopción' });
 
         const existingAdoption = await query(`
-            SELECT idAdopcion FROM adopcion
-            WHERE idUsuario = $1 AND idAnimal = $2 AND estadoAdopcion = 'Pendiente'
+            SELECT idadopcion FROM adopcion
+            WHERE idpersona = $1 AND idanimal = $2 AND estadoadopcion = 'Pendiente'
         `, [idUsuario, idAnimal]);
 
         if (existingAdoption.rows.length) return res.status(400).json({ message: 'Ya tienes una solicitud pendiente para este animal' });
 
         const result = await query(`
-            INSERT INTO adopcion (idUsuario, idAnimal, fechaAdopcion, horaAdopcion, estadoAdopcion)
-            VALUES ($1, $2, CURRENT_DATE, CURRENT_TIME, 'Pendiente')
-            RETURNING idAdopcion
+            INSERT INTO adopcion (idpersona, idanimal, f_adopcion, estadoadopcion)
+            VALUES ($1, $2, CURRENT_DATE, 'Pendiente')
+            RETURNING idadopcion
         `, [idUsuario, idAnimal]);
 
         res.status(201).json({
@@ -153,27 +151,27 @@ router.post('/agregar', upload.single('imagenAnimal'), async (req, res) => {
             return res.status(400).json({ message: 'Los campos obligatorios son: nombre, especie, raza, edad y género' });
         if (!req.file) return res.status(400).json({ message: 'La imagen es obligatoria' });
 
-        let especieResult = await query('SELECT idEspecie FROM especie WHERE especieAnimal = $1', [especie]);
+        let especieResult = await query('SELECT idespecie FROM especie WHERE especieanimal = $1', [especie]);
         let idEspecie = especieResult.rows.length ? especieResult.rows[0].idespecie :
-            (await query('INSERT INTO especie (especieAnimal) VALUES ($1) RETURNING idEspecie', [especie])).rows[0].idespecie;
+            (await query('INSERT INTO especie (especieanimal) VALUES ($1) RETURNING idespecie', [especie])).rows[0].idespecie;
 
-        let razaResult = await query('SELECT idRaza FROM raza WHERE razaAnimal = $1 AND idEspecie = $2', [raza, idEspecie]);
+        let razaResult = await query('SELECT idraza FROM raza WHERE razaanimal = $1 AND idespecie = $2', [raza, idEspecie]);
         let idRaza = razaResult.rows.length ? razaResult.rows[0].idraza :
-            (await query('INSERT INTO raza (idEspecie, razaAnimal) VALUES ($1, $2) RETURNING idRaza', [idEspecie, raza])).rows[0].idraza;
+            (await query('INSERT INTO raza (idespecie, razaanimal) VALUES ($1, $2) RETURNING idraza', [idEspecie, raza])).rows[0].idraza;
 
         const animalResult = await query(`
-            INSERT INTO animal (nombreAnimal, edadMesesAnimal, generoAnimal, pesoAnimal, pelaje, tamaño, idRaza)
-            VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idAnimal
+            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, tamaño, idraza)
+            VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idanimal
         `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje || null, tamaño || null, idRaza]);
 
         const idAnimal = animalResult.rows[0].idanimal;
 
         const historialResult = await query(`
-            INSERT INTO historial_animal (idAnimal, pesoHistorial, fechaHistorial, horaHistorial, descripcionHistorial)
-            VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3) RETURNING idHistorial
+            INSERT INTO historial_animal (idanimal, pesohistorial, fechahistorial, horahistorial, descripcionhisto)
+            VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3) RETURNING idhistorial
         `, [idAnimal, peso ? parseFloat(peso) : null, descripcion || 'Registro inicial del animal']);
 
-        await query('INSERT INTO galeria (idHistorial, imagen) VALUES ($1,$2)', [historialResult.rows[0].idhistorial, req.file.filename]);
+        await query('INSERT INTO galeria (idanimal, imagen) VALUES ($1,$2)', [idAnimal, req.file.filename]);
 
         res.status(201).json({ message: 'Animal agregado exitosamente', data: { idAnimal, nombreAnimal, imagen: req.file.filename } });
 

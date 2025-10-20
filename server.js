@@ -71,22 +71,22 @@ app.use('*', (req, res) => {
 async function startServer() {
     try {
         // Probar conexión a la base de datos
-        console.log('🔄 Probando conexión a la base de datos...');
+        console.log('Probando conexión a la base de datos...');
         const dbConnected = await testConnection();
         
         if (!dbConnected) {
-            console.error('❌ No se pudo conectar a la base de datos. Verifica tu configuración en config.env');
+            console.error('No se pudo conectar a la base de datos. Verifica tu configuración en config.env');
             process.exit(1);
         }
 
         // Iniciar servidor
         app.listen(PORT, () => {
-            console.log('🚀 Servidor iniciado exitosamente!');
-            console.log(`📍 Puerto: ${PORT}`);
-            console.log(`🌐 URL: http://localhost:${PORT}`);
-            console.log(`💾 Base de datos: ${process.env.DB_DATABASE}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
-            console.log(`🔧 Modo: ${process.env.NODE_ENV}`);
-            console.log('📋 Rutas disponibles:');
+            console.log('Servidor iniciado exitosamente!');
+            console.log(`Puerto: ${PORT}`);
+            console.log(`URL: http://localhost:${PORT}`);
+            console.log(`Base de datos: ${process.env.DB_DATABASE}@${process.env.DB_HOST}:${process.env.DB_PORT}`);
+            console.log(`Modo: ${process.env.NODE_ENV}`);
+            console.log('Rutas disponibles:');
             console.log('   - GET  /api/auth/verify');
             console.log('   - POST /api/auth/login');
             console.log('   - POST /api/auth/registro');
@@ -100,19 +100,19 @@ async function startServer() {
         });
 
     } catch (error) {
-        console.error('❌ Error iniciando servidor:', error);
+        console.error('Error iniciando servidor:', error);
         process.exit(1);
     }
 }
 
 // Manejar cierre graceful del servidor
 process.on('SIGINT', () => {
-    console.log('\n🛑 Cerrando servidor...');
+    console.log('\nCerrando servidor...');
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-    console.log('\n🛑 Cerrando servidor...');
+    console.log('\nCerrando servidor...');
     process.exit(0);
 });
 

@@ -10,34 +10,34 @@ const pool = new Pool({
   ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
 });
 
-// 🔹 Probar la conexión
+// Probar la conexión
 async function testConnection() {
   try {
     const client = await pool.connect();
-    console.log('✅ Conexión a PostgreSQL exitosa');
+    console.log('Conexión a PostgreSQL exitosa');
     client.release();
     return true;
   } catch (error) {
-    console.error('❌ Error conectando a PostgreSQL:', error.message);
+    console.error('Error conectando a PostgreSQL:', error.message);
     return false;
   }
 }
 
-// 🔹 Ejecutar consultas normales
+// Ejecutar consultas normales
 async function query(text, params) {
   const start = Date.now();
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('⏱️ Query ejecutada:', { text, duration, rows: res.rowCount });
+    console.log('Query ejecutada:', { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
-    console.error('⚠️ Error en la consulta:', error.message);
+    console.error('Error en la consulta:', error.message);
     throw error;
   }
 }
 
-// 🔹 Obtener cliente para transacciones
+// Obtener cliente para transacciones
 async function getClient() {
   const client = await pool.connect();
   return client;

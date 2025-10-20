@@ -6,12 +6,21 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acerca de</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="files/casitaicon.png">
+    <link rel="shortcut icon" type="image/png" href="files/casitaicon.png">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Iconos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="CSS/estilos.css">
+    <style>
+        #descripcionEquipo {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 
 <body>
@@ -19,7 +28,10 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">HUELLA FELIZ</a>
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
+        <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+        HUELLA FELIZ
+      </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -47,8 +59,8 @@
         </div>
     </nav>
 
-    <!-- Hero -->
-    <section class="hero d-flex align-items-center justify-content-center text-white">
+    <!-- Hero con banner de historia -->
+    <section class="hero d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('files/banner_historia.jpg'); background-size: cover; background-position: center; min-height: 400px;">
         <div class="hero-content text-center">
             <h1>Conoce Nuestra Historia</h1>
         </div>
@@ -60,7 +72,18 @@
             <h2 class="section-title">¿Quiénes Somos?</h2>
             <div class="row justify-content-center my-4">
                 <div class="col-md-6">
-                    <img src="img/mapa.png" alt="Mapa ilustrado" class="img-fluid mb-3">
+                    <!-- Google Maps embebido -->
+                    <div class="map-container mb-3">
+                        <iframe 
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d31694.79828735966!2d-79.85649025903778!3d-6.78812687691884!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x904cef08440024c3%3A0x4f90ac1218cd3ec8!2sProyecto%20SOS%20Alma%20Animal!5e0!3m2!1ses-419!2spe!4v1760916650203!5m2!1ses-419!2spe"
+                            width="100%" 
+                            height="250" 
+                            style="border:0; border-radius: 10px;" 
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
                 </div>
                 <div class="col-md-6 d-flex align-items-center">
                     <p>
@@ -77,33 +100,43 @@
     <!-- Métricas -->
     <section class="bg-pink text-white py-5">
         <div class="container text-center">
-            <div class="row">
-                <div class="col-md-2">
-                    <h3>+100</h3>
-                    <p>Animales rescatados</p>
+            <div class="row justify-content-center">
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="metric-item">
+                        <h3 class="display-4 fw-bold">+100</h3>
+                        <p class="mb-0">Animales rescatados</p>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <h3>+300</h3>
-                    <p>Actividades de voluntariado</p>
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="metric-item">
+                        <h3 class="display-4 fw-bold">+300</h3>
+                        <p class="mb-0">Actividades de voluntariado</p>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <h3>+11052</h3>
-                    <p>Voluntarios</p>
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="metric-item">
+                        <h3 class="display-4 fw-bold">+11,052</h3>
+                        <p class="mb-0">Voluntarios</p>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <h3>+30</h3>
-                    <p>Albergues beneficiados</p>
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="metric-item">
+                        <h3 class="display-4 fw-bold">+30</h3>
+                        <p class="mb-0">Albergues beneficiados</p>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <h3>+3101</h3>
-                    <p>Esterilizaciones</p>
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <div class="metric-item">
+                        <h3 class="display-4 fw-bold">+3,101</h3>
+                        <p class="mb-0">Esterilizaciones</p>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Visión -->
-    <section class="py-5">
+    <section class="quienes-somos py-5">
         <div class="container text-center">
             <h2 class="section-title">Visión</h2>
             <p class="mb-5">
@@ -117,13 +150,13 @@
             </p>
             <div class="row g-4">
                 <div class="col-md-4">
-                    <img src="img/vision1.png" alt="Visión 1" class="img-fluid">
+                    <img src="files/vision1.jpg" alt="Visión 1" class="img-fluid rounded shadow">
                 </div>
                 <div class="col-md-4">
-                    <img src="img/vision2.png" alt="Visión 2" class="img-fluid">
+                    <img src="files/vision2.jpg" alt="Visión 2" class="img-fluid rounded shadow">
                 </div>
                 <div class="col-md-4">
-                    <img src="img/vision3.png" alt="Visión 3" class="img-fluid">
+                    <img src="files/vision3.jpg" alt="Visión 3" class="img-fluid rounded shadow">
                 </div>
             </div>
         </div>
@@ -144,13 +177,13 @@
             </p>
             <div class="row g-4">
                 <div class="col-md-4">
-                    <img src="img/mision1.png" alt="Misión 1" class="img-fluid">
+                    <img src="files/mision1.jpg" alt="Misión 1" class="img-fluid rounded shadow">
                 </div>
                 <div class="col-md-4">
-                    <img src="img/mision2.png" alt="Misión 2" class="img-fluid">
+                    <img src="files/mision2.jpg" alt="Misión 2" class="img-fluid rounded shadow">
                 </div>
                 <div class="col-md-4">
-                    <img src="img/mision3.png" alt="Misión 3" class="img-fluid">
+                    <img src="files/mision3.jpg" alt="Misión 3" class="img-fluid rounded shadow">
                 </div>
             </div>
         </div>
@@ -165,10 +198,13 @@
                     <div id="equipoCarousel" class="carousel slide" data-bs-ride="carousel">
                         <div class="carousel-inner">
                             <div class="carousel-item active">
-                                <img src="img/equipo1.jpg" alt="Miembro del equipo">
+                                <img src="files/miembro1.jpg" alt="Josías Omar Sandoval Sánchez" class="d-block w-100 rounded" style="height: 400px; object-fit: cover;">
                             </div>
                             <div class="carousel-item">
-                                <img src="img/equipo2.jpg" alt="Miembro del equipo">
+                                <img src="files/miembro2.jpg" alt="Doris Karelly García Inoñan" class="d-block w-100 rounded" style="height: 400px; object-fit: cover;">
+                            </div>
+                            <div class="carousel-item">
+                                <img src="files/miembro3.jpg" alt="Alessandro Dante Cabrera Altamirano" class="d-block w-100 rounded" style="height: 400px; object-fit: cover;">
                             </div>
                         </div>
                         <button class="carousel-control-prev" type="button" data-bs-target="#equipoCarousel"
@@ -184,18 +220,77 @@
 
                 <!-- Texto de portafolio -->
                 <div class="col-md-6 portfolio-text">
-                    <h3>Portfolio</h3>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi risus dui,
-                        malesuada luctus tincidunt tortor consectetur netus facilisi dapibus laoreet orci.
-                        Vivamus ante malesuada consectetur tincidunt felis, pretium posuere ut sapien.
+                    <h3>Portafolio</h3>
+                    <p id="descripcionEquipo">
+                        Nuestro equipo de Huella Feliz está formado por profesionales apasionados y comprometidos con el bienestar animal. Cada miembro aporta su experiencia única para crear un impacto positivo en la vida de los animales que rescatamos y las familias que los adoptan.
                     </p>
-                    <a href="#" class="btn btn-pink">View All</a>
+                    <button type="button" class="btn btn-pink" data-bs-toggle="modal" data-bs-target="#modalEquipo">
+                        Ver todo
+                    </button>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Modal del Equipo -->
+    <div class="modal fade" id="modalEquipo" tabindex="-1" aria-labelledby="modalEquipoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEquipoLabel">Nuestro Equipo Completo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-4">
+                        <!-- Josías Omar Sandoval Sánchez -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <img src="files/miembro1.jpg" class="card-img-top" alt="Josías Omar Sandoval Sánchez" style="height: 300px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">Josías Omar Sandoval Sánchez</h5>
+                                    <p class="card-text fw-bold text-muted">El corazón de Huella Feliz</p>
+                                    <p class="card-text">
+                                        Con una dedicación que se siente en cada caricia, Josías es el alma del cuidado diario en nuestro refugio 'Huella Feliz'. Su labor va más allá de alimentar y limpiar; él es un amigo leal para aquellos que han conocido el abandono, ofreciendo consuelo, juegos y la promesa de un futuro mejor. Su conexión con los animales es la fuerza que impulsa nuestra misión cada día.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Doris Karelly García Inoñan -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <img src="files/miembro2.jpg" class="card-img-top" alt="Doris Karelly García Inoñan" style="height: 300px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">Doris Karelly García Inoñan</h5>
+                                    <p class="card-text fw-bold text-muted">La mente innovadora de Huella Feliz</p>
+                                    <p class="card-text">
+                                        Detrás de cada rescate exitoso y adopción feliz en 'Huella Feliz', hay un sistema que lo hace posible. Doris es la arquitecta de nuestra plataforma digital, la mente brillante que conecta a nuestros animales con familias amorosas. Con cada línea de código, transforma la tecnología en una poderosa herramienta de compasión, optimizando nuestros procesos para que podamos salvar más vidas.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alessandro Dante Cabrera Altamirano -->
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <img src="files/miembro3.jpg" class="card-img-top" alt="Alessandro Dante Cabrera Altamirano" style="height: 300px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h5 class="card-title text-danger">Alessandro Dante Cabrera Altamirano</h5>
+                                    <p class="card-text fw-bold text-muted">La voz y la bienvenida de Huella Feliz</p>
+                                    <p class="card-text">
+                                        Alessandro es el primer rostro amigable que encuentras en 'Huella Feliz' y la voz apasionada que defiende a los que no la tienen. Como recepcionista, guía con empatía a cada visitante y potencial adoptante. Como activista y educador, su compromiso es fundamental para crear conciencia en la comunidad, promoviendo una cultura de respeto y amor por los animales.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="py-5 bg-pink text-white">
         <div class="container">
@@ -216,9 +311,9 @@
                 <div class="col-6 col-md-3 mb-4">
                     <h5 class="fw-bold">Redes sociales</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white text-decoration-none"><i
+                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank" class="text-white text-decoration-none"><i
                                     class="bi bi-facebook me-2"></i>Facebook</a></li>
-                        <li><a href="#" class="text-white text-decoration-none"><i
+                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank" class="text-white text-decoration-none"><i
                                     class="bi bi-instagram me-2"></i>Instagram</a>
                         </li>
                     </ul>
@@ -226,10 +321,10 @@
 
                 <!-- About -->
                 <div class="col-6 col-md-3 mb-4">
-                    <h5 class="fw-bold">About</h5>
+                    <h5 class="fw-bold">Acerca de</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
-                        <li><a href="#" class="text-white text-decoration-none">Terms & Condition</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
                     </ul>
                 </div>
 
@@ -251,10 +346,155 @@
         </div>
     </footer>
 
+    <!-- MODAL POLÍTICA DE PRIVACIDAD -->
+    <div class="modal fade" id="modalPrivacidad" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-pink text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-shield-lock-fill me-2"></i>
+                        Política de Privacidad
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="mb-4">
+                        <h6 class="text-danger">1. Información que Recopilamos</h6>
+                        <p class="small">En Huella Feliz, recopilamos información personal que nos proporcionas voluntariamente cuando te registras, realizas donaciones, solicitas adopciones o nos contactas.</p>
+                        <p class="small"><strong>Tipos de información:</strong> Nombre, correo electrónico, teléfono, dirección, información de pago y cualquier otra información que decidas compartir.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">2. Cómo Utilizamos tu Información</h6>
+                        <ul class="small">
+                            <li>Procesar adopciones y donaciones</li>
+                            <li>Comunicarnos contigo sobre nuestros servicios</li>
+                            <li>Mejorar nuestros programas de rescate animal</li>
+                            <li>Cumplir con obligaciones legales</li>
+                            <li>Enviarte actualizaciones sobre nuestros programas (solo si das tu consentimiento)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">3. Protección de Datos</h6>
+                        <p class="small">Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">4. Tus Derechos</h6>
+                        <p class="small">Tienes derecho a acceder, rectificar, eliminar u oponerte al procesamiento de tus datos personales. Puedes retirar tu consentimiento en cualquier momento.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">5. Contacto</h6>
+                        <p class="small">Si tienes preguntas sobre esta política de privacidad, contáctanos:</p>
+                        <ul class="small">
+                            <li><strong>Email:</strong> privacidad@huellafeliz.org</li>
+                            <li><strong>Teléfono:</strong> +51 952 225 506</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TÉRMINOS Y CONDICIONES -->
+    <div class="modal fade" id="modalTerminos" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-pink text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-file-text-fill me-2"></i>
+                        Términos y Condiciones
+                    </h5>
+                    <button type="button" class=" your-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="mb-4">
+                        <h6 class="text-danger">1. Aceptación de los Términos</h6>
+                        <p class="small">Al acceder y utilizar la plataforma de Huella Feliz, aceptas estar sujeto a estos términos y condiciones.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">2. Descripción del Servicio</h6>
+                        <p class="small">Huella Feliz es una plataforma sin fines de lucro que facilita adopción responsable, donaciones, reportes de animales y información sobre protección animal.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">3. Proceso de Adopción</h6>
+                        <p class="small"><strong>Requisitos:</strong> Ser mayor de 18 años, proporcionar información veraz, demostrar capacidad económica y comprometerse al cuidado responsable del animal.</p>
+                        <p class="small"><strong>Proceso:</strong> Completar formulario, entrevista, firma de contrato y entrega del animal.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">4. Donaciones</h6>
+                        <p class="small">Las donaciones son voluntarias y no reembolsables. Se utilizarán exclusivamente para el cuidado de animales y se proporcionarán recibos para donaciones económicas.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">5. Responsabilidades del Usuario</h6>
+                        <p class="small">Te comprometes a proporcionar información veraz, no utilizar la plataforma para actividades ilegales, respetar a otros usuarios y cumplir con las leyes locales sobre tenencia de animales.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">6. Limitación de Responsabilidad</h6>
+                        <p class="small">Huella Feliz no se hace responsable por el comportamiento de animales adoptados, daños a propiedad o gastos veterinarios posteriores a la adopción.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-danger">7. Contacto</h6>
+                        <p class="small">Para consultas sobre estos términos:</p>
+                        <ul class="small">
+                            <li><strong>Email:</strong> legal@huellafeliz.org</li>
+                            <li><strong>Teléfono:</strong> +51 952 225 506</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
+    
+    <!-- JavaScript para el carrusel del equipo -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.getElementById('equipoCarousel');
+            const descripcionEquipo = document.getElementById('descripcionEquipo');
+            
+            // Descripciones para cada miembro del equipo
+            const descripciones = [
+                "Nombre: Josías Omar Sandoval Sánchez<br>Edad: 19 años<br>Email: josias.sandoval@huellafeliz.org<br>Rol: Cuidado de animales<br>Estudios: Veterinaria básica<br>Número: +51 992 584 469",
+                
+                "Nombre: Doris Karelly García Inoñan<br>Edad: 20 años<br>Email: doris.garcia@huellafeliz.org<br>Rol: Desarrolladora de software<br>Estudios: Ingeniería de sistemas<br>Número: +51 930 472 644",
+                
+                "Nombre: Alessandro Dante Cabrera Altamirano<br>Edad: 21 años<br>Email: alessandro.cabrera@huellafeliz.org<br>Rol: Recepcionista y coordinador<br>Estudios: Administración<br>Número: +51 952 225 506"
+            ];
+            
+            // Función para actualizar la descripción
+            function actualizarDescripcion(index) {
+                descripcionEquipo.innerHTML = descripciones[index];
+            }
+            
+            // Evento cuando cambia el carrusel
+            carousel.addEventListener('slide.bs.carousel', function (event) {
+                const activeIndex = event.to;
+                actualizarDescripcion(activeIndex);
+            });
+            
+            // Inicializar con la primera descripción
+            actualizarDescripcion(0);
+        });
+    </script>
 </body>
 
 </html>
