@@ -66,7 +66,7 @@ router.post('/registro', [
 
         const hashedPassword = await bcrypt.hash(contrasenaUsuario, 10);
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, contrasenausual, numerousuario, direccionusuario, idrol)
+            INSERT INTO usuario(aliasusuario, correousuario, contrasenausuario, numerousuario, direccionusuario, idrol)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
         `, [aliasUsuario, correoNormalizado, hashedPassword, numUsuario, direccionUsuario, idRolCliente]);
 
@@ -113,7 +113,12 @@ router.post('/login', async (req, res) => {
         const user = userResult.rows[0];
         console.log('Usuario logeado:', user.aliasusuario, 'Rol:', user.idrol);
 
-        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.contrasenausual);
+        // Verificar si la contraseña existe en la base de datos
+        if (!user.contrasenausuario) {
+            return res.status(400).json({ message: 'Usuario no tiene contraseña configurada. Contacta al administrador.' });
+        }
+
+        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.contrasenausuario);
         if (!passwordMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
         const token = jwt.sign(

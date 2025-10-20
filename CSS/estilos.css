@@ -35,6 +35,306 @@ body{
   display: inline-block !important;
 }
 
+/* ===================================================
+   MENÚ HAMBURGUESA Y PERFIL DE USUARIO
+   =================================================== */
+
+/* Menú hamburguesa personalizado */
+.hamburger-menu {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.hamburger-menu:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.hamburger-icon {
+  width: 25px;
+  height: 3px;
+  background-color: #333;
+  margin: 5px 0;
+  transition: 0.3s;
+  border-radius: 2px;
+}
+
+/* Animación del hamburguesa */
+.hamburger-menu.active .hamburger-icon:nth-child(1) {
+  transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.hamburger-menu.active .hamburger-icon:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-icon:nth-child(3) {
+  transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Menú desplegable del usuario */
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  min-width: 250px;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.user-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Header del menú de usuario */
+.user-menu-header {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--pink), #ff6b9d);
+  color: white;
+  border-radius: 10px 10px 0 0;
+  text-align: center;
+}
+
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-role {
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 5px 0 0;
+}
+
+.user-info {
+  font-size: 11px;
+  opacity: 0.8;
+  margin: 3px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.user-info i {
+  font-size: 10px;
+}
+
+/* Items del menú */
+.user-menu-items {
+  padding: 10px 0;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.3s;
+  border-left: 3px solid transparent;
+}
+
+.user-menu-item:hover {
+  background-color: #f8f9fa;
+  border-left-color: var(--pink);
+  color: var(--pink);
+  text-decoration: none;
+}
+
+.user-menu-item i {
+  width: 20px;
+  margin-right: 12px;
+  text-align: center;
+}
+
+.user-menu-item.danger {
+  color: #dc3545;
+}
+
+.user-menu-item.danger:hover {
+  background-color: #fff5f5;
+  border-left-color: #dc3545;
+}
+
+.user-menu-divider {
+  height: 1px;
+  background-color: #e0e0e0;
+  margin: 8px 0;
+}
+
+/* Botón de perfil mejorado */
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background: linear-gradient(135deg, var(--pink), #ff6b9d);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  transition: all 0.3s;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 77, 136, 0.3);
+  color: white;
+}
+
+.profile-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* Alineación perfecta del navbar */
+.navbar {
+  padding: 0.5rem 0 !important;
+}
+
+.navbar-nav {
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.nav-item {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.nav-link {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px 15px !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+  transition: all 0.3s !important;
+  color: #333 !important;
+  font-weight: 500 !important;
+}
+
+.nav-link:hover {
+  color: var(--pink) !important;
+  background-color: rgba(255, 77, 136, 0.1) !important;
+}
+
+/* Botón personalizado para navbar */
+.btn-pink-custom {
+  background: linear-gradient(135deg, var(--pink), #ff6b9d) !important;
+  color: white !important;
+  border-radius: 25px !important;
+  padding: 8px 20px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s !important;
+  border: none !important;
+  text-decoration: none !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.btn-pink-custom:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(255, 77, 136, 0.3) !important;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+/* Botón de perfil personalizado */
+.profile-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 15px !important;
+  background: linear-gradient(135deg, var(--pink), #ff6b9d) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 25px !important;
+  transition: all 0.3s !important;
+  cursor: pointer !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  text-decoration: none !important;
+}
+
+.profile-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 5px 15px rgba(255, 77, 136, 0.3) !important;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .navbar-nav {
+    gap: 0.25rem !important;
+  }
+  
+  .nav-link {
+    padding: 8px 12px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+  
+  .btn-pink-custom {
+    padding: 6px 16px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+  
+  .profile-btn {
+    padding: 6px 12px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+  
+  .profile-avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .user-dropdown {
+    right: -50px;
+    min-width: 280px;
+  }
+}
+
 .btn-pink {
   background: var(--pink);
   color: white;

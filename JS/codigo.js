@@ -80,11 +80,11 @@ function hasRole(allowedRoleIds) {
     return allowedRoleIds.includes(currentUser.idRol);
 }
 
-// Verificar acceso al dashboard (solo Administrador y trabajador)
+// Verificar acceso al dashboard (solo Administrador)
 function checkDashboardAccess() {
-    const allowedRoleIds = [1, 2]; // 1=Administrador, 2=Trabajador
+    const allowedRoleIds = [1]; // 1=Administrador únicamente
     if (!hasRole(allowedRoleIds)) {
-        showMessage('Acceso denegado. Solo administradores y trabajadores pueden acceder al dashboard.', 'danger');
+        showMessage('Acceso denegado. Solo administradores pueden acceder al dashboard.', 'danger');
         setTimeout(() => {
             window.location.href = 'HUELLA FELIZ.html';
         }, 3000);
@@ -100,38 +100,223 @@ function updateAuthUI() {
 
     if (loginLink) {
         if (isAuthenticated()) {
-            loginLink.textContent = `Hola, ${currentUser.aliasUsuario}`;
+            // Crear el menú de usuario dinámicamente
+            const userMenuHtml = `
+                <div class="position-relative">
+                    <button class="profile-btn" onclick="showUserMenu(event)">
+                        <div class="profile-avatar">${getUserInitials(currentUser.aliasUsuario)}</div>
+                        <span>${currentUser.aliasUsuario}</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-menu-header">
+                            <div class="user-avatar">${getUserInitials(currentUser.aliasUsuario)}</div>
+                            <h6 class="user-name">${currentUser.aliasUsuario}</h6>
+                            <p class="user-role">${getRoleName(currentUser.idRol)}</p>
+                        </div>
+                        
+                        <div class="user-menu-items">
+                            <a href="#" class="user-menu-item" onclick="showEditProfileModal()">
+                                <i class="bi bi-person-gear"></i>
+                                Editar Perfil
+                            </a>
+                            <a href="#" class="user-menu-item" onclick="showMyAdoptions()">
+                                <i class="bi bi-heart"></i>
+                                Mis Adopciones
+                            </a>
+                            <a href="#" class="user-menu-item" onclick="showMyDonations()">
+                                <i class="bi bi-gift"></i>
+                                Mis Donaciones
+                            </a>
+                            
+                            ${hasRole([1]) ? `
+                                <div class="user-menu-divider"></div>
+                                <a href="dashboard.html" class="user-menu-item">
+                                    <i class="bi bi-speedometer2"></i>
+                                    Dashboard
+                                </a>
+                            ` : ''}
+                            
+                            <div class="user-menu-divider"></div>
+                            <a href="#" class="user-menu-item danger" onclick="logout()">
+                                <i class="bi bi-box-arrow-right"></i>
+                                Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            loginLink.innerHTML = userMenuHtml;
             loginLink.href = '#';
-            loginLink.onclick = showUserMenu;
+            loginLink.onclick = null;
         } else {
-            loginLink.textContent = 'Iniciar Sesión';
+            loginLink.innerHTML = 'Iniciar Sesión';
             loginLink.href = 'iniciarSesion.html';
             loginLink.onclick = null;
         }
     }
 
-    // Mostrar/ocultar dashboard según el rol
-    if (dashboardLink) {
-        // Mostrar dash solo para admin (1) o trabajador (2)
-        if (hasRole([1, 2])) {
-            dashboardLink.style.display = 'block';
-        } else {
-            dashboardLink.style.display = 'none';
-        }
-    }
+    // El dashboard ahora solo está disponible desde el menú de usuario
 }
 
 // Mostrar menú de usuario
 function showUserMenu(e) {
     e.preventDefault();
-    // Aquí podrías implementar un dropdown con opciones como:
-    // - Ver perfil
-    // - Mis adopciones
-    // - Mis donaciones
-    // - Cerrar sesión
-    if (confirm('¿Deseas cerrar sesión?')) {
-        logout();
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
     }
+}
+
+// Cerrar menú de usuario al hacer clic fuera
+function closeUserMenu() {
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) {
+        dropdown.classList.remove('show');
+    }
+}
+
+// Obtener iniciales del usuario para el avatar
+function getUserInitials(name) {
+    if (!name) return 'U';
+    const words = name.split(' ');
+    if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    return name[0].toUpperCase();
+}
+
+// Obtener nombre del rol
+function getRoleName(roleId) {
+    const roles = {
+        1: 'Administrador',
+        2: 'Adoptante', 
+        3: 'Donante'
+    };
+    return roles[roleId] || 'Usuario';
+}
+
+// Mostrar modal de edición de perfil
+function showEditProfileModal() {
+    // Recargar currentUser desde localStorage para asegurar datos actualizados
+    currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    if (!currentUser) return;
+    
+    // Crear modal dinámicamente
+    const modalHtml = `
+        <div class="modal fade" id="editProfileModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Editar Perfil</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editProfileForm">
+                            <div class="mb-3">
+                                <label class="form-label">Alias</label>
+                                <input type="text" class="form-control" id="editAlias" value="${currentUser.aliasUsuario || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Correo</label>
+                                <input type="email" class="form-control" id="editEmail" value="${currentUser.correoUsuario || ''}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Número de teléfono</label>
+                                <input type="tel" class="form-control" id="editPhone" value="${currentUser.numeroUsuario || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Dirección</label>
+                                <input type="text" class="form-control" id="editAddress" value="${currentUser.direccionUsuario || ''}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Nueva contraseña (opcional)</label>
+                                <input type="password" class="form-control" id="editPassword" placeholder="Dejar vacío para no cambiar">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-pink" onclick="saveProfile()">Guardar Cambios</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente si existe
+    const existingModal = document.getElementById('editProfileModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Agregar modal al body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+    
+    // Cerrar menú de usuario
+    closeUserMenu();
+}
+
+// Guardar cambios del perfil
+async function saveProfile() {
+    try {
+        const formData = {
+            aliasusuario: document.getElementById('editAlias').value,
+            correousuario: document.getElementById('editEmail').value,
+            numerousuario: document.getElementById('editPhone').value,
+            direccionusuario: document.getElementById('editAddress').value
+        };
+        
+        const newPassword = document.getElementById('editPassword').value;
+        if (newPassword) {
+            formData.claveusuario = newPassword;
+        }
+        
+        const response = await apiRequest(`/users/${currentUser.idUsuario}`, {
+            method: 'PUT',
+            body: JSON.stringify(formData)
+        });
+        
+        showMessage('Perfil actualizado exitosamente', 'success');
+        
+        // Actualizar usuario actual con los nombres correctos
+        currentUser.aliasUsuario = formData.aliasusuario;
+        currentUser.correoUsuario = formData.correousuario;
+        currentUser.numeroUsuario = formData.numerousuario;
+        currentUser.direccionUsuario = formData.direccionusuario;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        // Actualizar UI
+        updateAuthUI();
+        
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+        modal.hide();
+        
+    } catch (error) {
+        console.error('Error actualizando perfil:', error);
+        showMessage('Error al actualizar el perfil', 'danger');
+    }
+}
+
+// Mostrar mis adopciones
+function showMyAdoptions() {
+    closeUserMenu();
+    // Aquí podrías implementar la lógica para mostrar las adopciones del usuario
+    showMessage('Funcionalidad de "Mis Adopciones" próximamente', 'info');
+}
+
+// Mostrar mis donaciones
+function showMyDonations() {
+    closeUserMenu();
+    // Aquí podrías implementar la lógica para mostrar las donaciones del usuario
+    showMessage('Funcionalidad de "Mis Donaciones" próximamente', 'info');
 }
 
 // Cerrar sesión
@@ -186,7 +371,9 @@ async function handleLogin(email, password) {
             idUsuario: u.idusuario || u.idUsuario,
             aliasUsuario: u.aliasusuario || u.aliasUsuario,
             idRol: Number(u.idrol), // ahora usamos idRol directamente
-            correoUsuario: u.correousuario || u.correoUsuario
+            correoUsuario: u.correousuario || u.correoUsuario,
+            numeroUsuario: u.numerousuario || u.numeroUsuario,
+            direccionUsuario: u.direccionusuario || u.direccionUsuario
         };
 
         localStorage.setItem('authToken', authToken);
@@ -607,6 +794,16 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Cerrar menú de usuario al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('userDropdown');
+        const profileBtn = event.target.closest('.profile-btn');
+        
+        if (dropdown && !dropdown.contains(event.target) && !profileBtn) {
+            dropdown.classList.remove('show');
+        }
+    });
 
     // Página específica: Adopciones
     if (window.location.pathname.includes('adopciones')) {

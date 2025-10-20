@@ -16,18 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Toggle contraseña
-    const togglePassword = document.getElementById("togglePassword");
-    const password = document.getElementById("password");
-    togglePassword.addEventListener("click", () => {
-        if (password.type === "password") {
-            password.type = "text";
-            togglePassword.innerHTML = '<i class="bi bi-eye-slash"></i>';
-        } else {
-            password.type = "password";
-            togglePassword.innerHTML = '<i class="bi bi-eye"></i>';
-        }
-    });
+    // Toggle contraseña (esto se maneja ahora en el HTML con el script inline)
 
     // Validación y envío del formulario
     const formRegistro = document.getElementById("registroForm");
@@ -99,9 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     text: 'Usuario registrado correctamente',
                     confirmButtonText: 'Aceptar'
                 }).then(() => {
-                    formRegistro.reset();
-                    camposPersona.classList.remove("d-none");
-                    camposEmpresa.classList.add("d-none");
+                    // Redirigir a iniciar sesión
+                    window.location.href = 'iniciarSesion.html';
                 });
             } else {
                 Swal.fire('Error', data.message || 'Datos inválidos', 'error');

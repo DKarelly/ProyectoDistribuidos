@@ -36,11 +36,9 @@
                     <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
                     <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
 
-                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
-                            Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
-                    <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aqui</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a></li>
                 </ul>
             </div>
         </div>
@@ -86,9 +84,6 @@
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                 <input type="password" id="password" name="contrasenaUsuario" class="form-control"
                                     placeholder="Crea una contraseña" required>
-                                <button class="btn btn-toggle-pass" type="button" id="togglePassword">
-                                    <i class="bi bi-eye"></i>
-                                </button>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
@@ -97,6 +92,9 @@
                                 <span class="input-group-text"><i class="bi bi-lock-check"></i></span>
                                 <input type="password" id="password2" name="password2" class="form-control"
                                     placeholder="Confirmar la contraseña" required>
+                                <button class="btn btn-toggle-pass" type="button" id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -411,6 +409,57 @@
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
     <script src="JS/registrar.js"></script>
+    
+    <!-- Script para mostrar/ocultar contraseñas -->
+    <script>
+        // Script directo sin conflictos
+        setTimeout(function() {
+            console.log('=== INICIANDO SCRIPT DE CONTRASEÑAS ===');
+            
+            const passwordInput = document.getElementById('password');
+            const password2Input = document.getElementById('password2');
+            const toggleBtn = document.getElementById('togglePassword');
+            
+            console.log('Elementos:', passwordInput, password2Input, toggleBtn);
+            
+            if (passwordInput && password2Input && toggleBtn) {
+                const icon = toggleBtn.querySelector('i');
+                
+                // Remover cualquier event listener existente
+                toggleBtn.onclick = null;
+                
+                // Función simple para toggle
+                function toggleBothPasswords() {
+                    console.log('=== TOGGLE EJECUTADO ===');
+                    
+                    // Forzar el cambio sin importar el estado actual
+                    if (passwordInput.type === 'password') {
+                        passwordInput.setAttribute('type', 'text');
+                        password2Input.setAttribute('type', 'text');
+                        if (icon) icon.setAttribute('class', 'bi bi-eye-slash');
+                        console.log('🔓 CONTRASEÑAS MOSTRADAS');
+                    } else {
+                        passwordInput.setAttribute('type', 'password');
+                        password2Input.setAttribute('type', 'password');
+                        if (icon) icon.setAttribute('class', 'bi bi-eye');
+                        console.log('🔒 CONTRASEÑAS OCULTAS');
+                    }
+                }
+                
+                // Event listener directo
+                toggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    console.log('CLICK EN BOTÓN');
+                    toggleBothPasswords();
+                }, true);
+                
+                console.log('✅ BOTÓN CONFIGURADO');
+            } else {
+                console.error('❌ ELEMENTOS NO ENCONTRADOS');
+            }
+        }, 1000);
+    </script>
 </body>
 
 </html>

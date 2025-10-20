@@ -38,10 +38,9 @@
                     <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
 
                     <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
-                            Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
-                    <li class="nav-item"><a class="btn btn-pink ms-2" href="adopciones.html">Adopta aqui</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a></li>
                 </ul>
             </div>
         </div>
@@ -547,6 +546,15 @@
     <script src="JS/paraVerModificarUsuario.js"></script>
     <script src="JS/codigo.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Verificar acceso al dashboard cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!checkDashboardAccess()) {
+                return; // Si no tiene acceso, la función ya redirige
+            }
+            updateAuthUI();
+        });
+    </script>
 
 </body>
 
