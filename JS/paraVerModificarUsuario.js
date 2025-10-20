@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <td>${u.idusuario}</td>
                 <td>${u.aliasusuario}</td>
                 <td>${u.correousuario}</td>
-                <td>${u.numusuario || "-"}</td>
+                <td>${u.numerousuario || "-"}</td>
                 <td>${u.direccionusuario || "-"}</td>
                 <td>${u.rolusuario}</td>
                 <td>
@@ -216,7 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             form.querySelector('#idEditar').readOnly = true;
             form.querySelector('input[placeholder="Ingresar alias"]').value = usuario.aliasusuario || "";
             form.querySelector('input[placeholder="Ingresar correo"]').value = usuario.correousuario || "";
-            form.querySelector('input[placeholder="Ingresar teléfono"]').value = usuario.numusuario || "";
+            form.querySelector('input[placeholder="Ingresar teléfono"]').value = usuario.numerousuario || "";
             form.querySelector('input[placeholder="Ingresar dirección"]').value = usuario.direccionusuario || "";
             form.querySelector('#selectRolEditar').value = usuario.idrol || "";
 
@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const payload = {
                     aliasusuario: form.querySelector('input[placeholder="Ingresar alias"]').value.trim(),
                     correousuario: form.querySelector('input[placeholder="Ingresar correo"]').value.trim(),
-                    numusuario: form.querySelector('input[placeholder="Ingresar teléfono"]').value.trim(),
+                    numerousuario: form.querySelector('input[placeholder="Ingresar teléfono"]').value.trim(),
                     direccionusuario: form.querySelector('input[placeholder="Ingresar dirección"]').value.trim(),
                     idrol: form.querySelector('#selectRolEditar').value,
                     persona: persona ? {
@@ -374,7 +374,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const correousuario = document.getElementById("correoRegistrar").value.trim();
         const claveusuario = document.getElementById("claveRegistrar").value.trim();
         const confirmarClave = document.getElementById("confirmarClaveRegistrar").value.trim();
-        const numusuario = document.getElementById("telefonoRegistrar").value.trim();
+        const numerousuario = document.getElementById("telefonoRegistrar").value.trim();
         const direccionusuario = document.getElementById("direccionRegistrar").value.trim();
         const idrol = document.getElementById("selectRolRegistrar").value;
 
@@ -409,7 +409,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 aliasusuario,
                 correousuario,
                 claveusuario,
-                numusuario,
+                numerousuario,
                 direccionusuario,
                 idrol,
                 tipoPersona,

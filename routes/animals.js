@@ -85,7 +85,7 @@ router.get('/:id', async (req, res) => {
 
         const animal = animalResult.rows[0];
         const historialResult = await query(`
-            SELECT idhistorial, pesohistorial, fechahistorial, horahistorial, descripcionhisto
+            SELECT idhistorial, pesohistorial, fechahistorial, horahistorial, descripcionhistorial, nombreveterinario
             FROM historial_animal
             WHERE idanimal = $1
             ORDER BY fechahistorial DESC, horahistorial DESC
@@ -167,7 +167,7 @@ router.post('/agregar', upload.single('imagenAnimal'), async (req, res) => {
         const idAnimal = animalResult.rows[0].idanimal;
 
         const historialResult = await query(`
-            INSERT INTO historial_animal (idanimal, pesohistorial, fechahistorial, horahistorial, descripcionhisto)
+            INSERT INTO historial_animal (idanimal, pesohistorial, fechahistorial, horahistorial, descripcionhistorial)
             VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3) RETURNING idhistorial
         `, [idAnimal, peso ? parseFloat(peso) : null, descripcion || 'Registro inicial del animal']);
 
@@ -178,6 +178,81 @@ router.post('/agregar', upload.single('imagenAnimal'), async (req, res) => {
     } catch (error) {
         console.error('Error agregando animal:', error);
         if (req.file) fs.unlinkSync(req.file.path);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/animals/filtros/opciones
+router.get('/filtros/opciones', async (req, res) => {
+    try {
+        // Obtener especies únicas
+        const especiesResult = await query(`
+            SELECT DISTINCT e.especieanimal 
+            FROM especie e 
+            JOIN raza r ON e.idespecie = r.idespecie 
+            JOIN animal a ON r.idraza = a.idraza 
+            WHERE a.idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+            ORDER BY e.especieanimal
+        `);
+
+        // Obtener pelajes únicos
+        const pelajesResult = await query(`
+            SELECT DISTINCT pelaje 
+            FROM animal 
+            WHERE pelaje IS NOT NULL AND pelaje != '' 
+            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+            ORDER BY pelaje
+        `);
+
+        // Obtener tamaños únicos
+        const tamañosResult = await query(`
+            SELECT DISTINCT tamaño 
+            FROM animal 
+            WHERE tamaño IS NOT NULL AND tamaño != '' 
+            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+            ORDER BY tamaño
+        `);
+
+        // Obtener géneros únicos
+        const generosResult = await query(`
+            SELECT DISTINCT generoanimal 
+            FROM animal 
+            WHERE generoanimal IS NOT NULL AND generoanimal != '' 
+            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+            ORDER BY generoanimal
+        `);
+
+        // Obtener edades únicas (agrupadas por rangos)
+        const edadesResult = await query(`
+            SELECT DISTINCT 
+                CASE 
+                    WHEN edadmesesanimal <= 6 THEN '0-6 meses'
+                    WHEN edadmesesanimal <= 12 THEN '7-12 meses'
+                    WHEN edadmesesanimal <= 24 THEN '1-2 años'
+                    WHEN edadmesesanimal <= 60 THEN '3-5 años'
+                    ELSE '5+ años'
+                END as rango_edad
+            FROM animal 
+            WHERE edadmesesanimal IS NOT NULL 
+            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+            ORDER BY rango_edad
+        `);
+
+        const opciones = {
+            especies: especiesResult.rows.map(row => row.especieanimal),
+            pelajes: pelajesResult.rows.map(row => row.pelaje),
+            tamaños: tamañosResult.rows.map(row => row.tamaño),
+            generos: generosResult.rows.map(row => row.generoanimal),
+            edades: edadesResult.rows.map(row => row.rango_edad)
+        };
+
+        res.json({
+            message: 'Opciones de filtros obtenidas exitosamente',
+            data: opciones
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo opciones de filtros:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });

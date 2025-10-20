@@ -140,7 +140,7 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
 
         // Insertar usuario
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, contrasenausual, numerousuario, direccionusuario, idrol)
+            INSERT INTO usuario(aliasusuario, correousuario, contrasenausuario, numerousuario, direccionusuario, idrol)
             VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
         `, [aliasusuario, correousuario, hashedPassword, numerousuario, direccionusuario, idrol]);
 
@@ -188,14 +188,14 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
         const usuarioActual = resultUser.rows[0];
 
-        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.contrasenausual;
+        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.contrasenausuario;
 
         // Actualizar usuario
         const updatedUser = await client.query(`
             UPDATE usuario
             SET aliasusuario = COALESCE($2, aliasusuario),
                 correousuario = COALESCE($3, correousuario),
-                contrasenausual = $4,
+                contrasenausuario = $4,
                 numerousuario = COALESCE($5, numerousuario),
                 direccionusuario = COALESCE($6, direccionusuario),
                 idrol = COALESCE($7, idrol)
