@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adopciones</title>
+    <title>Huella Feliz</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="files/casitaicon.png">
     <link rel="shortcut icon" type="image/png" href="files/casitaicon.png">
@@ -15,35 +15,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="CSS/estilos.css">
-    <style>
-        /* HERO con fondo */
-        .hero {
-            background: url("files/adopciones_1.jpeg") center/cover no-repeat;
-            min-height: 60vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            position: relative;
-        }
-
-        .hero::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
-            /* oscurece */
-        }
-
-        .hero .container {
-            position: relative;
-            z-index: 1;
-        }
-    </style>
 </head>
 
 <body>
@@ -65,7 +36,6 @@
                     <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
                     <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
                     <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
-
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
                     <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a>
@@ -76,145 +46,92 @@
     </nav>
 
 
-    <!-- HERO -->
-    <header class="hero">
+    <!-- Hero -->
+    <section class="hero blog-huella-feliz text-center text-white d-flex align-items-center justify-content-center"
+        style="background: url('https://placehold.co/1600x600?text=Hero+Image') center/cover no-repeat;">
         <div class="container">
-            <h1 class="fw-bold">AYÚDANOS A AYUDAR <br> ADOPTAR</h1>
-            <a href="#" class="btn btn-pink mt-3">Ir ahora</a>
-        </div>
-    </header>
-
-    <!-- SECCIÓN ADOPCIONES -->
-    <section class="py-5 contacto">
-        <div class="container">
-            <!-- Título + linea decorativa -->
-            <h2 class="fw-bold mb-1 text-center section-title">Encuentra a tu Nuevo Mejor Amigo</h2>
-            <p class="text-muted mb-3 text-center">Adopta y cambia una vida para siempre</p>
-
-            <!-- FILTROS (sticky) -->
-            <div class="filters-wrap mx-auto mb-4">
-                <div class="row g-2 align-items-center">
-                    <div class="col-6 col-sm">
-                        <select class="form-select form-select-sm" data-filter="especie">
-                            <option value="">Especie</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm">
-                        <select class="form-select form-select-sm" data-filter="pelaje">
-                            <option value="">Pelaje</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm">
-                        <select class="form-select form-select-sm" data-filter="edad">
-                            <option value="">Edad</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm">
-                        <select class="form-select form-select-sm" data-filter="genero">
-                            <option value="">Sexo</option>
-                        </select>
-                    </div>
-                    <div class="col-6 col-sm">
-                        <select class="form-select form-select-sm" data-filter="tamaño">
-                            <option value="">Tamaño</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CARDS: 5 columnas en escritorio -->
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
-                <!-- Repite estas columnas las veces que necesites -->
-                <div class="col">
-                    <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
-                    </div>
-                </div>
-
-                <div class="col">
-                    <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
-                    </div>
-                </div>
-
-                <div class="col">
-                    <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
-                    </div>
-                </div>
-
-                <div class="col">
-                    <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
-                    </div>
-                </div>
-
-                <div class="col">
-                    <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
-                    </div>
-                </div>
-
-                <!-- añade más .col según necesites filas -->
-            </div>
+            <h1 class="display-5 fw-bold">CONOCE UN POCO DE HISTORIAS DE PATITAS</h1>
         </div>
     </section>
 
-
-    <!-- HISTORIAL DE ADOPCIONES -->
-    <section class="py-5">
+    <!-- Blog Section -->
+    <section class="py-5 blog-huella-feliz">
         <div class="container text-center">
-            <h2 class="fw-bold mb-4 section-title">Historial de adopciones</h2>
-            <div id="historialAdopcionesCarousel" class="carousel slide" data-bs-ride="carousel"
-                data-bs-interval="2000">
-                <div class="carousel-inner">
+            <h2 class="fw-bold text-dark">BLOG HUELLA FELIZ</h2>
+            <div class="underline mx-auto my-3"></div>
 
-                    <!-- Slide 1 -->
-                    <div class="carousel-item active">
-                        <div class="row justify-content-center align-items-center">
-                            <div class="col-md-4">
-                                <img src="files/adoptado_1.png" class="d-block w-100 rounded" alt="Panchito">
+            <div class="row g-4 justify-content-center mt-4">
+                <!-- Tarjeta con carrusel -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card card-historia shadow-sm mx-auto">
+                        <div id="carousel1" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <img src="https://placehold.co/400x300?text=Panchito+1"
+                                        class="d-block w-100 rounded-top" alt="Panchito">
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="https://placehold.co/400x300?text=Panchito+2"
+                                        class="d-block w-100 rounded-top" alt="Panchito">
+                                </div>
                             </div>
-                            <div class="col-md-6 text-start">
-                                <h3 class="animal-name">PANCHITO</h3>
-                                <p class="adopcion-fecha">Adoptado: 12/03/2025</p>
-                                <p>Ahora tiene un hogar lleno de amor y disfruta de sus paseos diarios.</p>
-                                <a href="#" class="btn btn-pink">Ver más</a>
-                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel1"
+                                data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel1"
+                                data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">PANCHITO</h5>
+                            <a href="#" class="btn btn-pink">Ver historia</a>
                         </div>
                     </div>
-
-                    <!-- Slide 2 -->
-                    <div class="carousel-item">
-                        <div class="row justify-content-center align-items-center">
-                            <div class="col-md-4">
-                                <img src="files/adoptado_2.jpeg" class="d-block w-100 rounded" alt="Luna">
-                            </div>
-                            <div class="col-md-6 text-start">
-                                <h3 class="animal-name">LUNA</h3>
-                                <p class="adopcion-fecha">Adoptado: 25/06/2025</p>
-                                <p>Ahora tiene un hogar lleno de amor y disfruta de sus paseos diarios.</p>
-                                <a href="#" class="btn btn-pink">Ver más</a>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Controles -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#historialAdopcionesCarousel"
-                    data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#historialAdopcionesCarousel"
-                    data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
+                <!-- Puedes duplicar esta tarjeta cambiando el ID del carrusel -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="card card-historia shadow-sm mx-auto">
+                        <div id="carousel2" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                <div class="carousel-item active">
+                                    <img src="https://placehold.co/400x300?text=Panchito+1"
+                                        class="d-block w-100 rounded-top" alt="Panchito">
+                                </div>
+                                <div class="carousel-item">
+                                    <img src="https://placehold.co/400x300?text=Panchito+2"
+                                        class="d-block w-100 rounded-top" alt="Panchito">
+                                </div>
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel2"
+                                data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carousel2"
+                                data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">PANCHITO</h5>
+                            <a href="#" class="btn btn-pink">Ver historia</a>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- Paginación -->
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled"><a class="page-link" href="#">«</a></li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">»</a></li>
+                </ul>
+            </nav>
         </div>
     </section>
-
-
 
     <footer class="py-5 bg-pink text-white">
         <div class="container">
@@ -402,10 +319,101 @@
         </div>
     </div>
 
+    <!-- ========== MODAL 1: Detalle del animal ========== -->
+    <div class="modal fade" id="modalDetalleAnimal" tabindex="-1" aria-labelledby="detalleAnimalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-0 bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="detalleAnimalLabel">Panchito</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-5 text-center">
+                            <img src="https://via.placeholder.com/300x300?text=Panchito"
+                                class="img-fluid rounded-4 shadow-sm" alt="Panchito">
+                        </div>
+                        <div class="col-md-7">
+                            <form id="formDetalleAnimal">
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <label class="form-label fw-semibold">Edad en Meses</label>
+                                        <input type="text" class="form-control" placeholder="2">
+                                    </div>
+                                    <div class="col">
+                                        <label class="form-label fw-semibold">Género</label>
+                                        <input type="text" class="form-control" placeholder="Macho">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Especie</label>
+                                    <input type="text" class="form-control" placeholder="Perro">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Enfermedad</label>
+                                    <textarea class="form-control" rows="2" placeholder="Sin enfermedad"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Gravedad</label>
+                                    <input type="text" class="form-control" placeholder="Leve">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold">Medicinas</label>
+                                    <textarea class="form-control" rows="2" placeholder="Ninguna"></textarea>
+                                </div>
+
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-pink" data-bs-toggle="modal"
+                                        data-bs-target="#modalConfirmarApadrinar" data-animal="Panchito">
+                                        Apadrinar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-0 text-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MODAL 2: Confirmar apadrinamiento ========== -->
+    <div class="modal fade" id="modalConfirmarApadrinar" tabindex="-1" aria-labelledby="confirmarApadrinarLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold text-dark" id="confirmarApadrinarLabel">Confirmar apadrinamiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p class="fs-5">¿Confirmar el apadrinamiento del animal: <strong
+                            id="nombreAnimalConfirmacion"></strong>?</p>
+                </div>
+
+                <div class="modal-footer justify-content-center border-0 pb-4">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">No</button>
+                    <button type="button" class="btn btn-pink px-4" id="confirmarApadrinarBtn">Sí</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
+    <script src="JS/blog.js"></script>
 </body>
 
 </html>
