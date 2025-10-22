@@ -1,0 +1,203 @@
+-- ============================================
+-- BASE DE DATOS: Huella Feliz (PostgreSQL)
+-- Estructura limpia sin acciones en cascada
+-- ============================================
+
+-- ======================
+-- TABLA: ROL_USUARIO
+-- ======================
+CREATE TABLE rol_usuario (
+    idRol SERIAL PRIMARY KEY,
+    rolUsuario VARCHAR(30) NOT NULL
+);
+
+-- ======================
+-- TABLA: USUARIO
+-- ======================
+CREATE TABLE usuario (
+    idUsuario SERIAL PRIMARY KEY,
+    aliasUsuario VARCHAR(30),
+    correoUsuario VARCHAR(50),
+    claveUsuario VARCHAR(30) NOT NULL,
+    numeroUsuario VARCHAR(8),
+    direccionUsuario VARCHAR(50),
+    idRol INT REFERENCES rol_usuario(idRol)
+);
+
+-- ======================
+-- TABLA: PERSONA
+-- ======================
+CREATE TABLE persona (
+    idPersona SERIAL PRIMARY KEY,
+    nombres VARCHAR(30) NOT NULL,
+    apePaterno VARCHAR(30) NOT NULL,
+    apeMaterno VARCHAR(30) NOT NULL,
+    dni CHAR(8) UNIQUE NOT NULL,
+    sexo CHAR(1),
+    idUsuario INT REFERENCES usuario(idUsuario)
+);
+
+-- ======================
+-- TABLA: EMPRESA
+-- ======================
+CREATE TABLE empresa (
+    idEmpresa SERIAL PRIMARY KEY,
+    nombreEmpresa VARCHAR(50) NOT NULL,
+    tipoPersona VARCHAR(30),
+    ruc CHAR(20) UNIQUE NOT NULL,
+    f_creacion DATE,
+    idUsuario INT REFERENCES usuario(idUsuario)
+);
+
+-- ======================
+-- TABLA: ESPECIE
+-- ======================
+CREATE TABLE especie (
+    idEspecie SERIAL PRIMARY KEY,
+    especieAnimal VARCHAR(30) NOT NULL
+);
+
+-- ======================
+-- TABLA: RAZA
+-- ======================
+CREATE TABLE raza (
+    idRaza SERIAL PRIMARY KEY,
+    razaAnimal VARCHAR(30) NOT NULL,
+    idEspecie INT REFERENCES especie(idEspecie)
+);
+
+-- ======================
+-- TABLA: ANIMAL
+-- ======================
+CREATE TABLE animal (
+    idAnimal SERIAL PRIMARY KEY,
+    nombreAnimal VARCHAR(50) NOT NULL,
+    edadMesesAnimal INT,
+    generoAnimal CHAR(1),
+    pesoAnimal DECIMAL(5,2),
+    pelaje VARCHAR(30),
+    tamaño VARCHAR(20),
+    idRaza INT REFERENCES raza(idRaza)
+);
+
+-- ======================
+-- TABLA: GALERIA
+-- ======================
+CREATE TABLE galeria (
+    idGaleria SERIAL PRIMARY KEY,
+    imagen VARCHAR(200),
+    video VARCHAR(255),
+    idAnimal INT REFERENCES animal(idAnimal)
+);
+
+-- ======================
+-- TABLA: HISTORIAL_ANIMAL
+-- ======================
+CREATE TABLE historial_animal (
+    idHistorial SERIAL PRIMARY KEY,
+    pesoHistorial INT,
+    f_historial DATE,
+    h_historial TIME,
+    descripcionHistorial VARCHAR(255),
+    nombVeterinario VARCHAR(150),
+    idAnimal INT REFERENCES animal(idAnimal)
+);
+
+-- ======================
+-- TABLA: ENFERMEDAD
+-- ======================
+CREATE TABLE enfermedad (
+    idEnfermedad SERIAL PRIMARY KEY,
+    nombEnfermedad VARCHAR(50) NOT NULL,
+    tipoEnfermedad VARCHAR(50)
+);
+
+-- ======================
+-- TABLA: DETALLE_ENFERMEDAD
+-- ======================
+CREATE TABLE detalle_enfermedad (
+    idDetalleEnfermedad SERIAL PRIMARY KEY,
+    idHistorial INT REFERENCES historial_animal(idHistorial),
+    idEnfermedad INT REFERENCES enfermedad(idEnfermedad),
+	medicinas varchar(500),
+    gravedadEnfermedad VARCHAR(10),
+    estadoEnfermedad VARCHAR(30)
+);
+
+-- ======================
+-- TABLA: CASO_ANIMAL
+-- ======================
+CREATE TABLE caso_animal (
+    idCaso SERIAL PRIMARY KEY,
+    tipoCaso VARCHAR(50),
+    descripcionCompleta VARCHAR(255),
+    direccion VARCHAR(255),
+    f_entrada DATE,
+    idAnimal INT REFERENCES animal(idAnimal),
+    idUsuario INT REFERENCES usuario(idUsuario)
+);
+
+-- ======================
+-- TABLA: ADOPCION
+-- ======================
+CREATE TABLE adopcion (
+    idAdopcion SERIAL PRIMARY KEY,
+    f_Adopcion DATE,
+    contrato VARCHAR(255),
+    condiciones VARCHAR(255),
+    estadoAdopcion VARCHAR(30),
+    direccionAdoptante VARCHAR(150),
+    idAnimal INT REFERENCES animal(idAnimal),
+    idPersona INT REFERENCES persona(idPersona),
+    idEntregante INT REFERENCES usuario(idUsuario)
+);
+
+-- ======================
+-- TABLA: DONACION
+-- ======================
+CREATE TABLE donacion (
+    idDonacion SERIAL PRIMARY KEY,
+    f_donacion DATE,
+    h_donacion TIME,
+    idUsuario INT REFERENCES usuario(idUsuario)
+);
+
+-- ======================
+-- TABLA: CATEGORIA_DONACION
+-- ======================
+CREATE TABLE categoria_donacion (
+    idCategoria SERIAL PRIMARY KEY,
+    nombCategoria VARCHAR(30) NOT NULL
+);
+
+-- ======================
+-- TABLA: DETALLE_DONACION
+-- ======================
+CREATE TABLE detalle_donacion (
+    idDetalleDonacion SERIAL PRIMARY KEY,
+    cantidadDonacion DECIMAL(5,2) CHECK (cantidadDonacion > 0),
+    detalleDonacion VARCHAR(150),
+    idDonacion INT REFERENCES donacion(idDonacion),
+    idCategoria INT REFERENCES categoria_donacion(idCategoria)
+);
+
+-- ======================
+-- TABLA: DONACION_GENERAL
+-- ======================
+CREATE TABLE donacion_general (
+    idGeneral SERIAL PRIMARY KEY,
+    proposito VARCHAR(255),
+    notaDonante VARCHAR(255),
+    idDonacion INT REFERENCES donacion(idDonacion)
+);
+
+-- ======================
+-- TABLA: APADRINAMIENTO
+-- ======================
+CREATE TABLE apadrinamiento (
+    idApadrinamiento SERIAL PRIMARY KEY,
+    f_inicio DATE,
+    frecuencia VARCHAR(20),
+    idDonacion INT REFERENCES donacion(idDonacion),
+    idAnimal INT REFERENCES animal(idAnimal)
+);

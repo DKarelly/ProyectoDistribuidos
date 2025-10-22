@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Huella Feliz</title>
+    <title>Blog - Huella Feliz</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="files/casitaicon.png">
     <link rel="shortcut icon" type="image/png" href="files/casitaicon.png">
@@ -45,10 +45,9 @@
         </div>
     </nav>
 
-
     <!-- Hero -->
     <section class="hero blog-huella-feliz text-center text-white d-flex align-items-center justify-content-center"
-        style="background: url('https://placehold.co/1600x600?text=Hero+Image') center/cover no-repeat;">
+        style="background: url('files/imagenParaBlog.jpg') center/cover no-repeat;">
         <div class="container">
             <h1 class="display-5 fw-bold">CONOCE UN POCO DE HISTORIAS DE PATITAS</h1>
         </div>
@@ -60,67 +59,8 @@
             <h2 class="fw-bold text-dark">BLOG HUELLA FELIZ</h2>
             <div class="underline mx-auto my-3"></div>
 
-            <div class="row g-4 justify-content-center mt-4">
-                <!-- Tarjeta con carrusel -->
-                <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-historia shadow-sm mx-auto">
-                        <div id="carousel1" class="carousel slide" data-bs-ride="carousel">
-                            <div class="carousel-inner">
-                                <div class="carousel-item active">
-                                    <img src="https://placehold.co/400x300?text=Panchito+1"
-                                        class="d-block w-100 rounded-top" alt="Panchito">
-                                </div>
-                                <div class="carousel-item">
-                                    <img src="https://placehold.co/400x300?text=Panchito+2"
-                                        class="d-block w-100 rounded-top" alt="Panchito">
-                                </div>
-                            </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel1"
-                                data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carousel1"
-                                data-bs-slide="next">
-                                <span class="carousel-control-next-icon"></span>
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">PANCHITO</h5>
-                            <a href="#" class="btn btn-pink">Ver historia</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Puedes duplicar esta tarjeta cambiando el ID del carrusel -->
-                <div class="col-12 col-sm-6 col-lg-4">
-                    <div class="card card-historia shadow-sm mx-auto">
-                        <div id="carousel2" class="carousel slide" data-bs-ride="carousel">
-                            <div class="carousel-inner">
-                                <div class="carousel-item active">
-                                    <img src="https://placehold.co/400x300?text=Panchito+1"
-                                        class="d-block w-100 rounded-top" alt="Panchito">
-                                </div>
-                                <div class="carousel-item">
-                                    <img src="https://placehold.co/400x300?text=Panchito+2"
-                                        class="d-block w-100 rounded-top" alt="Panchito">
-                                </div>
-                            </div>
-                            <button class="carousel-control-prev" type="button" data-bs-target="#carousel2"
-                                data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon"></span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#carousel2"
-                                data-bs-slide="next">
-                                <span class="carousel-control-next-icon"></span>
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title">PANCHITO</h5>
-                            <a href="#" class="btn btn-pink">Ver historia</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Aquí se cargan dinámicamente los animales -->
+            <div class="row g-4 justify-content-center mt-4" id="contenedorAnimales"></div>
 
             <!-- Paginación -->
             <nav class="mt-5">
@@ -369,8 +309,7 @@
                                 </div>
 
                                 <div class="text-center">
-                                    <button type="button" class="btn btn-pink" data-bs-toggle="modal"
-                                        data-bs-target="#modalConfirmarApadrinar" data-animal="Panchito">
+                                    <button type="button" class="btn btn-pink" onclick="confirmarApadrinar(this)">
                                         Apadrinar
                                     </button>
                                 </div>
