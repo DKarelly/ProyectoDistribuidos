@@ -1059,3 +1059,80 @@ section img:hover {
     height: 80px;
   }
 }
+
+
+/* ===================================================== */
+/* PARA EL BLOG*/ 
+/* ===================================================== */
+/* Paleta específica para Blog Huella Feliz */
+:root {
+  --pink: #ff4d88;
+}
+
+/* General */
+.text-pink {
+  color: var(--pink) !important;
+}
+
+.btn-pink {
+  background: var(--pink);
+  color: #fff;
+  border: none;
+  transition: 0.3s;
+}
+
+.btn-pink:hover {
+  background: #ff6699;
+}
+
+/* Hero */
+.blog-huella-feliz .hero {
+  min-height: 60vh;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Sección principal */
+.blog-huella-feliz {
+  background-color: var(--light-pink);
+}
+
+.blog-huella-feliz .underline {
+  width: 60px;
+  height: 3px;
+  background-color: var(--pink);
+}
+
+/* Tarjetas */
+.card-historia {
+  border: none;
+  border-radius: 15px;
+  overflow: hidden;
+  background-color: white;
+  transition: transform 0.3s;
+}
+
+.card-historia:hover {
+  transform: translateY(-5px);
+}
+
+.card-historia .card-title {
+  color: #333;
+  font-weight: bold;
+}
+
+/* Paginación */
+.pagination .page-link {
+  color: var(--pink);
+  border-color: var(--pink);
+}
+.pagination .page-item.active .page-link {
+  background-color: var(--pink);
+  border-color: var(--pink);
+  color: #fff;
+}
+.pagination .page-link:hover {
+  background-color: var(--light-pink);
+  border-color: var(--pink);
+  color: var(--pink);
+}
