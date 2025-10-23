@@ -85,10 +85,13 @@ router.get('/:id', async (req, res) => {
 
         const animal = animalResult.rows[0];
         const historialResult = await query(`
-            SELECT idhistorial, pesohistorial, fechahistorial, horahistorial, descripcionhistorial, nombreveterinario
-            FROM historial_animal
-            WHERE idanimal = $1
-            ORDER BY fechahistorial DESC, horahistorial DESC
+            SELECT h.idhistorial, h.pesohistorial, h.f_historial, h.h_historial, h.descripcionhistorial, h.nombveterinario,
+                   e.nombenfermedad, d.gravedadenfermedad, d.medicinas
+            FROM historial_animal h
+            LEFT JOIN detalle_enfermedad d ON h.idhistorial = d.idhistorial
+            LEFT JOIN enfermedad e ON d.idenfermedad = e.idenfermedad
+            WHERE h.idanimal = $1
+            ORDER BY h.f_historial DESC, h.h_historial DESC
         `, [id]);
 
         animal.historial = historialResult.rows;
@@ -182,58 +185,60 @@ router.post('/agregar', upload.single('imagenAnimal'), async (req, res) => {
     }
 });
 
+
+
 // GET /api/animals/filtros/opciones
 router.get('/filtros/opciones', async (req, res) => {
     try {
         // Obtener especies únicas
         const especiesResult = await query(`
-            SELECT DISTINCT e.especieanimal 
-            FROM especie e 
-            JOIN raza r ON e.idespecie = r.idespecie 
-            JOIN animal a ON r.idraza = a.idraza 
+            SELECT DISTINCT e.especieanimal
+            FROM especie e
+            JOIN raza r ON e.idespecie = r.idespecie
+            JOIN animal a ON r.idraza = a.idraza
             WHERE a.idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
             ORDER BY e.especieanimal
         `);
 
         // Obtener pelajes únicos
         const pelajesResult = await query(`
-            SELECT DISTINCT pelaje 
-            FROM animal 
-            WHERE pelaje IS NOT NULL AND pelaje != '' 
+            SELECT DISTINCT pelaje
+            FROM animal
+            WHERE pelaje IS NOT NULL AND pelaje != ''
             AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
             ORDER BY pelaje
         `);
 
         // Obtener tamaños únicos
         const tamañosResult = await query(`
-            SELECT DISTINCT tamaño 
-            FROM animal 
-            WHERE tamaño IS NOT NULL AND tamaño != '' 
+            SELECT DISTINCT tamaño
+            FROM animal
+            WHERE tamaño IS NOT NULL AND tamaño != ''
             AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
             ORDER BY tamaño
         `);
 
         // Obtener géneros únicos
         const generosResult = await query(`
-            SELECT DISTINCT generoanimal 
-            FROM animal 
-            WHERE generoanimal IS NOT NULL AND generoanimal != '' 
+            SELECT DISTINCT generoanimal
+            FROM animal
+            WHERE generoanimal IS NOT NULL AND generoanimal != ''
             AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
             ORDER BY generoanimal
         `);
 
         // Obtener edades únicas (agrupadas por rangos)
         const edadesResult = await query(`
-            SELECT DISTINCT 
-                CASE 
+            SELECT DISTINCT
+                CASE
                     WHEN edadmesesanimal <= 6 THEN '0-6 meses'
                     WHEN edadmesesanimal <= 12 THEN '7-12 meses'
                     WHEN edadmesesanimal <= 24 THEN '1-2 años'
                     WHEN edadmesesanimal <= 60 THEN '3-5 años'
                     ELSE '5+ años'
                 END as rango_edad
-            FROM animal 
-            WHERE edadmesesanimal IS NOT NULL 
+            FROM animal
+            WHERE edadmesesanimal IS NOT NULL
             AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
             ORDER BY rango_edad
         `);
@@ -253,6 +258,64 @@ router.get('/filtros/opciones', async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo opciones de filtros:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/animals/apadrinar
+router.post('/apadrinar', authenticateToken, async (req, res) => {
+    try {
+        const { idAnimal } = req.body;
+        const idUsuario = req.user.idusuario;
+
+        if (!idAnimal) return res.status(400).json({ message: 'ID del animal es requerido' });
+
+        // Verificar que el animal existe
+        const animalResult = await query('SELECT idanimal FROM animal WHERE idanimal = $1', [idAnimal]);
+        if (!animalResult.rows.length) return res.status(404).json({ message: 'Animal no encontrado' });
+
+        // Obtener o crear categoría para apadrinamiento
+        let categoriaResult = await query("SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = 'Apadrinamiento'");
+        let idCategoria;
+        if (categoriaResult.rows.length) {
+            idCategoria = categoriaResult.rows[0].idcategoria;
+        } else {
+            // Insertar categoría si no existe
+            const insertCategoria = await query("INSERT INTO categoria_donacion (nombcategoria) VALUES ('Apadrinamiento') RETURNING idcategoria");
+            idCategoria = insertCategoria.rows[0].idcategoria;
+        }
+
+        // Insertar donación
+        const donacionResult = await query(`
+            INSERT INTO donacion (f_donacion, h_donacion, idusuario)
+            VALUES (CURRENT_DATE, CURRENT_TIME, $1)
+            RETURNING iddonacion
+        `, [idUsuario]);
+        const idDonacion = donacionResult.rows[0].iddonacion;
+
+        // Insertar detalle donación (cantidad 0 para apadrinamiento simbólico)
+        await query(`
+            INSERT INTO detalle_donacion (cantidaddonacion, iddonacion, idcategoria)
+            VALUES (0, $1, $2)
+        `, [idDonacion, idCategoria]);
+
+        // Insertar apadrinamiento
+        const apadrinamientoResult = await query(`
+            INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal)
+            VALUES (CURRENT_DATE, 'Mensual', $1, $2)
+            RETURNING idapadrinamiento
+        `, [idDonacion, idAnimal]);
+
+        res.status(201).json({
+            message: 'Apadrinamiento registrado exitosamente',
+            data: {
+                idApadrinamiento: apadrinamientoResult.rows[0].idapadrinamiento,
+                animal: idAnimal,
+                frecuencia: 'Mensual'
+            }
+        });
+    } catch (error) {
+        console.error('Error registrando apadrinamiento:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
