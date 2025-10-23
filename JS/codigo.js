@@ -49,7 +49,7 @@ function showMessage(message, type = 'info') {
     const messageDiv = document.createElement('div');
     messageDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
     messageDiv.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
-    
+
     messageDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -77,6 +77,7 @@ function isAuthenticated() {
 // Verificar si el usuario tiene un rol específico
 function hasRole(allowedRoleIds) {
     if (!isAuthenticated()) return false;
+    console.log('Verificando rol:', currentUser.idRol, 'Permitidos:', allowedRoleIds);
     return allowedRoleIds.includes(currentUser.idRol);
 }
 
@@ -147,7 +148,7 @@ function updateAuthUI() {
                     </div>
                 </div>
             `;
-            
+
             loginLink.innerHTML = userMenuHtml;
             loginLink.href = '#';
             loginLink.onclick = null;
@@ -192,7 +193,7 @@ function getUserInitials(name) {
 function getRoleName(roleId) {
     const roles = {
         1: 'Administrador',
-        2: 'Adoptante', 
+        2: 'Adoptante',
         3: 'Donante'
     };
     return roles[roleId] || 'Usuario';
@@ -203,7 +204,7 @@ function showEditProfileModal() {
     // Recargar currentUser desde localStorage para asegurar datos actualizados
     currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
     if (!currentUser) return;
-    
+
     // Crear modal dinámicamente
     const modalHtml = `
         <div class="modal fade" id="editProfileModal" tabindex="-1">
@@ -245,20 +246,23 @@ function showEditProfileModal() {
             </div>
         </div>
     `;
-    
+
     // Remover modal existente si existe
     const existingModal = document.getElementById('editProfileModal');
     if (existingModal) {
         existingModal.remove();
     }
-    
+
     // Agregar modal al body
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
     modal.show();
-    
+
+    // Aplicar validaciones después de crear el modal
+    applyEditProfileValidations();
+
     // Cerrar menú de usuario
     closeUserMenu();
 }
@@ -272,36 +276,103 @@ async function saveProfile() {
             numerousuario: document.getElementById('editPhone').value,
             direccionusuario: document.getElementById('editAddress').value
         };
-        
+
         const newPassword = document.getElementById('editPassword').value;
         if (newPassword) {
             formData.claveusuario = newPassword;
         }
-        
+
         const response = await apiRequest(`/users/${currentUser.idUsuario}`, {
             method: 'PUT',
             body: JSON.stringify(formData)
         });
-        
+
         showMessage('Perfil actualizado exitosamente', 'success');
-        
+
         // Actualizar usuario actual con los nombres correctos
         currentUser.aliasUsuario = formData.aliasusuario;
         currentUser.correoUsuario = formData.correousuario;
         currentUser.numeroUsuario = formData.numerousuario;
         currentUser.direccionUsuario = formData.direccionusuario;
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        
+
         // Actualizar UI
         updateAuthUI();
-        
+
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
         modal.hide();
-        
+
     } catch (error) {
         console.error('Error actualizando perfil:', error);
         showMessage('Error al actualizar el perfil', 'danger');
+    }
+}
+
+// Aplicar validaciones al modal de editar perfil
+function applyEditProfileValidations() {
+    // Alias: máximo 30 caracteres
+    const aliasInput = document.getElementById('editAlias');
+    if (aliasInput) {
+        aliasInput.setAttribute('maxlength', '30');
+        aliasInput.addEventListener('input', (e) => {
+            if (e.target.value.length >= 30) {
+                e.target.value = e.target.value.substring(0, 30);
+            }
+        });
+    }
+
+    // Correo: máximo 50 caracteres
+    const emailInput = document.getElementById('editEmail');
+    if (emailInput) {
+        emailInput.setAttribute('maxlength', '50');
+        emailInput.addEventListener('input', (e) => {
+            if (e.target.value.length >= 50) {
+                e.target.value = e.target.value.substring(0, 50);
+            }
+        });
+    }
+
+    // Teléfono: solo números, máximo 9 dígitos
+    const phoneInput = document.getElementById('editPhone');
+    if (phoneInput) {
+        phoneInput.setAttribute('maxlength', '9');
+        phoneInput.addEventListener('input', (e) => {
+            // Solo permitir números
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+            if (e.target.value.length >= 9) {
+                e.target.value = e.target.value.substring(0, 9);
+            }
+        });
+
+        // Bloquear teclas no numéricas
+        phoneInput.addEventListener('keypress', (e) => {
+            if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    // Dirección: máximo 100 caracteres
+    const addressInput = document.getElementById('editAddress');
+    if (addressInput) {
+        addressInput.setAttribute('maxlength', '100');
+        addressInput.addEventListener('input', (e) => {
+            if (e.target.value.length >= 100) {
+                e.target.value = e.target.value.substring(0, 100);
+            }
+        });
+    }
+
+    // Contraseña: máximo 100 caracteres
+    const passwordInput = document.getElementById('editPassword');
+    if (passwordInput) {
+        passwordInput.setAttribute('maxlength', '100');
+        passwordInput.addEventListener('input', (e) => {
+            if (e.target.value.length >= 100) {
+                e.target.value = e.target.value.substring(0, 100);
+            }
+        });
     }
 }
 
@@ -380,14 +451,10 @@ async function handleLogin(email, password) {
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         showMessage(`¡Bienvenido, ${currentUser.aliasUsuario}!`, 'success');
-        
-        // Redirigir según rol
+
+        // Redirigir al index principal
         setTimeout(() => {
-            if (hasRole([1, 2])) {
-                window.location.href = 'dashboard.html';
-            } else {
-                window.location.href = 'HUELLA FELIZ.html';
-            }
+            window.location.href = 'HUELLA FELIZ.html';
         }, 1500);
 
     } catch (error) {
@@ -405,9 +472,9 @@ async function loadAvailableAnimals(filters = {}) {
     try {
         const queryParams = new URLSearchParams(filters);
         const data = await apiRequest(`/animals/disponibles?${queryParams}`);
-        
+
         displayAnimals(data.data);
-        
+
     } catch (error) {
         showMessage('Error cargando animales: ' + error.message, 'danger');
     }
@@ -440,7 +507,7 @@ function displayAnimals(animals) {
 function createAnimalCard(animal) {
     const col = document.createElement('div');
     col.className = 'col';
-    
+
     // Mapear los nombres de propiedades de la base de datos a los nombres esperados
     const nombre = animal.nombreanimal || animal.nombreAnimal || 'Sin nombre';
     const especie = animal.especieanimal || animal.especieAnimal || 'Sin especie';
@@ -449,14 +516,14 @@ function createAnimalCard(animal) {
     const genero = animal.generoanimal || animal.generoAnimal || 'N';
     const id = animal.idanimal || animal.idAnimal || 0;
     const imagen = animal.imagenanimal || animal.imagenAnimal;
-    
+
     // Determinar la URL de la imagen
-    const imagenUrl = imagen ? 
-        (imagen.startsWith('http') ? imagen : `files/${imagen}`) : 
+    const imagenUrl = imagen ?
+        (imagen.startsWith('http') ? imagen : `files/${imagen}`) :
         `https://placehold.co/300x300?text=${nombre}`;
-    
+
     console.log(`Imagen para ${nombre}: ${imagen} -> ${imagenUrl}`);
-    
+
     col.innerHTML = `
         <div class="card shadow-sm card-animal" onclick="viewAnimalDetails(${id})">
             <img src="${imagenUrl}" class="card-img-top" alt="${nombre}" style="height: 200px; object-fit: cover;" 
@@ -468,7 +535,7 @@ function createAnimalCard(animal) {
             </div>
         </div>
     `;
-    
+
     return col;
 }
 
@@ -495,12 +562,12 @@ function showAnimalModal(animal) {
     const tamaño = animal.tamaño || 'No especificado';
     const id = animal.idanimal || animal.idAnimal || 0;
     const imagen = animal.imagenanimal || animal.imagenAnimal;
-    
+
     // Determinar la URL de la imagen
-    const imagenUrl = imagen ? 
-        (imagen.startsWith('http') ? imagen : `files/${imagen}`) : 
+    const imagenUrl = imagen ?
+        (imagen.startsWith('http') ? imagen : `files/${imagen}`) :
         `https://placehold.co/400x400?text=${nombre}`;
-    
+
     const modalHtml = `
         <div class="modal fade" id="animalModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
@@ -565,7 +632,7 @@ function showAnimalModal(animal) {
 
     // Agregar nuevo modal
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
+
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('animalModal'));
     modal.show();
@@ -585,7 +652,7 @@ async function adoptAnimal(animalId) {
         });
 
         showMessage('Solicitud de adopción enviada exitosamente', 'success');
-        
+
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('animalModal'));
         if (modal) modal.hide();
@@ -619,7 +686,7 @@ function populateFilters(options) {
         const select = document.querySelector(`select[data-filter="${filterId}"]`);
         if (select && selects[filterId]) {
             select.innerHTML = `<option value="">${select.options[0].text}</option>`;
-            
+
             selects[filterId].forEach(option => {
                 const optionElement = document.createElement('option');
                 if (typeof option === 'string') {
@@ -644,9 +711,9 @@ async function loadDonationHistory(filters = {}) {
     try {
         const queryParams = new URLSearchParams(filters);
         const data = await apiRequest(`/donations/historial?${queryParams}`);
-        
+
         displayDonationHistory(data.data);
-        
+
     } catch (error) {
         showMessage('Error cargando historial: ' + error.message, 'danger');
     }
@@ -694,7 +761,7 @@ async function makeDonation(amount, method, message = '') {
         });
 
         showMessage('¡Donación realizada exitosamente! Gracias por tu apoyo', 'success');
-        
+
         // Recargar historial si estamos en la página de donaciones
         if (window.location.pathname.includes('donaciones')) {
             loadDonationHistory();
@@ -718,7 +785,7 @@ async function sendAnimalReport(reportData) {
         });
 
         showMessage(`Reporte enviado exitosamente. Código: ${data.data.codigoReporte}`, 'success');
-        
+
         // Limpiar formulario
         const form = document.querySelector('#reporte form');
         if (form) form.reset();
@@ -733,7 +800,7 @@ async function sendAnimalReport(reportData) {
 // INICIALIZACIÓN Y EVENT LISTENERS
 // ===================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Verificar acceso al dashboard si estamos en esa página
     if (window.location.pathname.includes('dashboard')) {
         if (!checkDashboardAccess()) {
@@ -748,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('iniciarSesion')) {
         const loginForm = document.querySelector('form');
         if (loginForm) {
-            loginForm.addEventListener('submit', function(e) {
+            loginForm.addEventListener('submit', function (e) {
                 e.preventDefault();
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
@@ -761,9 +828,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('registrate')) {
         const registerForm = document.querySelector('form');
         if (registerForm) {
-            registerForm.addEventListener('submit', function(e) {
+            registerForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                
+
                 const formData = {
                     aliasUsuario: document.getElementById('alias').value,
                     nombreUsuario: document.getElementById('nombre').value,
@@ -788,10 +855,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Cerrar menú de usuario al hacer clic fuera
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         const dropdown = document.getElementById('userDropdown');
         const profileBtn = event.target.closest('.profile-btn');
-        
+
         if (dropdown && !dropdown.contains(event.target) && !profileBtn) {
             dropdown.classList.remove('show');
         }
@@ -805,7 +872,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Event listeners para filtros
         const filterSelects = document.querySelectorAll('.form-select');
         filterSelects.forEach(select => {
-            select.addEventListener('change', function() {
+            select.addEventListener('change', function () {
                 const filters = {};
                 filterSelects.forEach(s => {
                     if (s.value && s.dataset.filter) {
@@ -824,14 +891,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Event listener para filtro de donaciones
         const filtrarBtn = document.getElementById('filtrarBtn');
         if (filtrarBtn) {
-            filtrarBtn.addEventListener('click', function() {
+            filtrarBtn.addEventListener('click', function () {
                 const categoria = document.querySelector('select').value;
                 const fecha = document.querySelector('input[type="date"]').value;
-                
+
                 const filters = {};
                 if (categoria) filters.categoria = categoria;
                 if (fecha) filters.fecha = fecha;
-                
+
                 loadDonationHistory(filters);
             });
         }
@@ -841,9 +908,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('reportar')) {
         const reportForm = document.querySelector('#reporte form');
         if (reportForm) {
-            reportForm.addEventListener('submit', function(e) {
+            reportForm.addEventListener('submit', function (e) {
                 e.preventDefault();
-                
+
                 const formData = new FormData(this);
                 const reportData = {
                     direccion: formData.get('direccion') || document.querySelector('input[placeholder="Ingresar dirección"]').value,
@@ -869,11 +936,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle password visibility
     const togglePassword = document.getElementById('togglePassword');
     if (togglePassword) {
-        togglePassword.addEventListener('click', function() {
+        togglePassword.addEventListener('click', function () {
             const password = document.getElementById('password');
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
-            
+
             const icon = this.querySelector('i');
             icon.classList.toggle('bi-eye');
             icon.classList.toggle('bi-eye-slash');
@@ -882,7 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Función global para donar (llamada desde botones)
-window.donar = function(amount, method) {
+window.donar = function (amount, method) {
     if (!isAuthenticated()) {
         showMessage('Debes iniciar sesión para donar', 'warning');
         setTimeout(() => {
@@ -890,7 +957,7 @@ window.donar = function(amount, method) {
         }, 2000);
         return;
     }
-    
+
     const message = prompt('¿Quieres agregar un mensaje a tu donación? (opcional)');
     makeDonation(amount, method, message || '');
 };
@@ -909,40 +976,40 @@ function validarEmail(email) {
 // Función para manejar el envío del formulario de contacto
 function manejarContacto(event) {
     event.preventDefault();
-    
+
     // Obtener valores del formulario
     const email = document.getElementById('emailContacto').value.trim();
     const numero = document.getElementById('numeroContacto').value.trim();
     const titulo = document.getElementById('tituloContacto').value.trim();
     const mensaje = document.getElementById('mensajeContacto').value.trim();
-    
+
     // Ocultar errores previos
     document.getElementById('emailError').style.display = 'none';
     document.getElementById('tituloError').style.display = 'none';
     document.getElementById('mensajeError').style.display = 'none';
-    
+
     // Validaciones
     let hayErrores = false;
-    
+
     if (!email || !validarEmail(email)) {
         document.getElementById('emailError').style.display = 'block';
         hayErrores = true;
     }
-    
+
     if (!titulo) {
         document.getElementById('tituloError').style.display = 'block';
         hayErrores = true;
     }
-    
+
     if (!mensaje) {
         document.getElementById('mensajeError').style.display = 'block';
         hayErrores = true;
     }
-    
+
     if (hayErrores) {
         return;
     }
-    
+
     // Crear mensaje para WhatsApp
     const numeroWhatsApp = '51952225506'; // Tu número sin el + y sin espacios
     let mensajeWhatsApp = `*Nuevo mensaje desde Huella Feliz*\n\n`;
@@ -952,19 +1019,19 @@ function manejarContacto(event) {
     }
     mensajeWhatsApp += `*Título:* ${titulo}\n\n`;
     mensajeWhatsApp += `*Mensaje:*\n${mensaje}`;
-    
+
     // Codificar el mensaje para URL
     const mensajeCodificado = encodeURIComponent(mensajeWhatsApp);
-    
+
     // Crear URL de WhatsApp
     const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`;
-    
+
     // Abrir WhatsApp
     window.open(urlWhatsApp, '_blank');
-    
+
     // Mostrar mensaje de confirmación
     showMessage('Redirigiendo a WhatsApp... ¡Tu mensaje será enviado!', 'success');
-    
+
     // Limpiar formulario después de un breve delay
     setTimeout(() => {
         document.getElementById('contactoForm').reset();
@@ -972,7 +1039,7 @@ function manejarContacto(event) {
 }
 
 // Inicializar funcionalidad de contacto cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const contactoForm = document.getElementById('contactoForm');
     if (contactoForm) {
         contactoForm.addEventListener('submit', manejarContacto);
