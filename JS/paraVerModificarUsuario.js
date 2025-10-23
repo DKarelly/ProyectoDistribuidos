@@ -129,8 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <td>${u.correousuario}</td>
                 <td>${u.numerousuario || "-"}</td>
                 <td>${u.direccionusuario || "-"}</td>
-                <td>${u.rolusuario}</td>
-                <td>
+                <<td>
                     <button class="btn btn-warning btn-sm btn-editar" data-id="${u.idusuario}">
                         <i class="bi bi-pencil-square"></i>
                     </button>
@@ -139,7 +138,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <button class="btn btn-danger btn-sm btn-eliminar" data-id="${u.idusuario}">
                         <i class="bi bi-trash"></i>
                     </button>
-                </td>
+                </td>td>${u.rolusuario}</td>
+                
             `;
             usuariosBody.appendChild(tr);
         });
