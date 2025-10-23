@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Middleware para verificar rol de administrador
 function requireAdmin(req, res, next) {
-    if (!req.user || req.user.idRol !== 1) {
+    if (!req.user || req.user.idrol !== 1) {
         return res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
     }
     next();

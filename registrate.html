@@ -23,9 +23,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-        <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
-        HUELLA FELIZ
-      </a>
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                HUELLA FELIZ
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -39,7 +39,8 @@
 
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
-                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -63,7 +64,7 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
                             <input type="text" id="alias" name="aliasUsuario" class="form-control"
-                                placeholder="Tu alias" required>
+                                placeholder="Tu alias" maxlength="30" required>
                         </div>
                     </div>
 
@@ -73,7 +74,7 @@
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                             <input type="email" id="correo" name="correoUsuario" class="form-control"
-                                placeholder="ejemplo@email.com" required>
+                                placeholder="ejemplo@email.com" maxlength="50" required>
                         </div>
                     </div>
 
@@ -107,7 +108,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                                 <input type="tel" id="numero" name="numUsuario" class="form-control"
-                                    placeholder="987654321" required>
+                                    placeholder="987654321" maxlength="9" pattern="[0-9]{9}"
+                                    onkeypress="return /[0-9]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 9)" required>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -115,7 +118,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
                                 <textarea id="direccion" name="direccionUsuario" class="form-control" rows="2"
-                                    placeholder="Tu dirección completa"></textarea>
+                                    placeholder="Tu dirección completa" maxlength="50"></textarea>
                             </div>
                         </div>
                     </div>
@@ -142,7 +145,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person"></i></span>
                                 <input type="text" id="nombrePersonaRegistrar" name="nombrePersona" class="form-control"
-                                    placeholder="Ingresar nombres">
+                                    placeholder="Ingresar nombres" maxlength="30" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                                    onkeypress="return /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').substring(0, 30)">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -150,7 +155,10 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person-lines-fill"></i></span>
                                 <input type="text" id="apepaternoRegistrar" name="apepaterno" class="form-control"
-                                    placeholder="Ingresar apellido paterno">
+                                    placeholder="Ingresar apellido paterno" maxlength="30"
+                                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                                    onkeypress="return /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').substring(0, 30)">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -158,7 +166,10 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-person-bounding-box"></i></span>
                                 <input type="text" id="apematernoRegistrar" name="apematerno" class="form-control"
-                                    placeholder="Ingresar apellido materno">
+                                    placeholder="Ingresar apellido materno" maxlength="30"
+                                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+"
+                                    onkeypress="return /[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').substring(0, 30)">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -166,7 +177,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
                                 <input type="text" id="dniRegistrar" name="dni" class="form-control"
-                                    placeholder="Ingresar DNI">
+                                    placeholder="Ingresar DNI" maxlength="8" pattern="[0-9]{8}"
+                                    onkeypress="return /[0-9]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 8)">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -189,7 +202,7 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-building"></i></span>
                                 <input type="text" id="nombreEmpresaRegistrar" name="nombreEmpresa" class="form-control"
-                                    placeholder="Ingresar nombre de la empresa">
+                                    placeholder="Ingresar nombre de la empresa" maxlength="50">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -208,7 +221,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-credit-card-2-back"></i></span>
                                 <input type="text" id="rucRegistrar" name="ruc" class="form-control"
-                                    placeholder="Ingresar RUC">
+                                    placeholder="Ingresar RUC" maxlength="20" pattern="[0-9]+"
+                                    onkeypress="return /[0-9]/.test(event.key) || event.key === 'Backspace' || event.key === 'Delete' || event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowLeft' || event.key === 'ArrowRight'"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 20)">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -256,9 +271,11 @@
                 <div class="col-6 col-md-3 mb-4">
                     <h5 class="fw-bold">Redes sociales</h5>
                     <ul class="list-unstyled">
-                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank" class="text-white text-decoration-none"><i
-                                    class="bi bi-facebook me-2"></i>Facebook</a></li>
-                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank" class="text-white text-decoration-none"><i
+                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank"
+                                class="text-white text-decoration-none"><i class="bi bi-facebook me-2"></i>Facebook</a>
+                        </li>
+                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank"
+                                class="text-white text-decoration-none"><i
                                     class="bi bi-instagram me-2"></i>Instagram</a>
                         </li>
                     </ul>
@@ -268,8 +285,10 @@
                 <div class="col-6 col-md-3 mb-4">
                     <h5 class="fw-bold">Acerca de</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
-                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
                     </ul>
                 </div>
 
@@ -305,10 +324,13 @@
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div class="mb-4">
                         <h6 class="text-danger">1. Información que Recopilamos</h6>
-                        <p class="small">En Huella Feliz, recopilamos información personal que nos proporcionas voluntariamente cuando te registras, realizas donaciones, solicitas adopciones o nos contactas.</p>
-                        <p class="small"><strong>Tipos de información:</strong> Nombre, correo electrónico, teléfono, dirección, información de pago y cualquier otra información que decidas compartir.</p>
+                        <p class="small">En Huella Feliz, recopilamos información personal que nos proporcionas
+                            voluntariamente cuando te registras, realizas donaciones, solicitas adopciones o nos
+                            contactas.</p>
+                        <p class="small"><strong>Tipos de información:</strong> Nombre, correo electrónico, teléfono,
+                            dirección, información de pago y cualquier otra información que decidas compartir.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">2. Cómo Utilizamos tu Información</h6>
                         <ul class="small">
@@ -319,17 +341,19 @@
                             <li>Enviarte actualizaciones sobre nuestros programas (solo si das tu consentimiento)</li>
                         </ul>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">3. Protección de Datos</h6>
-                        <p class="small">Implementamos medidas de seguridad técnicas y organizativas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción.</p>
+                        <p class="small">Implementamos medidas de seguridad técnicas y organizativas para proteger tu
+                            información personal contra acceso no autorizado, alteración, divulgación o destrucción.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">4. Tus Derechos</h6>
-                        <p class="small">Tienes derecho a acceder, rectificar, eliminar u oponerte al procesamiento de tus datos personales. Puedes retirar tu consentimiento en cualquier momento.</p>
+                        <p class="small">Tienes derecho a acceder, rectificar, eliminar u oponerte al procesamiento de
+                            tus datos personales. Puedes retirar tu consentimiento en cualquier momento.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">5. Contacto</h6>
                         <p class="small">Si tienes preguntas sobre esta política de privacidad, contáctanos:</p>
@@ -360,35 +384,43 @@
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div class="mb-4">
                         <h6 class="text-danger">1. Aceptación de los Términos</h6>
-                        <p class="small">Al acceder y utilizar la plataforma de Huella Feliz, aceptas estar sujeto a estos términos y condiciones.</p>
+                        <p class="small">Al acceder y utilizar la plataforma de Huella Feliz, aceptas estar sujeto a
+                            estos términos y condiciones.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">2. Descripción del Servicio</h6>
-                        <p class="small">Huella Feliz es una plataforma sin fines de lucro que facilita adopción responsable, donaciones, reportes de animales y información sobre protección animal.</p>
+                        <p class="small">Huella Feliz es una plataforma sin fines de lucro que facilita adopción
+                            responsable, donaciones, reportes de animales y información sobre protección animal.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">3. Proceso de Adopción</h6>
-                        <p class="small"><strong>Requisitos:</strong> Ser mayor de 18 años, proporcionar información veraz, demostrar capacidad económica y comprometerse al cuidado responsable del animal.</p>
-                        <p class="small"><strong>Proceso:</strong> Completar formulario, entrevista, firma de contrato y entrega del animal.</p>
+                        <p class="small"><strong>Requisitos:</strong> Ser mayor de 18 años, proporcionar información
+                            veraz, demostrar capacidad económica y comprometerse al cuidado responsable del animal.</p>
+                        <p class="small"><strong>Proceso:</strong> Completar formulario, entrevista, firma de contrato y
+                            entrega del animal.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">4. Donaciones</h6>
-                        <p class="small">Las donaciones son voluntarias y no reembolsables. Se utilizarán exclusivamente para el cuidado de animales y se proporcionarán recibos para donaciones económicas.</p>
+                        <p class="small">Las donaciones son voluntarias y no reembolsables. Se utilizarán exclusivamente
+                            para el cuidado de animales y se proporcionarán recibos para donaciones económicas.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">5. Responsabilidades del Usuario</h6>
-                        <p class="small">Te comprometes a proporcionar información veraz, no utilizar la plataforma para actividades ilegales, respetar a otros usuarios y cumplir con las leyes locales sobre tenencia de animales.</p>
+                        <p class="small">Te comprometes a proporcionar información veraz, no utilizar la plataforma para
+                            actividades ilegales, respetar a otros usuarios y cumplir con las leyes locales sobre
+                            tenencia de animales.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">6. Limitación de Responsabilidad</h6>
-                        <p class="small">Huella Feliz no se hace responsable por el comportamiento de animales adoptados, daños a propiedad o gastos veterinarios posteriores a la adopción.</p>
+                        <p class="small">Huella Feliz no se hace responsable por el comportamiento de animales
+                            adoptados, daños a propiedad o gastos veterinarios posteriores a la adopción.</p>
                     </div>
-                    
+
                     <div class="mb-4">
                         <h6 class="text-danger">7. Contacto</h6>
                         <p class="small">Para consultas sobre estos términos:</p>
@@ -411,29 +443,29 @@
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
     <script src="JS/registrar.js"></script>
-    
+
     <!-- Script para mostrar/ocultar contraseñas -->
     <script>
         // Script directo sin conflictos
-        setTimeout(function() {
+        setTimeout(function () {
             console.log('=== INICIANDO SCRIPT DE CONTRASEÑAS ===');
-            
+
             const passwordInput = document.getElementById('password');
             const password2Input = document.getElementById('password2');
             const toggleBtn = document.getElementById('togglePassword');
-            
+
             console.log('Elementos:', passwordInput, password2Input, toggleBtn);
-            
+
             if (passwordInput && password2Input && toggleBtn) {
                 const icon = toggleBtn.querySelector('i');
-                
+
                 // Remover cualquier event listener existente
                 toggleBtn.onclick = null;
-                
+
                 // Función simple para toggle
                 function toggleBothPasswords() {
                     console.log('=== TOGGLE EJECUTADO ===');
-                    
+
                     // Forzar el cambio sin importar el estado actual
                     if (passwordInput.type === 'password') {
                         passwordInput.setAttribute('type', 'text');
@@ -447,15 +479,15 @@
                         console.log('🔒 CONTRASEÑAS OCULTAS');
                     }
                 }
-                
+
                 // Event listener directo
-                toggleBtn.addEventListener('click', function(e) {
+                toggleBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
                     console.log('CLICK EN BOTÓN');
                     toggleBothPasswords();
                 }, true);
-                
+
                 console.log('✅ BOTÓN CONFIGURADO');
             } else {
                 console.error('❌ ELEMENTOS NO ENCONTRADOS');

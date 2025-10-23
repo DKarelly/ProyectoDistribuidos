@@ -20,22 +20,22 @@ function authenticateToken(req, res, next) {
 
 /* ------------------ REGISTRO CLIENTE ------------------ */
 router.post('/registro', [
-    body('aliasUsuario').notEmpty(),
-    body('correoUsuario').isEmail(),
-    body('contrasenaUsuario').isLength({ min: 4 }),
-    body('numUsuario').notEmpty(),
-    body('direccionUsuario').notEmpty(),
-    body('tipoPersona').isIn(['persona','empresa']), // ahora depende de tipoPersona
+    body('aliasUsuario').notEmpty().isLength({ max: 30 }),
+    body('correoUsuario').isEmail().isLength({ max: 50 }),
+    body('contrasenaUsuario').isLength({ min: 4, max: 100 }),
+    body('numUsuario').notEmpty().isLength({ max: 9 }),
+    body('direccionUsuario').notEmpty().isLength({ max: 100 }),
+    body('tipoPersona').isIn(['persona', 'empresa']), // ahora depende de tipoPersona
     // Persona
-    body('nombreUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
-    body('apellidoPaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
-    body('apellidoMaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty(),
+    body('nombreUsuario').if(body('tipoPersona').equals('persona')).notEmpty().isLength({ max: 30 }),
+    body('apellidoPaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty().isLength({ max: 30 }),
+    body('apellidoMaternoUsuario').if(body('tipoPersona').equals('persona')).notEmpty().isLength({ max: 30 }),
     body('dni').if(body('tipoPersona').equals('persona')).isLength({ min: 8, max: 8 }),
-    body('sexo').if(body('tipoPersona').equals('persona')).isIn(['M','F']),
+    body('sexo').if(body('tipoPersona').equals('persona')).isIn(['M', 'F']),
     // Empresa
-    body('nombreEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty(),
-    body('tipoPersonaEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty(),
-    body('ruc').if(body('tipoPersona').equals('empresa')).notEmpty(),
+    body('nombreEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty().isLength({ max: 50 }),
+    body('tipoPersonaEmpresa').if(body('tipoPersona').equals('empresa')).notEmpty().isLength({ max: 30 }),
+    body('ruc').if(body('tipoPersona').equals('empresa')).notEmpty().isLength({ max: 20 }),
     body('fechaCreacion').if(body('tipoPersona').equals('empresa')).isDate()
 ], async (req, res) => {
     const client = await getClient();
@@ -66,11 +66,17 @@ router.post('/registro', [
 
         const hashedPassword = await bcrypt.hash(contrasenaUsuario, 10);
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, contrasenausuario, numerousuario, direccionusuario, idrol)
-            VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
-        `, [aliasUsuario, correoNormalizado, hashedPassword, numUsuario, direccionUsuario, idRolCliente]);
+            INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numerousuario, direccionusuario)
+            VALUES ($1,$2,$3,$4,$5) RETURNING idusuario
+        `, [aliasUsuario, correoNormalizado, hashedPassword, numUsuario, direccionUsuario]);
 
         const idUsuario = resultUser.rows[0].idusuario;
+
+        // Asignar rol por defecto (Adoptante = idrol 2)
+        await client.query(`
+            INSERT INTO usuario_roles(idusuario, idrol)
+            VALUES ($1, $2)
+        `, [idUsuario, 2]);
 
         if (!esEmpresa) {
             await client.query(`
@@ -107,18 +113,23 @@ router.post('/login', async (req, res) => {
 
         const correoNormalizado = correoUsuario.trim().toLowerCase();
 
-        const userResult = await query('SELECT * FROM usuario WHERE LOWER(correousuario) = $1', [correoNormalizado]);
+        const userResult = await query(`
+            SELECT u.*, ur.idrol 
+            FROM usuario u 
+            LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario 
+            WHERE LOWER(u.correousuario) = $1
+        `, [correoNormalizado]);
         if (!userResult.rows.length) return res.status(400).json({ message: 'Usuario no encontrado' });
 
         const user = userResult.rows[0];
         console.log('Usuario logeado:', user.aliasusuario, 'Rol:', user.idrol);
 
         // Verificar si la contraseña existe en la base de datos
-        if (!user.contrasenausuario) {
+        if (!user.claveusuario) {
             return res.status(400).json({ message: 'Usuario no tiene contraseña configurada. Contacta al administrador.' });
         }
 
-        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.contrasenausuario);
+        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
         if (!passwordMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
         const token = jwt.sign(

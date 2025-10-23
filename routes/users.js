@@ -20,9 +20,10 @@ router.get('/perfil', authenticateToken, async (req, res) => {
 
         const result = await query(`
             SELECT u.idusuario, u.aliasusuario, u.correousuario, 
-                   u.numerousuario, u.direccionusuario, r.rolusuario
+                   u.numerousuario, u.direccionusuario, r.rolusuario, ur.idrol
             FROM usuario u
-            JOIN rol r ON u.idrol = r.idrol
+            LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario
+            LEFT JOIN rol_usuario r ON ur.idrol = r.idrol
             WHERE u.idusuario = $1
         `, [idUsuario]);
 
@@ -114,9 +115,10 @@ router.get('/', authenticateToken, async (req, res) => {
     try {
         const result = await query(`
             SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, 
-                   u.direccionusuario, r.rolusuario, u.idrol
+                   u.direccionusuario, r.rolusuario, ur.idrol
             FROM usuario u
-            JOIN rol r ON u.idrol = r.idrol
+            LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario
+            LEFT JOIN rol_usuario r ON ur.idrol = r.idrol
             ORDER BY u.idusuario ASC
         `);
         console.log(result.rows);  // <--- VERIFICA
@@ -140,11 +142,17 @@ router.post('/', authenticateToken, isAdmin, async (req, res) => {
 
         // Insertar usuario
         const resultUser = await client.query(`
-            INSERT INTO usuario(aliasusuario, correousuario, contrasenausuario, numerousuario, direccionusuario, idrol)
-            VALUES ($1,$2,$3,$4,$5,$6) RETURNING idusuario
-        `, [aliasusuario, correousuario, hashedPassword, numerousuario, direccionusuario, idrol]);
+            INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numerousuario, direccionusuario)
+            VALUES ($1,$2,$3,$4,$5) RETURNING idusuario
+        `, [aliasusuario, correousuario, hashedPassword, numerousuario, direccionusuario]);
 
         const idusuario = resultUser.rows[0].idusuario;
+
+        // Asignar rol al usuario
+        await client.query(`
+            INSERT INTO usuario_roles(idusuario, idrol)
+            VALUES ($1, $2)
+        `, [idusuario, idrol]);
 
         // Insertar persona o empresa
         if (tipoPersona === 'persona' && persona) {
@@ -188,17 +196,16 @@ router.put('/:id', authenticateToken, async (req, res) => {
         }
         const usuarioActual = resultUser.rows[0];
 
-        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.contrasenausuario;
+        const hashedPassword = claveusuario ? await bcrypt.hash(claveusuario, 10) : usuarioActual.claveusuario;
 
         // Actualizar usuario
         const updatedUser = await client.query(`
             UPDATE usuario
             SET aliasusuario = COALESCE($2, aliasusuario),
                 correousuario = COALESCE($3, correousuario),
-                contrasenausuario = $4,
+                claveusuario = $4,
                 numerousuario = COALESCE($5, numerousuario),
-                direccionusuario = COALESCE($6, direccionusuario),
-                idrol = COALESCE($7, idrol)
+                direccionusuario = COALESCE($6, direccionusuario)
             WHERE idusuario = $1
             RETURNING *
         `, [
@@ -207,9 +214,17 @@ router.put('/:id', authenticateToken, async (req, res) => {
             correousuario || usuarioActual.correousuario,
             hashedPassword,
             numerousuario || usuarioActual.numerousuario,
-            direccionusuario || usuarioActual.direccionusuario,
-            idrol || usuarioActual.idrol
+            direccionusuario || usuarioActual.direccionusuario
         ]);
+
+        // Actualizar rol si se proporciona
+        if (idrol) {
+            await client.query(`
+                UPDATE usuario_roles 
+                SET idrol = $2 
+                WHERE idusuario = $1
+            `, [id, idrol]);
+        }
 
         // Actualizar persona si existe
         if (persona) {
@@ -290,9 +305,10 @@ router.get('/:id', authenticateToken, async (req, res) => {
 
         // Usuario
         const resultUser = await query(`
-            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, u.direccionusuario, u.idrol, r.rolusuario
+            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, u.direccionusuario, ur.idrol, r.rolusuario
             FROM usuario u
-            JOIN rol r ON u.idrol = r.idrol
+            LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario
+            LEFT JOIN rol_usuario r ON ur.idrol = r.idrol
             WHERE u.idusuario = $1
         `, [id]);
 

@@ -37,6 +37,9 @@ function displayEspecies() {
         return;
     }
 
+    // Ordenar por ID antes de mostrar
+    especiesData.sort((a, b) => a.idespecie - b.idespecie);
+
     especiesData.forEach(especie => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -182,7 +185,7 @@ function showModalRegistrarEspecie(especie = null) {
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-pink" onclick="${especie ? `updateEspecie(${especie.idespecie})` : 'createEspecie()'}">
                             ${especie ? 'Actualizar' : 'Crear'}
                         </button>
@@ -231,7 +234,7 @@ async function createEspecie() {
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
@@ -268,13 +271,24 @@ async function updateEspecie(id) {
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
 // Eliminar especie
 async function deleteEspecie(id) {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta especie?')) {
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿Estás seguro de que deseas eliminar esta especie?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) {
         return;
     }
 
@@ -283,11 +297,11 @@ async function deleteEspecie(id) {
             method: 'DELETE'
         });
 
-        showMessage('Especie eliminada exitosamente', 'success');
+        Swal.fire('Éxito', 'Especie eliminada exitosamente', 'success');
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
@@ -323,7 +337,7 @@ function showModalRegistrarRaza(raza = null) {
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-pink" onclick="${raza ? `updateRaza(${raza.idraza})` : 'createRaza()'}">
                             ${raza ? 'Actualizar' : 'Crear'}
                         </button>
@@ -378,7 +392,7 @@ async function createRaza() {
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
@@ -421,13 +435,24 @@ async function updateRaza(id) {
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
 // Eliminar raza
 async function deleteRaza(id) {
-    if (!confirm('¿Estás seguro de que deseas eliminar esta raza?')) {
+    const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: '¿Estás seguro de que deseas eliminar esta raza?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!result.isConfirmed) {
         return;
     }
 
@@ -436,16 +461,16 @@ async function deleteRaza(id) {
             method: 'DELETE'
         });
 
-        showMessage('Raza eliminada exitosamente', 'success');
+        Swal.fire('Éxito', 'Raza eliminada exitosamente', 'success');
         loadEspeciesYRazas();
 
     } catch (error) {
-        showMessage(error.message, 'danger');
+        Swal.fire('Error', error.message, 'error');
     }
 }
 
 // Inicialización cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Verificar acceso al dashboard
     if (!checkDashboardAccess()) {
         return;
@@ -468,7 +493,104 @@ document.addEventListener('DOMContentLoaded', function() {
     if (buscarRaza) {
         buscarRaza.addEventListener('input', filterRazas);
     }
+
+    // Evento para cargar especies cuando se abre el modal de raza
+    const modalRaza = document.getElementById('modalRegistrarRaza');
+    if (modalRaza) {
+        modalRaza.addEventListener('show.bs.modal', function () {
+            loadEspeciesForRaza();
+        });
+    }
 });
+
+// Registrar nueva especie
+async function registrarEspecie() {
+    try {
+        const nombreEspecie = document.getElementById('nombreEspecie').value.trim();
+
+        if (!nombreEspecie) {
+            Swal.fire('Advertencia', 'El nombre de la especie es obligatorio', 'warning');
+            return;
+        }
+
+        await apiRequest('/especieRaza/especies', {
+            method: 'POST',
+            body: JSON.stringify({ especieAnimal: nombreEspecie })
+        });
+
+        Swal.fire('Éxito', 'Especie registrada correctamente', 'success');
+
+        // Cerrar modal y limpiar formulario
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalRegistrarEspecie'));
+        modal.hide();
+        document.getElementById('formRegistrarEspecie').reset();
+
+        // Recargar datos
+        loadEspeciesYRazas();
+
+    } catch (error) {
+        Swal.fire('Error', 'Error registrando especie: ' + error.message, 'error');
+    }
+}
+
+// Registrar nueva raza
+async function registrarRaza() {
+    try {
+        const especieId = document.getElementById('especieRaza').value;
+        const nombreRaza = document.getElementById('nombreRaza').value.trim();
+
+        if (!especieId || !nombreRaza) {
+            Swal.fire('Advertencia', 'Todos los campos son obligatorios', 'warning');
+            return;
+        }
+
+        await apiRequest('/especieRaza/razas', {
+            method: 'POST',
+            body: JSON.stringify({
+                idEspecie: parseInt(especieId),
+                razaAnimal: nombreRaza
+            })
+        });
+
+        Swal.fire('Éxito', 'Raza registrada correctamente', 'success');
+
+        // Cerrar modal y limpiar formulario
+        const modal = bootstrap.Modal.getInstance(document.getElementById('modalRegistrarRaza'));
+        modal.hide();
+        document.getElementById('formRegistrarRaza').reset();
+
+        // Recargar datos
+        loadEspeciesYRazas();
+
+    } catch (error) {
+        Swal.fire('Error', 'Error registrando raza: ' + error.message, 'error');
+    }
+}
+
+// Cargar especies en el select de raza
+async function loadEspeciesForRaza() {
+    try {
+        const response = await apiRequest('/especieRaza/especies');
+        const especies = response.data || [];
+
+        const select = document.getElementById('especieRaza');
+        select.innerHTML = '<option value="">Seleccionar especie</option>';
+
+        // Separar "Otros" del resto para orden correcto
+        const otrasEspecies = especies.filter(especie => especie.especieanimal.toLowerCase() === 'otro');
+        const restoEspecies = especies.filter(especie => especie.especieanimal.toLowerCase() !== 'otro');
+
+        // Agregar primero el resto, luego "Otros"
+        [...restoEspecies, ...otrasEspecies].forEach(especie => {
+            const option = document.createElement('option');
+            option.value = especie.idespecie;
+            option.textContent = especie.especieanimal;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando especies para raza:', error);
+    }
+}
 
 // Exponer funciones globales
 window.showModalRegistrarEspecie = showModalRegistrarEspecie;
@@ -481,3 +603,5 @@ window.createEspecie = createEspecie;
 window.createRaza = createRaza;
 window.updateEspecie = updateEspecie;
 window.updateRaza = updateRaza;
+window.registrarEspecie = registrarEspecie;
+window.registrarRaza = registrarRaza;
