@@ -8,6 +8,7 @@ const { testConnection } = require('./config/database');
 // Importar rutas
 const { router: authRouter } = require('./routes/auth');
 const animalsRouter = require('./routes/animals');
+const blogRouter = require('./routes/blog');
 const donationsRouter = require('./routes/donations');
 const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
@@ -31,6 +32,7 @@ app.use(express.static(path.join(__dirname)));
 // Rutas API
 app.use('/api/auth', authRouter);
 app.use('/api/animals', animalsRouter);
+app.use('/api/blog', blogRouter);
 app.use('/api/donations', donationsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/users', usersRouter);
@@ -93,6 +95,7 @@ async function startServer() {
             console.log('   - GET  /api/animals/disponibles');
             console.log('   - GET  /api/animals/:id');
             console.log('   - POST /api/animals/adoptar');
+            console.log('   - POST /api/blog/apadrinar');
             console.log('   - GET  /api/donations/historial');
             console.log('   - POST /api/donations/economica');
             console.log('   - POST /api/reports/crear');
