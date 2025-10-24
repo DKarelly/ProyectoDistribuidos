@@ -20,6 +20,42 @@ const especieRazaRouter = require('./routes/especieRaza');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ===================================================
+// SEGURIDAD SSL/TLS - Forzar HTTPS en producción
+// ===================================================
+app.use((req, res, next) => {
+    // Detectar si estamos en producción y la conexión no es HTTPS
+    if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+        // Redirigir a HTTPS automáticamente
+        return res.redirect('https://' + req.headers.host + req.url);
+    }
+    next();
+});
+
+// ===================================================
+// HEADERS DE SEGURIDAD SSL/TLS
+// ===================================================
+app.use((req, res, next) => {
+    // Forzar HTTPS Strict Transport Security (HSTS)
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+
+    // Prevenir clickjacking
+    res.setHeader('X-Frame-Options', 'DENY');
+
+    // Prevenir MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    // Habilitar XSS protection
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+
+    // Referrer Policy para privacidad
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+    next();
+});
+
 // Middleware
 app.use(cors({
     origin: [
@@ -61,6 +97,35 @@ app.get('/health', (req, res) => {
         status: 'OK',
         message: 'Servidor funcionando correctamente',
         timestamp: new Date().toISOString()
+    });
+});
+
+// ===================================================
+// ENDPOINT DE VERIFICACIÓN SSL/TLS
+// ===================================================
+app.get('/ssl-info', (req, res) => {
+    const sslInfo = {
+        secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+        protocol: req.headers['x-forwarded-proto'] || req.protocol,
+        host: req.headers.host,
+        userAgent: req.headers['user-agent'],
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV,
+        headers: {
+            'x-forwarded-proto': req.headers['x-forwarded-proto'],
+            'x-forwarded-for': req.headers['x-forwarded-for'],
+            'x-real-ip': req.headers['x-real-ip']
+        }
+    };
+
+    res.json({
+        message: 'Información SSL/TLS del servidor',
+        ssl: sslInfo,
+        security: {
+            hsts: process.env.NODE_ENV === 'production' ? 'Habilitado' : 'Solo en producción',
+            https_redirect: 'Configurado',
+            security_headers: 'Aplicados'
+        }
     });
 });
 
