@@ -254,6 +254,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             const modal = new bootstrap.Modal(document.getElementById("modalEditarUsuario"));
             modal.show();
 
+            // Aplicar validaciones al modal
+            applyEditUserValidations();
+
             // Enviar formulario
             form.onsubmit = async e => {
                 e.preventDefault();
@@ -434,6 +437,154 @@ document.addEventListener("DOMContentLoaded", async () => {
             Swal.fire("Error", err.message || "No se pudo registrar el usuario", "error");
         }
     });
+
+    // Aplicar validaciones al modal de editar usuario
+    function applyEditUserValidations() {
+        // Alias: máximo 30 caracteres
+        const aliasInput = formEditar.querySelector('input[placeholder="Ingresar alias"]');
+        if (aliasInput) {
+            aliasInput.setAttribute('maxlength', '30');
+            aliasInput.addEventListener('input', (e) => {
+                if (e.target.value.length >= 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                }
+            });
+        }
+
+        // Correo: máximo 50 caracteres
+        const emailInput = formEditar.querySelector('input[placeholder="Ingresar correo"]');
+        if (emailInput) {
+            emailInput.setAttribute('maxlength', '50');
+            emailInput.addEventListener('input', (e) => {
+                if (e.target.value.length >= 50) {
+                    e.target.value = e.target.value.substring(0, 50);
+                }
+            });
+        }
+
+        // Teléfono: solo números, máximo 9 dígitos
+        const phoneInput = formEditar.querySelector('input[placeholder="Ingresar teléfono"]');
+        if (phoneInput) {
+            phoneInput.setAttribute('maxlength', '9');
+            phoneInput.addEventListener('input', (e) => {
+                // Solo permitir números
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length >= 9) {
+                    e.target.value = e.target.value.substring(0, 9);
+                }
+            });
+
+            // Bloquear teclas no numéricas
+            phoneInput.addEventListener('keypress', (e) => {
+                if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Dirección: máximo 100 caracteres
+        const addressInput = formEditar.querySelector('input[placeholder="Ingresar dirección"]');
+        if (addressInput) {
+            addressInput.setAttribute('maxlength', '100');
+            addressInput.addEventListener('input', (e) => {
+                if (e.target.value.length >= 100) {
+                    e.target.value = e.target.value.substring(0, 100);
+                }
+            });
+        }
+
+        // Nombres: solo letras, máximo 30 caracteres
+        const nombreInput = formEditar.querySelector('input[placeholder="Ingresar nombres"]');
+        if (nombreInput) {
+            nombreInput.setAttribute('maxlength', '30');
+            nombreInput.addEventListener('input', (e) => {
+                // Solo permitir letras y espacios
+                e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                if (e.target.value.length >= 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                }
+            });
+
+            // Bloquear teclas no alfabéticas
+            nombreInput.addEventListener('keypress', (e) => {
+                if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Apellido Paterno: solo letras, máximo 30 caracteres
+        const apePaternoInput = formEditar.querySelector('input[placeholder="Ingresar apellido paterno"]');
+        if (apePaternoInput) {
+            apePaternoInput.setAttribute('maxlength', '30');
+            apePaternoInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                if (e.target.value.length >= 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                }
+            });
+
+            apePaternoInput.addEventListener('keypress', (e) => {
+                if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // Apellido Materno: solo letras, máximo 30 caracteres
+        const apeMaternoInput = formEditar.querySelector('input[placeholder="Ingresar apellido materno"]');
+        if (apeMaternoInput) {
+            apeMaternoInput.setAttribute('maxlength', '30');
+            apeMaternoInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                if (e.target.value.length >= 30) {
+                    e.target.value = e.target.value.substring(0, 30);
+                }
+            });
+
+            apeMaternoInput.addEventListener('keypress', (e) => {
+                if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // DNI: solo números, máximo 8 dígitos
+        const dniInput = formEditar.querySelector('input[placeholder="Ingresar DNI"]');
+        if (dniInput) {
+            dniInput.setAttribute('maxlength', '8');
+            dniInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length >= 8) {
+                    e.target.value = e.target.value.substring(0, 8);
+                }
+            });
+
+            dniInput.addEventListener('keypress', (e) => {
+                if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        // RUC: solo números, máximo 20 dígitos
+        const rucInput = formEditar.querySelector('input[placeholder="Ingresar RUC"]');
+        if (rucInput) {
+            rucInput.setAttribute('maxlength', '20');
+            rucInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value.length >= 20) {
+                    e.target.value = e.target.value.substring(0, 20);
+                }
+            });
+
+            rucInput.addEventListener('keypress', (e) => {
+                if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+    }
 
     /* ============================================================
         INICIALIZAR

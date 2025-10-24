@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de administración de animales</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="files/casitaicon.png">
+    <link rel="shortcut icon" type="image/png" href="files/casitaicon.png">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <!-- Tu CSS global -->
+    <link rel="stylesheet" href="CSS/estilos.css">
+    <!-- CSS exclusivo para usuarios -->
+    <link rel="stylesheet" href="CSS/EstilosUsuarios.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                HUELLA FELIZ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="adopciones.html">Adopciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="donaciones.html">Donaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+
+                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
+                    <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
+                            Sesion</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SECCIÓN ADMIN ANIMALES -->
+    <section class="admin-usuarios text-center py-5 mt-5">
+        <div class="container">
+            <i class="bi bi-shield-lock display-3 text-dark mb-3"></i>
+            <h2 class="fw-bold">Módulo de administración de animales</h2>
+            <hr class="mx-auto mb-4" style="width:60px; height:3px; background-color:#ff5c8d; border:none;">
+
+            <!-- BOTÓN REGISTRAR -->
+            <button class="btn btn-pink mb-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarAnimal">
+                <i class="bi bi-plus-lg me-2"></i>Registrar nuevo animal
+            </button>
+
+            <!-- BUSCAR Y FILTRAR -->
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-4 mb-2">
+                    <input type="text" id="buscarAnimal" class="form-control" placeholder="Buscar animal">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select class="form-select" id="filtroEspecie">
+                        <option value="">Todas las especies</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TABLA DE ANIMALES -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-danger">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>NOMBRE</th>
+                                    <th>ESPECIE</th>
+                                    <th>RAZA</th>
+                                    <th>EDAD</th>
+                                    <th>GÉNERO</th>
+                                    <th>ESTADO</th>
+                                    <th>EDITAR</th>
+                                    <th>ELIMINAR</th>
+                                </tr>
+                            </thead>
+                            <tbody id="animalesBody">
+                                <!-- Los animales se cargarán aquí dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-5 bg-pink text-white">
+        <div class="container">
+            <div class="row">
+                <!-- Navegacion -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Navegacion</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="HUELLA FELIZ.html" class="text-white text-decoration-none">Inicio</a></li>
+                        <li><a href="donaciones.html" class="text-white text-decoration-none">Donaciones</a></li>
+                        <li><a href="adopciones.html" class="text-white text-decoration-none">Adopciones</a></li>
+                        <li><a href="blog.html" class="text-white text-decoration-none">Blog</a></li>
+                        <li><a href="reportar.html" class="text-white text-decoration-none">Reportar</a></li>
+                        <li><a href="acercaDe.html" class="text-white text-decoration-none">Acerca de</a></li>
+                    </ul>
+                </div>
+
+                <!-- Redes sociales -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Redes sociales</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank"
+                                class="text-white text-decoration-none"><i class="bi bi-facebook me-2"></i>Facebook</a>
+                        </li>
+                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank"
+                                class="text-white text-decoration-none"><i
+                                    class="bi bi-instagram me-2"></i>Instagram</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- About -->
+                <div class="col-6 col-md-3 mb-4">
+                    <h5 class="fw-bold">Acerca de</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
+                    </ul>
+                </div>
+
+                <!-- Info -->
+                <div class="col-12 col-md-3 mb-4">
+                    <h5 class="fw-bold">HUELLA FELIZ</h5>
+                    <p class="small">
+                        Somos una organizacion dedicada al rescate, adopcion y proteccion de animales en situacion de
+                        abandono.
+                        Unete como voluntario o apoyanos con tus donaciones.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Linea inferior -->
+            <div class="text-center border-top border-light pt-3 mt-3">
+                <p class="mb-0 small">&copy; 2025 Huella Feliz - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL REGISTRAR ANIMAL -->
+    <div class="modal fade" id="modalRegistrarAnimal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content p-4">
+                <div class="modal-header border-0">
+                    <h3 class="modal-title w-100 text-center fw-bold">
+                        <i class="bi bi-plus-circle fs-1 d-block mb-2"></i>
+                        Registrar Nuevo Animal
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form class="row g-3" id="formRegistrarAnimal">
+                        <!-- Información Básica -->
+                        <h4 class="mb-3 mt-2" style="color: #ff5c8d; font-weight: bold;">Información Básica</h4>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Animal *</label>
+                            <input type="text" class="form-control" placeholder="Ingresar nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Especie *</label>
+                            <select class="form-select" required>
+                                <option value="">Seleccionar especie</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Raza *</label>
+                            <select class="form-select" id="razaRegistrarAnimal" required>
+                                <option value="">Seleccionar raza</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Edad (meses) *</label>
+                            <input type="number" class="form-control" placeholder="Ingresar edad" min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Género *</label>
+                            <select class="form-select" required>
+                                <option value="">Seleccionar género</option>
+                                <option value="M">Macho</option>
+                                <option value="H">Hembra</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" class="form-control" placeholder="Ingresar peso" min="0" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de Pelaje</label>
+                            <select class="form-select">
+                                <option value="">Seleccionar pelaje</option>
+                                <option value="Corto">Corto</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Largo">Largo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tamaño</label>
+                            <select class="form-select">
+                                <option value="">Seleccionar tamaño</option>
+                                <option value="Pequeño">Pequeño</option>
+                                <option value="Mediano">Mediano</option>
+                                <option value="Grande">Grande</option>
+                            </select>
+                        </div>
+
+                        <!-- Foto del Animal -->
+                        <h4 class="mb-3 mt-4" style="color: #ff5c8d; font-weight: bold;">Foto del Animal *</h4>
+                        <div class="col-12">
+                            <div class="upload-area"
+                                style="border: 2px dashed #ff5c8d; border-radius: 10px; padding: 30px; text-align: center; background-color: #f8f9fa;">
+                                <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #ff5c8d;"></i>
+                                <p class="mt-2 mb-1">Arrastra y suelta una imagen aquí o haz clic para seleccionar</p>
+                                <p class="text-muted small">Formatos: JPG, PNG, GIF (máx. 5MB)</p>
+                                <input type="file" class="form-control d-none" id="fotoRegistrarAnimal" accept="image/*"
+                                    required>
+                                <button type="button" class="btn btn-outline-pink mt-2"
+                                    onclick="document.getElementById('fotoRegistrarAnimal').click()">
+                                    <i class="bi bi-camera me-2"></i>Seleccionar Imagen
+                                </button>
+                            </div>
+                            <div class="mt-3" id="fotoPreviewContainer" style="display: none;">
+                                <img id="fotoPreviewRegistrarAnimal" src="#" alt="Previsualización"
+                                    class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <h4 class="mb-3 mt-4" style="color: #ff5c8d; font-weight: bold;">Información Adicional</h4>
+                        <div class="col-12">
+                            <label class="form-label">Descripción / Historial</label>
+                            <textarea class="form-control" rows="4"
+                                placeholder="Cuéntanos sobre el animal, su personalidad, historial médico, etc."></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink" onclick="registrarAnimal()">Registrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR ANIMAL -->
+    <div class="modal fade" id="modalEditarAnimal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content p-4">
+                <div class="modal-header border-0">
+                    <h3 class="modal-title w-100 text-center fw-bold">
+                        <i class="bi bi-pencil-square fs-1 d-block mb-2"></i>
+                        Editar Animal
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form class="row g-3" id="formEditarAnimal">
+                        <input type="hidden" id="idEditarAnimal">
+                        <!-- Los mismos campos que el modal de registrar -->
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre del Animal *</label>
+                            <input type="text" class="form-control" id="nombreEditarAnimal"
+                                placeholder="Ingresar nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Especie *</label>
+                            <select class="form-select" id="especieEditarAnimal" required>
+                                <option value="">Seleccionar especie</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Raza *</label>
+                            <select class="form-select" id="razaEditarAnimal" required>
+                                <option value="">Seleccionar raza</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Edad (meses) *</label>
+                            <input type="number" class="form-control" id="edadEditarAnimal" placeholder="Ingresar edad"
+                                min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Género *</label>
+                            <select class="form-select" id="generoEditarAnimal" required>
+                                <option value="">Seleccionar género</option>
+                                <option value="M">Macho</option>
+                                <option value="H">Hembra</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" class="form-control" id="pesoEditarAnimal" placeholder="Ingresar peso"
+                                min="0" step="0.1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tipo de Pelaje</label>
+                            <select class="form-select" id="pelajeEditarAnimal">
+                                <option value="">Seleccionar pelaje</option>
+                                <option value="Corto">Corto</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Largo">Largo</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Tamaño</label>
+                            <select class="form-select" id="tamanoEditarAnimal">
+                                <option value="">Seleccionar tamaño</option>
+                                <option value="Pequeño">Pequeño</option>
+                                <option value="Mediano">Mediano</option>
+                                <option value="Grande">Grande</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcionEditarAnimal" rows="3"
+                                placeholder="Descripción del animal"></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink" onclick="actualizarAnimal()">Actualizar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Custom JS -->
+    <script src="JS/codigo.js"></script>
+    <script src="JS/animales.js"></script>
+    <script>
+        // Verificar acceso al dashboard cuando se carga la página
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!checkDashboardAccess()) {
+                return; // Si no tiene acceso, la función ya redirige
+            }
+            updateAuthUI();
+        });
+    </script>
+
+</body>
+
+</html>

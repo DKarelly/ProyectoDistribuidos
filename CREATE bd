@@ -11,6 +11,23 @@ CREATE TABLE rol_usuario (
     rolUsuario VARCHAR(30) NOT NULL
 );
 
+INSERT INTO rol_usuario (rolUsuario) VALUES 
+('Administrador'),
+('Adoptante'),
+('Donante'),
+('Voluntario');
+
+-- ======================
+-- TABLA: USUARIO_ROLES
+-- ======================
+CREATE TABLE usuario_roles (
+    idUsuarioRol SERIAL PRIMARY KEY,
+    idUsuario INT REFERENCES usuario(idUsuario),
+    idRol INT REFERENCES rol_usuario(idRol),
+    fecha_asignacion DATE DEFAULT CURRENT_DATE,
+    activo BOOLEAN DEFAULT true
+);
+
 -- ======================
 -- TABLA: USUARIO
 -- ======================
@@ -18,11 +35,19 @@ CREATE TABLE usuario (
     idUsuario SERIAL PRIMARY KEY,
     aliasUsuario VARCHAR(30),
     correoUsuario VARCHAR(50),
-    claveUsuario VARCHAR(30) NOT NULL,
-    numeroUsuario VARCHAR(8),
-    direccionUsuario VARCHAR(50),
-    idRol INT REFERENCES rol_usuario(idRol)
+    claveUsuario VARCHAR(100) NOT NULL,
+    numeroUsuario VARCHAR(9),
+    direccionUsuario VARCHAR(50)
 );
+
+-- INSERT
+-- Cuando agregues un usuario, también asignarle rol por defecto
+INSERT INTO usuario (aliasUsuario, correoUsuario, claveUsuario, numeroUsuario, direccionUsuario) 
+VALUES ('testuser', 'test@test.com', 'password123', '12345678', 'Dirección test');
+
+-- Asignar rol "Adoptante" por defecto
+INSERT INTO usuario_roles (idUsuario, idRol) 
+VALUES (1, 2); -- 2 = Adoptante
 
 -- ======================
 -- TABLA: PERSONA
@@ -57,6 +82,16 @@ CREATE TABLE especie (
     especieAnimal VARCHAR(30) NOT NULL
 );
 
+-- INSERT
+INSERT INTO especie (especieAnimal) VALUES 
+('Perro'),
+('Gato'),
+('Conejo'),
+('Hamster'),
+('Ave'),
+('Reptil'),
+('Otro');
+
 -- ======================
 -- TABLA: RAZA
 -- ======================
@@ -65,6 +100,65 @@ CREATE TABLE raza (
     razaAnimal VARCHAR(30) NOT NULL,
     idEspecie INT REFERENCES especie(idEspecie)
 );
+
+-- INSERT
+INSERT INTO raza (razaAnimal, idEspecie) VALUES 
+-- PERROS (idEspecie = 1)
+('Labrador', 1),
+('Golden Retriever', 1),
+('Pastor Alemán', 1),
+('Bulldog', 1),
+('Poodle', 1),
+('Beagle', 1),
+('Rottweiler', 1),
+('Chihuahua', 1),
+('Mestizo', 1),
+('Criollo', 1),
+
+-- GATOS (idEspecie = 2)
+('Persa', 2),
+('Siamés', 2),
+('Maine Coon', 2),
+('British Shorthair', 2),
+('Ragdoll', 2),
+('Bengalí', 2),
+('Sphynx', 2),
+('Mestizo', 2),
+('Criollo', 2),
+
+-- CONEJOS (idEspecie = 3)
+('Holandés', 3),
+('Angora', 3),
+('Mini Rex', 3),
+('Criollo', 3),
+
+-- HAMSTERS (idEspecie = 4)
+('Dorado', 4),
+('Ruso', 4),
+('Roborovski', 4),
+
+-- AVES (idEspecie = 5)
+('Canario', 5),
+('Periquito', 5),
+('Cockatiel', 5),
+('Criollo', 5),
+
+-- REPTILES (idEspecie = 6)
+('Iguana', 6),
+('Gecko', 6),
+('Tortuga', 6),
+
+-- OTROS (idEspecie = 7)
+('Conejo', 7),
+('Cobaya', 7),
+('Hurón', 7),
+('Otro', 7);
+
+-- Ver razas con sus especies
+SELECT r.idRaza, r.razaAnimal, e.especieAnimal 
+FROM raza r 
+JOIN especie e ON r.idEspecie = e.idEspecie 
+ORDER BY e.especieAnimal, r.razaAnimal;
 
 -- ======================
 -- TABLA: ANIMAL
@@ -104,13 +198,74 @@ CREATE TABLE historial_animal (
 );
 
 -- ======================
+-- TABLA: TIPO_ENFERMEDAD
+-- ======================
+CREATE TABLE tipo_enfermedad (
+    idTipoEnfermedad SERIAL PRIMARY KEY,
+    tipoEnfermedad VARCHAR(50) NOT NULL
+);
+
+-- INSERT
+INSERT INTO tipo_enfermedad (tipoEnfermedad) VALUES 
+('Viral'),
+('Bacteriana'),
+('Parasitaria'),
+('Fúngica'),
+('Digestiva'),
+('Respiratoria'),
+('Cardiovascular'),
+('Neurológica'),
+('Osteoarticular'),
+('Dermatológica'),
+('Ocular'),
+('Auditiva'),
+('Renal'),
+('Hepática'),
+('Metabólica'),
+('Endocrina'),
+('Oncológica'),
+('Traumática'),
+('Conductual'),
+('Genética'),
+('Otra');
+
+-- ======================
 -- TABLA: ENFERMEDAD
 -- ======================
 CREATE TABLE enfermedad (
     idEnfermedad SERIAL PRIMARY KEY,
     nombEnfermedad VARCHAR(50) NOT NULL,
-    tipoEnfermedad VARCHAR(50)
+    idTipoEnfermedad INT REFERENCES tipo_enfermedad(idTipoEnfermedad)
 );
+
+-- INSERT
+INSERT INTO enfermedad (nombEnfermedad, idTipoEnfermedad) VALUES 
+('Parvovirus', 1),           -- Viral
+('Moquillo', 1),             -- Viral
+('Rabia', 1),                -- Viral
+('Leucemia Felina', 1),      -- Viral
+('Sarna', 3),                -- Parasitaria
+('Garrapatas', 3),           -- Parasitaria
+('Pulgas', 3),               -- Parasitaria
+('Gusano del Corazón', 3),   -- Parasitaria
+('Gastroenteritis', 5),      -- Digestiva
+('Dermatitis', 10),          -- Dermatológica
+('Conjuntivitis', 11),       -- Ocular
+('Otitis', 12),              -- Auditiva
+('Fractura', 9),             -- Osteoarticular
+('Artritis', 9),             -- Osteoarticular
+('Diabetes', 15),            -- Metabólica
+('Obesidad', 15),            -- Metabólica
+('Ansiedad', 19),            -- Conductual
+('Depresión', 19);           -- Conductual
+
+-- Ver enfermedades con sus tipos
+SELECT e.nombEnfermedad, t.tipoEnfermedad 
+FROM enfermedad e 
+JOIN tipo_enfermedad t ON e.idTipoEnfermedad = t.idTipoEnfermedad;
+
+-- Filtrar por tipo
+SELECT * FROM enfermedad WHERE idTipoEnfermedad = 1; -- Virales
 
 -- ======================
 -- TABLA: DETALLE_ENFERMEDAD
@@ -169,6 +324,13 @@ CREATE TABLE categoria_donacion (
     idCategoria SERIAL PRIMARY KEY,
     nombCategoria VARCHAR(30) NOT NULL
 );
+
+-- INSERT
+INSERT INTO categoria_donacion (nombCategoria) VALUES 
+('Alimentos'),
+('Medicinas'),
+('Donacion economica'),
+('Otros');
 
 -- ======================
 -- TABLA: DETALLE_DONACION
