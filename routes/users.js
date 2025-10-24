@@ -277,7 +277,15 @@ router.put('/:id', authenticateToken, async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error editando usuario:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+
+        // Manejar errores específicos
+        if (error.code === '23505') { // Violación de clave única
+            res.status(400).json({ message: 'El correo electrónico ya está en uso' });
+        } else if (error.code === '23503') { // Violación de clave foránea
+            res.status(400).json({ message: 'Error de referencia: el rol seleccionado no existe' });
+        } else {
+            res.status(500).json({ message: 'Error interno del servidor' });
+        }
     } finally {
         client.release();
     }
@@ -286,14 +294,44 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
 // Eliminar usuario
 router.delete('/:id', authenticateToken, async (req, res) => {
+    const client = await getClient();
     try {
         const { id } = req.params;
-        const result = await query('DELETE FROM usuario WHERE idusuario = $1 RETURNING *', [id]);
-        if (!result.rows.length) return res.status(404).json({ message: 'Usuario no encontrado' });
-        res.json({ message: 'Usuario eliminado', data: result.rows[0] });
+
+        await client.query('BEGIN');
+
+        // Verificar que el usuario existe
+        const userCheck = await client.query('SELECT idusuario FROM usuario WHERE idusuario = $1', [id]);
+        if (!userCheck.rows.length) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        // Eliminar registros relacionados primero
+        await client.query('DELETE FROM usuario_roles WHERE idusuario = $1', [id]);
+        await client.query('DELETE FROM persona WHERE idusuario = $1', [id]);
+        await client.query('DELETE FROM empresa WHERE idusuario = $1', [id]);
+        await client.query('DELETE FROM adopcion WHERE idpersona = $1', [id]);
+        await client.query('DELETE FROM donacion WHERE idusuario = $1', [id]);
+
+        // Finalmente eliminar el usuario
+        const result = await client.query('DELETE FROM usuario WHERE idusuario = $1 RETURNING *', [id]);
+
+        await client.query('COMMIT');
+        res.json({ message: 'Usuario eliminado exitosamente', data: result.rows[0] });
+
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error eliminando usuario:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+
+        // Manejar errores específicos
+        if (error.code === '23503') { // Violación de clave foránea
+            res.status(400).json({ message: 'No se puede eliminar el usuario porque tiene datos relacionados (adopciones, donaciones, etc.)' });
+        } else {
+            res.status(500).json({ message: 'Error interno del servidor' });
+        }
+    } finally {
+        client.release();
     }
 });
 

@@ -33,6 +33,31 @@ async function apiRequest(endpoint, options = {}) {
         const data = await response.json();
 
         if (!response.ok) {
+            // Manejar errores de validación específicos
+            if (data.errors && Array.isArray(data.errors)) {
+                const errorMessages = data.errors.map(error => {
+                    switch (error.path) {
+                        case 'claveusuario':
+                            if (error.msg === 'Invalid value') {
+                                return 'La contraseña debe tener al menos 4 caracteres';
+                            }
+                            return 'Error en la contraseña';
+                        case 'correoUsuario':
+                            return 'El correo electrónico no es válido';
+                        case 'numUsuario':
+                            return 'El número de teléfono no es válido';
+                        case 'dni':
+                            return 'El DNI debe tener exactamente 8 dígitos';
+                        case 'aliasUsuario':
+                            return 'El alias es requerido';
+                        case 'direccionUsuario':
+                            return 'La dirección es requerida';
+                        default:
+                            return error.msg || 'Campo inválido';
+                    }
+                });
+                throw new Error(errorMessages.join(', '));
+            }
             throw new Error(data.message || 'Error en la petición');
         }
 
@@ -45,24 +70,49 @@ async function apiRequest(endpoint, options = {}) {
 
 // Utilidad para mostrar mensajes
 function showMessage(message, type = 'info') {
+    // Remover mensajes anteriores del mismo tipo
+    const existingMessages = document.querySelectorAll('.alert-message');
+    existingMessages.forEach(msg => msg.remove());
+
     // Crear elemento de mensaje
     const messageDiv = document.createElement('div');
-    messageDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    messageDiv.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed alert-message`;
+    messageDiv.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 350px; max-width: 500px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);';
+
+    // Iconos para diferentes tipos de mensaje
+    let icon = '';
+    switch (type) {
+        case 'success':
+            icon = '<i class="bi bi-check-circle-fill me-2"></i>';
+            break;
+        case 'danger':
+            icon = '<i class="bi bi-exclamation-triangle-fill me-2"></i>';
+            break;
+        case 'warning':
+            icon = '<i class="bi bi-exclamation-circle-fill me-2"></i>';
+            break;
+        case 'info':
+            icon = '<i class="bi bi-info-circle-fill me-2"></i>';
+            break;
+    }
 
     messageDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="d-flex align-items-center">
+            ${icon}
+            <span>${message}</span>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
     `;
 
     document.body.appendChild(messageDiv);
 
-    // Auto-remover después de 5 segundos
+    // Auto-remover después de más tiempo para errores
+    const timeout = type === 'danger' ? 8000 : 5000;
     setTimeout(() => {
         if (messageDiv.parentNode) {
             messageDiv.remove();
         }
-    }, 5000);
+    }, timeout);
 }
 
 // Verificar si el usuario está autenticado
@@ -430,7 +480,7 @@ async function handleLogin(email, password) {
             method: 'POST',
             body: JSON.stringify({
                 correoUsuario: email,
-                contrasenaUsuario: password
+                claveusuario: password
             })
         });
 
@@ -831,22 +881,80 @@ document.addEventListener('DOMContentLoaded', function () {
             registerForm.addEventListener('submit', function (e) {
                 e.preventDefault();
 
+                // Obtener tipo de persona
+                const tipoPersona = document.querySelector('input[name="tipoPersonaRegistrar"]:checked').value;
+
                 const formData = {
                     aliasUsuario: document.getElementById('alias').value,
-                    nombreUsuario: document.getElementById('nombre').value,
-                    apellidoPaternoUsuario: document.getElementById('apellidoP').value,
-                    apellidoMaternoUsuario: document.getElementById('apellidoM').value || null,
                     correoUsuario: document.getElementById('correo').value,
-                    contrasenaUsuario: document.getElementById('password').value,
-                    numeroUsuario: document.getElementById('numero').value,
-                    direccionUsuario: document.getElementById('direccion').value || null
+                    claveusuario: document.getElementById('password').value,
+                    numUsuario: document.getElementById('numero').value,
+                    direccionUsuario: document.getElementById('direccion').value || null,
+                    tipoPersona: tipoPersona
                 };
+
+                // Agregar campos específicos según el tipo de persona
+                if (tipoPersona === 'persona') {
+                    formData.nombreUsuario = document.getElementById('nombrePersonaRegistrar').value;
+                    formData.apellidoPaternoUsuario = document.getElementById('apellidoPaternoRegistrar').value;
+                    formData.apellidoMaternoUsuario = document.getElementById('apellidoMaternoRegistrar').value || null;
+                    formData.dni = document.getElementById('dniRegistrar').value;
+                    formData.sexo = document.querySelector('input[name="sexoRegistrar"]:checked').value;
+                } else if (tipoPersona === 'empresa') {
+                    formData.nombreEmpresa = document.getElementById('nombreEmpresaRegistrar').value;
+                    formData.tipoPersonaEmpresa = document.getElementById('tipoPersonaEmpresaRegistrar').value;
+                    formData.ruc = document.getElementById('rucRegistrar').value;
+                    formData.fechaCreacion = document.getElementById('fechaCreacionRegistrar').value;
+                }
+
+                // Validaciones del frontend
+                if (!formData.aliasUsuario.trim()) {
+                    showMessage('El alias es requerido', 'danger');
+                    return;
+                }
+
+                if (!formData.correoUsuario.trim()) {
+                    showMessage('El correo electrónico es requerido', 'danger');
+                    return;
+                }
+
+                if (!formData.numUsuario.trim()) {
+                    showMessage('El número de teléfono es requerido', 'danger');
+                    return;
+                }
+
+                if (!formData.direccionUsuario.trim()) {
+                    showMessage('La dirección es requerida', 'danger');
+                    return;
+                }
+
+                // Validar longitud de contraseña
+                if (formData.claveusuario.length < 4) {
+                    showMessage('La contraseña debe tener al menos 4 caracteres', 'danger');
+                    return;
+                }
 
                 // Validar que las contraseñas coincidan
                 const password2 = document.getElementById('password2').value;
-                if (formData.contrasenaUsuario !== password2) {
+                if (formData.claveusuario !== password2) {
                     showMessage('Las contraseñas no coinciden', 'danger');
                     return;
+                }
+
+                // Validaciones específicas para persona
+                if (formData.tipoPersona === 'persona') {
+                    if (!formData.nombreUsuario.trim()) {
+                        showMessage('El nombre es requerido', 'danger');
+                        return;
+                    }
+                    if (!formData.apellidoPaternoUsuario.trim()) {
+                        showMessage('El apellido paterno es requerido', 'danger');
+                        return;
+                    }
+                    if (!formData.dni || formData.dni.length !== 8) {
+                        showMessage('El DNI debe tener exactamente 8 dígitos', 'danger');
+                        return;
+                    }
                 }
 
                 handleRegistration(formData);

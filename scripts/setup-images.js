@@ -10,10 +10,10 @@ async function setupImages() {
 
         if (existingHistorial.rows[0].count === '0') {
             console.log('📝 Insertando registros de historial...');
-            
+
             // Insertar registros de historial para los animales existentes
             await query(`
-                INSERT INTO historial_animal (idAnimal, pesoHistorial, fechaHistorial, horaHistorial, descripcionHistorial)
+                INSERT INTO historial_animal (idAnimal, pesoHistorial, f_historial, h_historial, descripcionHistorial)
                 VALUES 
                     ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Firulais'), 12.5, CURRENT_DATE, CURRENT_TIME, 'Registro inicial'),
                     ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Michi'), 4.3, CURRENT_DATE, CURRENT_TIME, 'Registro inicial'),
@@ -29,15 +29,15 @@ async function setupImages() {
 
         if (existingImages.rows[0].count === '0') {
             console.log('📸 Insertando imágenes en galería...');
-            
+
             // Insertar las imágenes en la galería
             await query(`
-                INSERT INTO galeria (idHistorial, imagen)
+                INSERT INTO galeria (idAnimal, imagen)
                 VALUES 
-                    ((SELECT idHistorial FROM historial_animal WHERE idAnimal = (SELECT idAnimal FROM animal WHERE nombreAnimal = 'Firulais') LIMIT 1), 'firulais.jpeg'),
-                    ((SELECT idHistorial FROM historial_animal WHERE idAnimal = (SELECT idAnimal FROM animal WHERE nombreAnimal = 'Michi') LIMIT 1), 'michi.jpeg'),
-                    ((SELECT idHistorial FROM historial_animal WHERE idAnimal = (SELECT idAnimal FROM animal WHERE nombreAnimal = 'Zero') LIMIT 1), 'zero.jpg'),
-                    ((SELECT idHistorial FROM historial_animal WHERE idAnimal = (SELECT idAnimal FROM animal WHERE nombreAnimal = 'Jeff') LIMIT 1), 'jeff.jpeg')
+                    ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Firulais'), 'firulais.jpeg'),
+                    ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Michi'), 'michi.jpeg'),
+                    ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Zero'), 'zero.jpg'),
+                    ((SELECT idAnimal FROM animal WHERE nombreAnimal = 'Jeff'), 'jeff.jpeg')
             `);
             console.log('✅ Imágenes insertadas en galería');
         }
@@ -56,7 +56,7 @@ async function setupImages() {
             LEFT JOIN raza r ON a.idRaza = r.idRaza
             LEFT JOIN especie e ON r.idEspecie = e.idEspecie
             LEFT JOIN historial_animal ha ON a.idAnimal = ha.idAnimal
-            LEFT JOIN galeria g ON ha.idHistorial = g.idHistorial
+            LEFT JOIN galeria g ON a.idAnimal = g.idAnimal
             ORDER BY a.nombreAnimal
         `);
 
