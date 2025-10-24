@@ -21,12 +21,29 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage,
     limits: { fileSize: 5 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) cb(null, true);
         else cb(new Error('Solo se permiten archivos de imagen'), false);
+    }
+});
+
+// GET /api/animals - Obtener todos los animales
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT a.*, e.especieanimal, r.razaanimal
+            FROM animal a
+            LEFT JOIN raza r ON a.idraza = r.idraza
+            LEFT JOIN especie e ON r.idespecie = e.idespecie
+            ORDER BY a.idanimal DESC
+        `);
+        res.json({ message: 'Animales obtenidos exitosamente', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo animales:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 

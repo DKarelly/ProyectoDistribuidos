@@ -14,6 +14,8 @@ const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
 const rolesRouter = require('./routes/roles');
 const adoptionsRouter = require('./routes/adoptions');
+const apadrinamientoRouter = require('./routes/apadrinamiento');
+const especieRazaRouter = require('./routes/especieRaza');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +41,8 @@ app.use('/api/reports', reportsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/roles', rolesRouter);
 app.use('/api/adoptions', adoptionsRouter);
+app.use('/api/apadrinamiento', apadrinamientoRouter);
+app.use('/api/especieRaza', especieRazaRouter);
 
 // Ruta para servir el archivo principal
 app.get('/', (req, res) => {
@@ -107,6 +111,20 @@ async function startServer() {
             console.log('   - PUT  /api/adoption/estado_solicitud/:id');
             console.log('   - PUT  /api/adoption/estado_adop/:id');
             console.log('   - DELETE /api/adoption/:id');
+            console.log('   - GET  /api/especieRaza/especies');
+            console.log('   - POST /api/especieRaza/especies');
+            console.log('   - PUT  /api/especieRaza/especies/:id');
+            console.log('   - DELETE /api/especieRaza/especies/:id');
+            console.log('   - GET  /api/especieRaza/razas');
+            console.log('   - POST /api/especieRaza/razas');
+            console.log('   - PUT  /api/especieRaza/razas/:id');
+            console.log('   - DELETE /api/especieRaza/razas/:id');
+            console.log('   - GET  /api/apadrinamiento');
+            console.log('   - POST /api/apadrinamiento');
+            console.log('   - PUT  /api/apadrinamiento/:id');
+            console.log('   - DELETE /api/apadrinamiento/:id');
+            console.log('   - GET  /api/apadrinamiento/usuarios');
+            console.log('   - GET  /api/apadrinamiento/animales');
         });
 
     } catch (error) {

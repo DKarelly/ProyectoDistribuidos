@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }));
             displayRoles(rolesData);
         } catch (error) {
-            alert('Error cargando roles: ' + error.message);
+            Swal.fire('Error', 'Error cargando roles: ' + error.message, 'error');
         }
     }
 
@@ -75,15 +75,26 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const id = parseInt(btn.dataset.id);
-                if (confirm('¿Seguro que deseas eliminar este rol?')) {
-                    try {
-                        await apiRequest(`/roles/${id}`, { method: 'DELETE' });
-                        alert('Rol eliminado correctamente');
-                        loadRoles();
-                    } catch (error) {
-                        alert(error.message);
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: '¿Seguro que deseas eliminar este rol?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            await apiRequest(`/roles/${id}`, { method: 'DELETE' });
+                            Swal.fire('Éxito', 'Rol eliminado correctamente', 'success');
+                            loadRoles();
+                        } catch (error) {
+                            Swal.fire('Error', error.message, 'error');
+                        }
                     }
-                }
+                });
             });
         });
     }
@@ -102,18 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             if (!rolActual) return;
             const nuevoNombre = formEditarRol.elements[1].value.trim();
-            if (!nuevoNombre) return alert('El nombre del rol no puede estar vacío');
+            if (!nuevoNombre) return Swal.fire('Advertencia', 'El nombre del rol no puede estar vacío', 'warning');
 
             try {
-                await apiRequest(`/roles/${rolActual.idRol}`, { 
-                    method: 'PUT', 
-                    body: JSON.stringify({ rolusuario: nuevoNombre }) 
+                await apiRequest(`/roles/${rolActual.idRol}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ rolusuario: nuevoNombre })
                 });
-                alert('Rol actualizado correctamente');
+                Swal.fire('Éxito', 'Rol actualizado correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalEditarRol')).hide();
                 loadRoles();
             } catch (err) {
-                alert(err.message);
+                Swal.fire('Error', err.message, 'error');
             }
         });
     }
@@ -123,19 +134,19 @@ document.addEventListener('DOMContentLoaded', () => {
         formRegistrarRol.addEventListener('submit', async e => {
             e.preventDefault();
             const nombreRol = formRegistrarRol.elements[0].value.trim();
-            if (!nombreRol) return alert('El nombre del rol es obligatorio');
+            if (!nombreRol) return Swal.fire('Advertencia', 'El nombre del rol es obligatorio', 'warning');
 
             try {
-                await apiRequest('/roles', { 
-                    method: 'POST', 
-                    body: JSON.stringify({ rolusuario: nombreRol }) 
+                await apiRequest('/roles', {
+                    method: 'POST',
+                    body: JSON.stringify({ rolusuario: nombreRol })
                 });
-                alert('Rol registrado correctamente');
+                Swal.fire('Éxito', 'Rol registrado correctamente', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('modalRegistrarRol')).hide();
                 formRegistrarRol.reset();
                 loadRoles();
             } catch (err) {
-                alert(err.message);
+                Swal.fire('Error', err.message, 'error');
             }
         });
     }
