@@ -13,6 +13,7 @@ const donationsRouter = require('./routes/donations');
 const reportsRouter = require('./routes/reports');
 const usersRouter = require('./routes/users');
 const rolesRouter = require('./routes/roles');
+const adoptionsRouter = require('./routes/adoptions');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,6 +38,7 @@ app.use('/api/donations', donationsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/roles', rolesRouter);
+app.use('/api/adoptions', adoptionsRouter);
 
 // Ruta para servir el archivo principal
 app.get('/', (req, res) => {
@@ -100,6 +102,11 @@ async function startServer() {
             console.log('   - POST /api/donations/economica');
             console.log('   - POST /api/reports/crear');
             console.log('   - GET  /api/users/perfil');
+            console.log('   - POST /api/adoption/solicitud');
+            console.log('   - PUT  /api/adoption/:id');
+            console.log('   - PUT  /api/adoption/estado_solicitud/:id');
+            console.log('   - PUT  /api/adoption/estado_adop/:id');
+            console.log('   - DELETE /api/adoption/:id');
         });
 
     } catch (error) {
