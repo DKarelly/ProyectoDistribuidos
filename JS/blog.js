@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     // === 1. Obtener animales disponibles desde el backend ===
-    const response = await fetch("/api/animals/disponibles");
+    const response = await fetch(window.location.origin + "/api/animals/disponibles");
     const result = await response.json();
     const animales = result.data; // La respuesta tiene { message, data: [...] }
 
@@ -58,7 +58,7 @@ function inicializarEventosVerHistoria() {
 
       try {
         // Obtener detalle del animal desde backend usando /api/animals/:id
-        const res = await fetch(`/api/animals/${idAnimal}`);
+        const res = await fetch(`${window.location.origin}/api/animals/${idAnimal}`);
         if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
         const result = await res.json();
         const animal = result.data; // La respuesta tiene { message, data: animal }
@@ -122,7 +122,7 @@ function confirmarApadrinar(button) {
   const btnConfirmar = document.getElementById("confirmarApadrinarBtn");
   btnConfirmar.onclick = async () => {
     try {
-      const response = await fetch('/api/animals/apadrinar', {
+      const response = await fetch(window.location.origin + '/api/animals/apadrinar', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -84,8 +84,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Cargar especies y razas para filtros
     async function loadEspecies() {
         try {
-            const response = await apiRequest('/especieRaza/especies');
-            const especies = response.data || [];
+            // Usar fetch directamente como en la página que funciona
+            const response = await fetch(window.location.origin + '/api/especieRaza/especies', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error cargando especies: ' + response.status);
+            }
+
+            const data = await response.json();
+            const especies = data.data || [];
 
             // Llenar filtro
             filtroEspecieSelect.innerHTML = '<option value="">Todas las especies</option>';
@@ -135,8 +147,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Cargar razas
     async function loadRazas() {
         try {
-            const response = await apiRequest('/especieRaza/razas');
-            const razas = response.data || [];
+            // Usar fetch directamente como en la página que funciona
+            const response = await fetch(window.location.origin + '/api/especieRaza/razas', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error cargando razas: ' + response.status);
+            }
+
+            const data = await response.json();
+            const razas = data.data || [];
 
             // Guardar todas las razas globalmente para filtrado
             window.todasLasRazas = razas;
@@ -272,31 +296,40 @@ document.addEventListener("DOMContentLoaded", async () => {
             const formData = new FormData();
 
             // Datos básicos
-            formData.append('nombreanimal', formRegistrarAnimal.querySelector('input[placeholder="Ingresar nombre"]').value.trim());
-            formData.append('especieanimal', formRegistrarAnimal.querySelector('select').value.trim());
-            formData.append('razaanimal', document.getElementById('razaRegistrarAnimal').value.trim());
-            formData.append('edadmesesanimal', parseInt(formRegistrarAnimal.querySelector('input[placeholder="Ingresar edad"]').value));
-            formData.append('generoanimal', formRegistrarAnimal.querySelectorAll('select')[1].value.trim());
-            formData.append('pesoanimal', parseFloat(formRegistrarAnimal.querySelector('input[placeholder="Ingresar peso"]').value) || null);
-            formData.append('tipopelaje', formRegistrarAnimal.querySelectorAll('select')[2].value.trim() || null);
-            formData.append('tamano', formRegistrarAnimal.querySelectorAll('select')[3].value.trim() || null);
+            formData.append('nombreAnimal', formRegistrarAnimal.querySelector('input[placeholder="Ingresar nombre"]').value.trim());
+            formData.append('especie', formRegistrarAnimal.querySelector('select').value.trim());
+            formData.append('raza', document.getElementById('razaRegistrarAnimal').value.trim());
+            formData.append('edadMeses', parseInt(formRegistrarAnimal.querySelector('input[placeholder="Ingresar edad"]').value));
+            // Obtener género del select (ya está en formato BD: M/F)
+            const generoValue = formRegistrarAnimal.querySelectorAll('select')[2].value.trim();
+            formData.append('genero', generoValue);
+            formData.append('peso', parseFloat(formRegistrarAnimal.querySelector('input[placeholder="Ingresar peso"]').value) || null);
+            formData.append('pelaje', formRegistrarAnimal.querySelectorAll('select')[3].value.trim() || null);
+            // Asegurar que tamaño no tenga caracteres especiales que causen problemas
+            const tamañoValue = formRegistrarAnimal.querySelectorAll('select')[4].value.trim();
+            formData.append('tamaño', tamañoValue || null);
             formData.append('descripcion', formRegistrarAnimal.querySelector('textarea').value.trim() || null);
-            formData.append('estadoanimal', 'disponible');
 
             // Foto del animal
             const fotoFile = document.getElementById('fotoRegistrarAnimal').files[0];
             if (fotoFile) {
-                formData.append('foto', fotoFile);
+                formData.append('imagenAnimal', fotoFile);
             }
 
             // Validaciones
-            if (!formData.get('nombreanimal') || !formData.get('especieanimal') || !formData.get('razaanimal') || !formData.get('edadmesesanimal') || !formData.get('generoanimal')) {
+            if (!formData.get('nombreAnimal') || !formData.get('especie') || !formData.get('raza') || !formData.get('edadMeses') || !formData.get('genero')) {
                 Swal.fire('Advertencia', 'Todos los campos obligatorios deben ser completados', 'warning');
                 return;
             }
 
+            // Validar que el género sea válido (M o F)
+            if (generoValue !== 'M' && generoValue !== 'F') {
+                Swal.fire('Error', 'Debe seleccionar un género válido', 'error');
+                return;
+            }
+
             // Enviar con FormData para manejar archivos
-            const response = await fetch('/api/animals', {
+            const response = await fetch(window.location.origin + '/api/animals/agregar', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`

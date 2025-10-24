@@ -22,7 +22,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'file://'],
+    origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'file://',
+        'https://huellafeliz-production.up.railway.app',
+        'https://*.railway.app'
+    ],
     credentials: true
 }));
 
@@ -51,8 +57,8 @@ app.get('/', (req, res) => {
 
 // Ruta de salud del servidor
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         message: 'Servidor funcionando correctamente',
         timestamp: new Date().toISOString()
     });
@@ -61,7 +67,7 @@ app.get('/health', (req, res) => {
 // Middleware de manejo de errores
 app.use((err, req, res, next) => {
     console.error('Error del servidor:', err);
-    res.status(500).json({ 
+    res.status(500).json({
         message: 'Error interno del servidor',
         error: process.env.NODE_ENV === 'development' ? err.message : 'Error interno'
     });
@@ -69,9 +75,9 @@ app.use((err, req, res, next) => {
 
 // Manejo de rutas no encontradas
 app.use('*', (req, res) => {
-    res.status(404).json({ 
+    res.status(404).json({
         message: 'Ruta no encontrada',
-        path: req.originalUrl 
+        path: req.originalUrl
     });
 });
 
@@ -81,7 +87,7 @@ async function startServer() {
         // Probar conexión a la base de datos
         console.log('Probando conexión a la base de datos...');
         const dbConnected = await testConnection();
-        
+
         if (!dbConnected) {
             console.error('No se pudo conectar a la base de datos. Verifica tu configuración en config.env');
             process.exit(1);

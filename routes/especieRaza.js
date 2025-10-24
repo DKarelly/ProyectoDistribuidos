@@ -12,8 +12,8 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// GET /api/especieRaza/especies - Obtener todas las especies
-router.get('/especies', authenticateToken, requireAdmin, async (req, res) => {
+// GET /api/especieRaza/especies - Obtener todas las especies (público para cargar combos)
+router.get('/especies', async (req, res) => {
     try {
         const result = await query('SELECT idEspecie, especieAnimal FROM especie ORDER BY especieAnimal');
         res.json({ message: 'Especies obtenidas exitosamente', data: result.rows });
@@ -115,8 +115,8 @@ router.delete('/especies/:id', authenticateToken, requireAdmin, async (req, res)
     }
 });
 
-// GET /api/especieRaza/razas - Obtener todas las razas con sus especies
-router.get('/razas', authenticateToken, requireAdmin, async (req, res) => {
+// GET /api/especieRaza/razas - Obtener todas las razas con sus especies (público para cargar combos)
+router.get('/razas', async (req, res) => {
     try {
         const result = await query(`
             SELECT r.idRaza, r.razaAnimal, r.idEspecie, e.especieAnimal
