@@ -198,7 +198,15 @@ router.post('/agregar', upload.single('imagenAnimal'), async (req, res) => {
     } catch (error) {
         console.error('Error agregando animal:', error);
         if (req.file) fs.unlinkSync(req.file.path);
-        res.status(500).json({ message: 'Error interno del servidor' });
+
+        // Manejar errores específicos
+        if (error.code === '22001') { // value too long for type
+            res.status(400).json({ message: 'Uno de los campos excede la longitud máxima permitida' });
+        } else if (error.code === '23503') { // foreign key violation
+            res.status(400).json({ message: 'La raza seleccionada no existe' });
+        } else {
+            res.status(500).json({ message: 'Error interno del servidor' });
+        }
     }
 });
 

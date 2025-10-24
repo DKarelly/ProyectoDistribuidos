@@ -280,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Payload registro:", payload);
 
         // Enviar al backend
-        fetch("/api/auth/registro", {
+        fetch(window.location.origin + "/api/auth/registro", {
             method: "POST",
             body: JSON.stringify(payload),
             headers: { 'Content-Type': 'application/json' }

@@ -2,7 +2,7 @@
 // CONFIGURACIÓN Y UTILIDADES GENERALES
 // ===================================================
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = window.location.origin + '/api';
 let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
 

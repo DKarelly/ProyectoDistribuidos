@@ -2,7 +2,7 @@
 let apadrinamientosData = [];
 
 // Inicializar cuando se carga la página
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     cargarApadrinamientos();
     configurarEventos();
 });
@@ -32,7 +32,7 @@ function configurarEventos() {
 // Cargar apadrinamientos
 async function cargarApadrinamientos() {
     try {
-        const response = await fetch('/api/apadrinamiento');
+        const response = await fetch(window.location.origin + '/api/apadrinamiento');
         const data = await response.json();
 
         if (response.ok) {
@@ -114,7 +114,7 @@ async function buscarUsuarios(event) {
     if (query.length < 2) return;
 
     try {
-        const response = await fetch(`/api/apadrinamiento/usuarios?search=${encodeURIComponent(query)}`);
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/usuarios?search=${encodeURIComponent(query)}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -133,7 +133,7 @@ async function buscarAnimales(event) {
     if (query.length < 2) return;
 
     try {
-        const response = await fetch(`/api/apadrinamiento/animales?search=${encodeURIComponent(query)}`);
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/animales?search=${encodeURIComponent(query)}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -208,7 +208,7 @@ async function registrarApadrinamiento(event) {
     const data = Object.fromEntries(formData);
 
     try {
-        const response = await fetch('/api/apadrinamiento', {
+        const response = await fetch(window.location.origin + '/api/apadrinamiento', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -261,7 +261,7 @@ async function modificarApadrinamiento(event) {
     const data = Object.fromEntries(formData);
 
     try {
-        const response = await fetch(`/api/apadrinamiento/${id}`, {
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -289,7 +289,7 @@ async function eliminarApadrinamiento(id) {
     if (!confirm('¿Está seguro de que desea eliminar este apadrinamiento?')) return;
 
     try {
-        const response = await fetch(`/api/apadrinamiento/${id}`, {
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/${id}`, {
             method: 'DELETE'
         });
 
