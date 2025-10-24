@@ -22,7 +22,7 @@ function authenticateToken(req, res, next) {
 router.post('/registro', [
     body('aliasUsuario').notEmpty().isLength({ max: 30 }),
     body('correoUsuario').isEmail().isLength({ max: 50 }),
-    body('contrasenaUsuario').isLength({ min: 4, max: 100 }),
+    body('claveusuario').isLength({ min: 4, max: 100 }),
     body('numUsuario').notEmpty().isLength({ max: 9 }),
     body('direccionUsuario').notEmpty().isLength({ max: 100 }),
     body('tipoPersona').isIn(['persona', 'empresa']), // ahora depende de tipoPersona
@@ -44,7 +44,7 @@ router.post('/registro', [
         if (!errors.isEmpty()) return res.status(400).json({ message: 'Datos inválidos', errors: errors.array() });
 
         const {
-            aliasUsuario, correoUsuario, contrasenaUsuario,
+            aliasUsuario, correoUsuario, claveusuario,
             numUsuario, direccionUsuario, tipoPersona,
             nombreUsuario, apellidoPaternoUsuario, apellidoMaternoUsuario, dni, sexo,
             nombreEmpresa, tipoPersonaEmpresa, ruc, fechaCreacion
@@ -64,7 +64,7 @@ router.post('/registro', [
 
         await client.query('BEGIN');
 
-        const hashedPassword = await bcrypt.hash(contrasenaUsuario, 10);
+        const hashedPassword = await bcrypt.hash(claveusuario, 10);
         const resultUser = await client.query(`
             INSERT INTO usuario(aliasusuario, correousuario, claveusuario, numerousuario, direccionusuario)
             VALUES ($1,$2,$3,$4,$5) RETURNING idusuario
@@ -105,9 +105,9 @@ router.post('/registro', [
 /* ------------------ LOGIN ------------------ */
 router.post('/login', async (req, res) => {
     try {
-        const { correoUsuario, contrasenaUsuario } = req.body;
+        const { correoUsuario, claveusuario } = req.body;
 
-        if (!correoUsuario || !contrasenaUsuario) {
+        if (!correoUsuario || !claveusuario) {
             return res.status(400).json({ message: 'Correo y contraseña son requeridos' });
         }
 
@@ -129,7 +129,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Usuario no tiene contraseña configurada. Contacta al administrador.' });
         }
 
-        const passwordMatch = await bcrypt.compare(contrasenaUsuario, user.claveusuario);
+        const passwordMatch = await bcrypt.compare(claveusuario, user.claveusuario);
         if (!passwordMatch) return res.status(400).json({ message: 'Contraseña incorrecta' });
 
         const token = jwt.sign(

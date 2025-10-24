@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const payload = {
             aliasUsuario: document.getElementById("alias").value.trim(),
             correoUsuario: document.getElementById("correo").value.trim(),
-            contrasenaUsuario: password.value.trim(),
+            claveusuario: password.value.trim(),
             numUsuario: document.getElementById("numero").value.trim(),
             direccionUsuario: document.getElementById("direccion").value.trim(),
             tipoPersona: tipoPersona // lo que espera el backend
