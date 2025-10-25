@@ -29,8 +29,14 @@ async function apiRequest(endpoint, options = {}) {
     };
 
     try {
+        console.log('=== API REQUEST DEBUG ===');
+        console.log('URL:', url);
+        console.log('Options:', finalOptions);
         const response = await fetch(url, finalOptions);
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
         const data = await response.json();
+        console.log('Response data:', data);
 
         if (!response.ok) {
             // Manejar errores de validación específicos
@@ -744,7 +750,7 @@ function populateFilters(options) {
                     optionElement.textContent = option;
                 } else {
                     optionElement.value = option.valor;
-                    optionElement.textContent = option.nombre;
+                    optionElement.textContent = option.display;
                 }
                 select.appendChild(optionElement);
             });

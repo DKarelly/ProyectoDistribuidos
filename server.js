@@ -16,6 +16,7 @@ const rolesRouter = require('./routes/roles');
 const adoptionsRouter = require('./routes/adoptions');
 const apadrinamientoRouter = require('./routes/apadrinamiento');
 const especieRazaRouter = require('./routes/especieRaza');
+const statsRouter = require('./routes/stats');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -74,6 +75,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname)));
 
+// Servir archivos de la carpeta files
+app.use('/files', express.static(path.join(__dirname, 'files')));
+
 // Rutas API
 app.use('/api/auth', authRouter);
 app.use('/api/animals', animalsRouter);
@@ -85,6 +89,7 @@ app.use('/api/roles', rolesRouter);
 app.use('/api/adoptions', adoptionsRouter);
 app.use('/api/apadrinamiento', apadrinamientoRouter);
 app.use('/api/especieRaza', especieRazaRouter);
+app.use('/api/stats', statsRouter);
 
 // Ruta para servir el archivo principal
 app.get('/', (req, res) => {

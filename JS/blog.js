@@ -7,28 +7,59 @@ document.addEventListener("DOMContentLoaded", async () => {
     const result = await response.json();
     const animales = result.data; // La respuesta tiene { message, data: [...] }
 
+    console.log('Animales recibidos:', animales);
+    console.log('Primer animal:', animales[0]);
+
     // === 2. Generar tarjetas dinámicamente ===
     animales.forEach((animal, index) => {
       const card = document.createElement("div");
       card.classList.add("col-12", "col-sm-6", "col-lg-4");
+
+      // Crear carousel con múltiples imágenes/videos
+      let carouselItems = '';
+      console.log(`Animal ${animal.nombreanimal} - imagenAnimal:`, animal.imagenAnimal);
+
+      if (animal.imagenAnimal) {
+        const imageUrl = `/files/${animal.imagenAnimal}`;
+        console.log(`URL de imagen para ${animal.nombreanimal}:`, imageUrl);
+        carouselItems = `
+          <div class="carousel-item active">
+            <img src="${imageUrl}" class="d-block w-100 rounded-top" alt="${animal.nombreanimal}" 
+                 onerror="console.error('Error cargando imagen:', this.src); this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 300px; display: none;">
+              <h4 class="text-muted">${animal.nombreanimal}</h4>
+            </div>
+          </div>
+        `;
+      } else {
+        console.log(`No hay imagen para ${animal.nombreanimal}`);
+        carouselItems = `
+          <div class="carousel-item active">
+            <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+              <h4 class="text-muted">${animal.nombreanimal}</h4>
+            </div>
+          </div>
+        `;
+      }
+
       card.innerHTML = `
         <div class="card card-historia shadow-sm mx-auto">
           <div id="carousel${index}" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
-              <div class="carousel-item active">
-                <img src="${animal.imagenAnimal ? 'files/' + animal.imagenAnimal : `https://placehold.co/400x300?text=${animal.nombreanimal}`}"
-                     class="d-block w-100 rounded-top" alt="${animal.nombreanimal}">
-              </div>
+              ${carouselItems}
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#carousel${index}" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#carousel${index}" data-bs-slide="next">
-              <span class="carousel-control-next-icon"></span>
-            </button>
+            ${animal.imagenAnimal ? `
+              <button class="carousel-control-prev" type="button" data-bs-target="#carousel${index}" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#carousel${index}" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
+            ` : ''}
           </div>
           <div class="card-body">
             <h5 class="card-title">${animal.nombreanimal}</h5>
+            <p class="card-text">${animal.especieanimal} - ${animal.razaanimal}</p>
             <a href="#" class="btn btn-pink btn-ver-historia" data-id="${animal.idanimal}">Ver historia</a>
           </div>
         </div>
@@ -57,17 +88,61 @@ function inicializarEventosVerHistoria() {
       const idAnimal = btn.getAttribute("data-id");
 
       try {
+        console.log('Obteniendo detalles del animal ID:', idAnimal);
         // Obtener detalle del animal desde backend usando /api/animals/:id
         const res = await fetch(`${window.location.origin}/api/animals/${idAnimal}`);
-        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+        console.log('Respuesta del servidor:', res.status, res.statusText);
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Error del servidor:', errorText);
+          throw new Error(`Error HTTP: ${res.status} - ${errorText}`);
+        }
+
         const result = await res.json();
+        console.log('Datos del animal recibidos:', result);
         const animal = result.data; // La respuesta tiene { message, data: animal }
 
         // Rellenar modal con datos reales
         document.getElementById("detalleAnimalLabel").textContent = animal.nombreanimal;
-        document.querySelector("#modalDetalleAnimal img").src =
-          animal.imagenAnimal ? 'files/' + animal.imagenAnimal : `https://via.placeholder.com/300x300?text=${animal.nombreanimal}`;
-        document.querySelector("#modalDetalleAnimal img").alt = animal.nombreanimal;
+
+        // Mostrar galería completa si existe
+        const galeriaContainer = document.querySelector("#modalDetalleAnimal .galeria-container");
+        if (galeriaContainer && animal.galeria && animal.galeria.length > 0) {
+          let galeriaHTML = '<div class="row g-2">';
+          animal.galeria.forEach(media => {
+            if (media.imagen) {
+              galeriaHTML += `
+                <div class="col-md-4">
+                  <img src="/files/${media.imagen}" class="img-thumbnail" alt="${animal.nombreanimal}" style="width: 100%; height: 150px; object-fit: cover;">
+                </div>
+              `;
+            }
+            if (media.video) {
+              galeriaHTML += `
+                <div class="col-md-4">
+                  <video class="img-thumbnail" controls style="width: 100%; height: 150px; object-fit: cover;">
+                    <source src="/files/${media.video}" type="video/mp4">
+                    Tu navegador no soporta videos.
+                  </video>
+                </div>
+              `;
+            }
+          });
+          galeriaHTML += '</div>';
+          galeriaContainer.innerHTML = galeriaHTML;
+          galeriaContainer.style.display = 'block';
+        } else if (galeriaContainer) {
+          galeriaContainer.style.display = 'none';
+        }
+
+        // Imagen principal (primera imagen o placeholder)
+        const mainImg = document.querySelector("#modalDetalleAnimal img");
+        if (mainImg) {
+          const primeraImagen = animal.galeria?.find(media => media.imagen);
+          mainImg.src = primeraImagen ? `/files/${primeraImagen.imagen}` : `https://via.placeholder.com/300x300?text=${animal.nombreanimal}`;
+          mainImg.alt = animal.nombreanimal;
+        }
 
         const inputs = document.querySelectorAll("#formDetalleAnimal input, #formDetalleAnimal textarea");
         inputs[0].value = animal.edadmesesanimal; // Edad en meses
@@ -102,7 +177,17 @@ function inicializarEventosVerHistoria() {
         modalDetalle.show();
       } catch (error) {
         console.error("Error al obtener detalle del animal:", error);
-        alert("Error al cargar el detalle del animal. Inténtalo de nuevo.");
+        console.error("Stack trace:", error.stack);
+
+        // Mostrar error más específico
+        let errorMessage = "Error al cargar el detalle del animal. Inténtalo de nuevo.";
+        if (error.message.includes('HTTP')) {
+          errorMessage = `Error del servidor: ${error.message}`;
+        } else if (error.message.includes('fetch')) {
+          errorMessage = "Error de conexión. Verifica que el servidor esté funcionando.";
+        }
+
+        alert(errorMessage);
       }
     });
   });

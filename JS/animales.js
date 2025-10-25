@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", async () => {
     console.log("DOM cargado - Inicializando módulo de animales");
 
+    // Importar variables necesarias desde codigo.js
+    const API_BASE_URL = window.location.origin + '/api';
+    const authToken = localStorage.getItem('authToken');
+
     const animalesBody = document.getElementById("animalesBody");
     const buscarAnimalInput = document.getElementById("buscarAnimal");
     const filtroEspecieSelect = document.getElementById("filtroEspecie");
@@ -98,42 +102,66 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const data = await response.json();
             const especies = data.data || [];
+            console.log('Especies obtenidas de la API:', especies);
+            console.log('Primera especie (ejemplo):', especies[0]);
+            if (especies[0]) {
+                console.log('Campos de la primera especie:', Object.keys(especies[0]));
+                console.log('idEspecie:', especies[0].idEspecie);
+                console.log('idEspecie (alternativo):', especies[0].idespecie);
+                console.log('especieAnimal:', especies[0].especieAnimal);
+            }
 
             // Llenar filtro
             filtroEspecieSelect.innerHTML = '<option value="">Todas las especies</option>';
 
             // Guardar especies globalmente para filtrado
             window.todasLasEspecies = especies;
+            console.log('Especies guardadas globalmente:', window.todasLasEspecies);
 
             // Separar "Otros" del resto
-            const otrasEspecies = especies.filter(especie => especie.especieanimal.toLowerCase() === 'otro');
-            const restoEspecies = especies.filter(especie => especie.especieanimal.toLowerCase() !== 'otro');
+            const otrasEspecies = especies.filter(especie =>
+                (especie.especieAnimal || especie.especieanimal).toLowerCase() === 'otro'
+            );
+            const restoEspecies = especies.filter(especie =>
+                (especie.especieAnimal || especie.especieanimal).toLowerCase() !== 'otro'
+            );
 
             // Agregar primero el resto, luego "Otros"
             [...restoEspecies, ...otrasEspecies].forEach(especie => {
                 const option = document.createElement('option');
-                option.value = especie.especieanimal;
-                option.textContent = especie.especieanimal;
+                // Manejar tanto idEspecie como idespecie (PostgreSQL puede devolver en minúsculas)
+                const especieId = especie.idEspecie || especie.idespecie;
+                option.value = especieId;
+                option.textContent = especie.especieAnimal || especie.especieanimal;
                 filtroEspecieSelect.appendChild(option);
             });
 
             // Llenar selects de especies en modales
-            const selectRegistrarEspecie = formRegistrarAnimal.querySelector('select');
-            const selectEditarEspecie = formEditarAnimal.querySelector('#especieEditarAnimal');
+            const selectRegistrarEspecie = document.getElementById('especieRegistrarAnimal');
+            const selectEditarEspecie = document.getElementById('especieEditarAnimal');
+
+            console.log('Select registrar especie encontrado:', selectRegistrarEspecie);
+            console.log('Select editar especie encontrado:', selectEditarEspecie);
 
             [selectRegistrarEspecie, selectEditarEspecie].forEach(select => {
                 if (select) {
                     const currentValue = select.value;
                     select.innerHTML = '<option value="">Seleccionar especie</option>';
 
+                    console.log('Llenando select con especies:', [...restoEspecies, ...otrasEspecies].length, 'especies');
+
                     // Aplicar el mismo orden: resto primero, "Otros" al final
                     [...restoEspecies, ...otrasEspecies].forEach(especie => {
                         const option = document.createElement('option');
-                        option.value = especie.especieanimal;
-                        option.textContent = especie.especieanimal;
+                        // Manejar tanto idEspecie como idespecie (PostgreSQL puede devolver en minúsculas)
+                        const especieId = especie.idEspecie || especie.idespecie;
+                        option.value = especieId;
+                        option.textContent = especie.especieAnimal || especie.especieanimal;
                         select.appendChild(option);
+                        console.log('Agregada especie:', especie.especieAnimal || especie.especieanimal, 'con ID:', especieId);
                     });
                     select.value = currentValue;
+                    console.log('Select llenado, opciones disponibles:', select.options.length);
                 }
             });
 
@@ -259,6 +287,144 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Variables para manejar eliminaciones pendientes
+    let mediosEliminadosPendientes = [];
+    let mediosOriginales = [];
+
+    // Función para restaurar medios eliminados
+    function restaurarMediosEliminados() {
+        console.log('Restaurando medios eliminados...');
+
+        // Limpiar array de eliminaciones pendientes
+        mediosEliminadosPendientes = [];
+
+        // Recargar medios originales
+        if (animalActual) {
+            cargarMediosExistentes(animalActual.idanimal);
+        }
+    }
+
+    // Cargar medios existentes para edición
+    async function cargarMediosExistentes(idAnimal) {
+        try {
+            const response = await apiRequest(`/animals/${idAnimal}`);
+            const animal = response.data;
+            const mediosContainer = document.getElementById('mediosExistentes');
+
+            if (!mediosContainer) return;
+
+            // Limpiar arrays de control
+            mediosEliminadosPendientes = [];
+            mediosOriginales = animal.galeria ? [...animal.galeria] : [];
+
+            mediosContainer.innerHTML = '';
+
+            if (animal.galeria && animal.galeria.length > 0) {
+                console.log('Medios cargados:', animal.galeria);
+                animal.galeria.forEach(media => {
+                    console.log('Procesando medio:', media);
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-4 col-6';
+
+                    const card = document.createElement('div');
+                    card.className = 'card mb-2';
+                    card.style.position = 'relative';
+
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+
+                    if (media.imagen) {
+                        const img = document.createElement('img');
+                        img.className = 'img-thumbnail';
+                        img.style.maxWidth = '100px';
+                        img.style.maxHeight = '100px';
+                        img.style.objectFit = 'cover';
+                        img.src = `/files/${media.imagen}`;
+                        cardBody.appendChild(img);
+                    }
+
+                    if (media.video) {
+                        const video = document.createElement('video');
+                        video.className = 'img-thumbnail';
+                        video.style.maxWidth = '100px';
+                        video.style.maxHeight = '100px';
+                        video.style.objectFit = 'cover';
+                        video.controls = true;
+                        video.muted = true;
+                        video.src = `/files/${media.video}`;
+                        cardBody.appendChild(video);
+                    }
+
+                    // Botón para eliminar medio
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn btn-sm btn-danger position-absolute';
+                    deleteBtn.style.top = '5px';
+                    deleteBtn.style.right = '5px';
+                    deleteBtn.style.padding = '2px 6px';
+                    deleteBtn.innerHTML = '×';
+                    deleteBtn.addEventListener('click', async function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const result = await Swal.fire({
+                            title: '¿Estás seguro?',
+                            text: '¿Quieres eliminar este medio?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#3085d6',
+                            confirmButtonText: 'Sí, eliminar',
+                            cancelButtonText: 'Cancelar'
+                        });
+
+                        if (result.isConfirmed) {
+                            // Marcar como eliminado pendiente (no eliminar del servidor aún)
+                            console.log('Marcando para eliminación - ID:', media.idgaleria, 'Media:', media);
+                            mediosEliminadosPendientes.push(media.idgaleria);
+
+                            // Ocultar el elemento con animación
+                            col.style.opacity = '0.3';
+                            col.style.transform = 'scale(0.95)';
+                            col.style.transition = 'all 0.3s ease';
+
+                            setTimeout(() => {
+                                col.style.display = 'none';
+                            }, 300);
+
+                            // Agregar indicador visual de eliminación pendiente
+                            const pendingIndicator = document.createElement('div');
+                            pendingIndicator.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center';
+                            pendingIndicator.style.background = 'rgba(220, 53, 69, 0.8)';
+                            pendingIndicator.style.borderRadius = '0.375rem';
+                            pendingIndicator.innerHTML = '<span class="text-white fw-bold">PENDIENTE DE ELIMINACIÓN</span>';
+                            card.appendChild(pendingIndicator);
+
+                            Swal.fire('Info', 'Medio marcado para eliminación. Se eliminará al actualizar el animal.', 'info');
+                        }
+                    });
+
+                    // Nombre del archivo
+                    const fileName = document.createElement('small');
+                    fileName.className = 'd-block text-muted mt-1';
+                    const fileNameText = media.imagen || media.video;
+                    fileName.textContent = fileNameText.length > 15 ? fileNameText.substring(0, 15) + '...' : fileNameText;
+                    fileName.title = fileNameText;
+
+                    cardBody.appendChild(fileName);
+                    card.appendChild(cardBody);
+                    card.appendChild(deleteBtn);
+                    col.appendChild(card);
+                    mediosContainer.appendChild(col);
+                });
+            } else {
+                mediosContainer.innerHTML = '<div class="col-12"><p class="text-muted">No hay medios asociados a este animal.</p></div>';
+            }
+        } catch (error) {
+            console.error('Error cargando medios existentes:', error);
+        }
+    }
+
     // Abrir modal de edición
     async function abrirModalEdicion(id) {
         try {
@@ -273,13 +439,40 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById('edadEditarAnimal').value = animal.edadmesesanimal;
             document.getElementById('generoEditarAnimal').value = animal.generoanimal;
             document.getElementById('pesoEditarAnimal').value = animal.pesoanimal || '';
-            document.getElementById('pelajeEditarAnimal').value = animal.tipopelaje || '';
-            document.getElementById('tamanoEditarAnimal').value = animal.tamano || '';
+            document.getElementById('pelajeEditarAnimal').value = animal.pelaje || '';
+            document.getElementById('tamanoEditarAnimal').value = animal.tamaño || '';
             document.getElementById('descripcionEditarAnimal').value = animal.descripcion || '';
 
             // Cargar especies y seleccionar la correcta
             await loadEspecies();
-            document.getElementById('especieEditarAnimal').value = animal.especieanimal;
+            // Buscar el ID de la especie por nombre
+            const especieEncontrada = window.todasLasEspecies.find(esp =>
+                (esp.especieAnimal || esp.especieanimal) === animal.especieanimal
+            );
+            if (especieEncontrada) {
+                const especieId = especieEncontrada.idEspecie || especieEncontrada.idespecie;
+                document.getElementById('especieEditarAnimal').value = especieId;
+            }
+
+            // Cargar medios existentes
+            await cargarMediosExistentes(animal.idanimal);
+
+            // Inicializar manejo de nuevos medios
+            inicializarNuevosMediosEdicion();
+
+            // Agregar event listener para cancelar
+            const modalElement = document.getElementById('modalEditarAnimal');
+            const cancelBtn = modalElement.querySelector('button[data-bs-dismiss="modal"]');
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function () {
+                    // Restaurar medios al cancelar
+                    restaurarMediosEliminados();
+                    // Limpiar nuevos medios seleccionados
+                    nuevosMediosSeleccionados = [];
+                    actualizarPrevisualizacionNuevosMedios();
+                });
+            }
 
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('modalEditarAnimal'));
@@ -297,28 +490,87 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Datos básicos
             formData.append('nombreAnimal', formRegistrarAnimal.querySelector('input[placeholder="Ingresar nombre"]').value.trim());
-            formData.append('especie', formRegistrarAnimal.querySelector('select').value.trim());
-            formData.append('raza', document.getElementById('razaRegistrarAnimal').value.trim());
+
+            // Obtener el nombre de la especie por ID
+            const especieId = document.getElementById('especieRegistrarAnimal').value.trim();
+            const especieEncontrada = window.todasLasEspecies.find(esp =>
+                (esp.idEspecie || esp.idespecie) == especieId
+            );
+            const nombreEspecie = especieEncontrada ? (especieEncontrada.especieAnimal || especieEncontrada.especieanimal) : '';
+            formData.append('especie', nombreEspecie);
+
+            // Obtener el nombre de la raza por ID
+            const razaId = document.getElementById('razaRegistrarAnimal').value.trim();
+            const razaEncontrada = window.todasLasRazas ? window.todasLasRazas.find(raza =>
+                (raza.idRaza || raza.idraza) == razaId
+            ) : null;
+            const nombreRaza = razaEncontrada ? (razaEncontrada.razaAnimal || razaEncontrada.razaanimal) : '';
+            formData.append('raza', nombreRaza);
             formData.append('edadMeses', parseInt(formRegistrarAnimal.querySelector('input[placeholder="Ingresar edad"]').value));
             // Obtener género del select (ya está en formato BD: M/F)
             const generoValue = formRegistrarAnimal.querySelectorAll('select')[2].value.trim();
             formData.append('genero', generoValue);
             formData.append('peso', parseFloat(formRegistrarAnimal.querySelector('input[placeholder="Ingresar peso"]').value) || null);
             formData.append('pelaje', formRegistrarAnimal.querySelectorAll('select')[3].value.trim() || null);
-            // Asegurar que tamaño no tenga caracteres especiales que causen problemas
-            const tamañoValue = formRegistrarAnimal.querySelectorAll('select')[4].value.trim();
+            // Obtener tamaño del select específico
+            const tamañoSelect = document.getElementById('tamañoRegistrarAnimal');
+            const tamañoValue = tamañoSelect ? tamañoSelect.value.trim() : '';
+            console.log('=== DEBUG TAMAÑO ===');
+            console.log('Select de tamaño encontrado:', tamañoSelect);
+            console.log('Valor de tamaño seleccionado:', tamañoValue);
+            console.log('Opciones disponibles:', tamañoSelect ? Array.from(tamañoSelect.options).map(opt => ({ value: opt.value, text: opt.textContent })) : 'No encontrado');
             formData.append('tamaño', tamañoValue || null);
+
+            // Campos de enfermedad
+            const enfermedadId = document.getElementById('enfermedadRegistrarAnimal').value;
+            const gravedad = document.getElementById('gravedadRegistrarAnimal').value;
+            const medicinas = document.getElementById('medicinasRegistrarAnimal').value;
+
+            formData.append('enfermedadId', enfermedadId || null);
+            formData.append('gravedad', gravedad || null);
+            formData.append('medicinas', medicinas || null);
             formData.append('descripcion', formRegistrarAnimal.querySelector('textarea').value.trim() || null);
 
-            // Foto del animal
-            const fotoFile = document.getElementById('fotoRegistrarAnimal').files[0];
-            if (fotoFile) {
-                formData.append('imagenAnimal', fotoFile);
+            // Debug: Mostrar todos los valores del FormData
+            console.log('=== DATOS DEL FORMULARIO ===');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
+            // Archivos del animal (usando archivos acumulados)
+            console.log('Archivos acumulados a enviar:', archivosSeleccionados.length);
+            console.log('Detalles de archivos:', archivosSeleccionados.map(f => ({ name: f.name, type: f.type, size: f.size })));
+
+            if (archivosSeleccionados.length > 0) {
+                // Separar imágenes y videos de los archivos acumulados
+                let imagenesCount = 0;
+                let videosCount = 0;
+
+                for (let i = 0; i < archivosSeleccionados.length; i++) {
+                    const file = archivosSeleccionados[i];
+                    if (file.type.startsWith('image/')) {
+                        formData.append('imagenAnimal', file);
+                        imagenesCount++;
+                        console.log('Imagen agregada:', file.name, 'Tipo:', file.type);
+                    } else if (file.type.startsWith('video/')) {
+                        formData.append('videoAnimal', file);
+                        videosCount++;
+                        console.log('Video agregado:', file.name, 'Tipo:', file.type);
+                    }
+                }
+
+                console.log(`Total archivos en FormData: ${imagenesCount} imágenes, ${videosCount} videos`);
             }
 
             // Validaciones
             if (!formData.get('nombreAnimal') || !formData.get('especie') || !formData.get('raza') || !formData.get('edadMeses') || !formData.get('genero')) {
                 Swal.fire('Advertencia', 'Todos los campos obligatorios deben ser completados', 'warning');
+                return;
+            }
+
+            // Verificar que al menos haya un archivo
+            if (archivosSeleccionados.length === 0) {
+                Swal.fire('Advertencia', 'Debe seleccionar al menos un archivo (imagen o video)', 'warning');
                 return;
             }
 
@@ -349,6 +601,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             modal.hide();
             formRegistrarAnimal.reset();
 
+            // Limpiar archivos seleccionados y previsualización
+            archivosSeleccionados = [];
+            actualizarPrevisualizacion();
+
             // Recargar lista
             loadAnimals();
 
@@ -362,15 +618,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             if (!animalActual) return;
 
+            // Obtener el nombre de la especie por ID
+            const especieId = document.getElementById('especieEditarAnimal').value;
+            const especieEncontrada = window.todasLasEspecies.find(esp =>
+                (esp.idEspecie || esp.idespecie) == especieId
+            );
+            const nombreEspecie = especieEncontrada ? (especieEncontrada.especieAnimal || especieEncontrada.especieanimal) : '';
+
             const formData = {
                 nombreanimal: document.getElementById('nombreEditarAnimal').value.trim(),
-                especieanimal: document.getElementById('especieEditarAnimal').value.trim(),
+                especieanimal: nombreEspecie,
                 razaanimal: document.getElementById('razaEditarAnimal').value.trim(),
                 edadmesesanimal: parseInt(document.getElementById('edadEditarAnimal').value),
                 generoanimal: document.getElementById('generoEditarAnimal').value.trim(),
                 pesoanimal: parseFloat(document.getElementById('pesoEditarAnimal').value) || null,
-                tipopelaje: document.getElementById('pelajeEditarAnimal').value.trim() || null,
-                tamano: document.getElementById('tamanoEditarAnimal').value.trim() || null,
+                pelaje: document.getElementById('pelajeEditarAnimal').value.trim() || null,
+                tamaño: document.getElementById('tamanoEditarAnimal').value.trim() || null,
                 descripcion: document.getElementById('descripcionEditarAnimal').value.trim() || null
             };
 
@@ -384,6 +647,59 @@ document.addEventListener("DOMContentLoaded", async () => {
                 method: 'PUT',
                 body: JSON.stringify(formData)
             });
+
+            // Eliminar medios marcados para eliminación
+            if (mediosEliminadosPendientes.length > 0) {
+                console.log('Eliminando medios pendientes:', mediosEliminadosPendientes);
+                for (const mediaId of mediosEliminadosPendientes) {
+                    try {
+                        await apiRequest(`/animals/${animalActual.idanimal}/media/${mediaId}`, { method: 'DELETE' });
+                        console.log('Medio eliminado:', mediaId);
+                    } catch (error) {
+                        console.error('Error eliminando medio:', error);
+                    }
+                }
+            }
+
+            // Subir nuevos medios si hay alguno seleccionado
+            if (nuevosMediosSeleccionados.length > 0) {
+                console.log('Subiendo nuevos medios:', nuevosMediosSeleccionados.length);
+                console.log('Archivos a subir:', nuevosMediosSeleccionados);
+                const formData = new FormData();
+
+                // Agregar todos los nuevos archivos
+                nuevosMediosSeleccionados.forEach((archivo, index) => {
+                    console.log(`Agregando archivo ${index}:`, archivo.name, archivo.type, archivo.size);
+                    formData.append('imagenAnimal', archivo);
+                });
+
+                try {
+                    // Usar fetch directamente para FormData (sin Content-Type manual)
+                    const url = `${API_BASE_URL}/animals/${animalActual.idanimal}/media`;
+                    console.log('URL de subida:', url);
+                    console.log('Token de autenticación:', authToken ? 'Presente' : 'Ausente');
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                            // No establecer Content-Type para que el navegador lo haga automáticamente
+                        },
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Error subiendo medios');
+                    }
+
+                    const result = await response.json();
+                    console.log('Nuevos medios subidos exitosamente:', result);
+                } catch (error) {
+                    console.error('Error subiendo nuevos medios:', error);
+                    Swal.fire('Advertencia', 'Error subiendo nuevos medios: ' + error.message, 'warning');
+                }
+            }
 
             Swal.fire('Éxito', 'Animal actualizado correctamente', 'success');
 
@@ -403,26 +719,253 @@ document.addEventListener("DOMContentLoaded", async () => {
     buscarAnimalInput.addEventListener('input', filterAnimals);
     filtroEspecieSelect.addEventListener('change', filterAnimals);
 
-    // Previsualización de imagen al registrar
-    const fotoRegistrarAnimalInput = document.getElementById('fotoRegistrarAnimal');
-    const fotoPreviewRegistrarAnimal = document.getElementById('fotoPreviewRegistrarAnimal');
-    const fotoPreviewContainer = document.getElementById('fotoPreviewContainer');
+    // ==========================
+    // Manejo de nuevos medios en modal de edición
+    // ==========================
+    let nuevosMediosSeleccionados = []; // Array para almacenar nuevos archivos seleccionados
 
-    if (fotoRegistrarAnimalInput && fotoPreviewRegistrarAnimal && fotoPreviewContainer) {
+    // Función para inicializar el manejo de nuevos medios en el modal de edición
+    function inicializarNuevosMediosEdicion() {
+        const nuevosMediosInput = document.getElementById('nuevosMediosEditar');
+        const nuevosMediosPreview = document.getElementById('nuevosMediosPreview');
+        const nuevosMediosGrid = document.getElementById('nuevosMediosGrid');
+
+        if (nuevosMediosInput && nuevosMediosPreview && nuevosMediosGrid) {
+            // Limpiar array al abrir modal
+            nuevosMediosSeleccionados = [];
+
+            nuevosMediosInput.addEventListener('change', function (event) {
+                const nuevosArchivos = Array.from(event.target.files);
+                console.log('Nuevos archivos seleccionados para edición:', nuevosArchivos.length);
+
+                // Agregar nuevos archivos a la lista existente
+                nuevosMediosSeleccionados = nuevosMediosSeleccionados.concat(nuevosArchivos);
+                console.log('Total de nuevos archivos acumulados:', nuevosMediosSeleccionados.length);
+
+                // Limpiar el input para permitir selecciones futuras
+                event.target.value = '';
+
+                // Actualizar la previsualización
+                actualizarPrevisualizacionNuevosMedios();
+            });
+        }
+    }
+
+    // Función para actualizar la previsualización de nuevos medios
+    function actualizarPrevisualizacionNuevosMedios() {
+        const nuevosMediosPreview = document.getElementById('nuevosMediosPreview');
+        const nuevosMediosGrid = document.getElementById('nuevosMediosGrid');
+
+        if (!nuevosMediosPreview || !nuevosMediosGrid) return;
+
+        if (nuevosMediosSeleccionados.length === 0) {
+            nuevosMediosPreview.style.display = 'none';
+            return;
+        }
+
+        // Mostrar contenedor
+        nuevosMediosPreview.style.display = 'block';
+
+        // Limpiar grid anterior
+        nuevosMediosGrid.innerHTML = '';
+
+        // Crear previsualizaciones
+        nuevosMediosSeleccionados.forEach((archivo, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-md-4 col-sm-6';
+
+            const card = document.createElement('div');
+            card.className = 'card position-relative';
+            card.style.height = '150px';
+
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body p-2 d-flex align-items-center justify-content-center';
+            cardBody.style.height = '100%';
+
+            if (archivo.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'img-fluid rounded';
+                img.style.maxHeight = '120px';
+                img.style.maxWidth = '100%';
+                img.style.objectFit = 'cover';
+                img.src = URL.createObjectURL(archivo);
+                cardBody.appendChild(img);
+            } else if (archivo.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.className = 'img-fluid rounded';
+                video.style.maxHeight = '120px';
+                video.style.maxWidth = '100%';
+                video.style.objectFit = 'cover';
+                video.controls = true;
+                video.muted = true;
+                video.src = URL.createObjectURL(archivo);
+                cardBody.appendChild(video);
+            }
+
+            // Botón para eliminar archivo
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'btn btn-sm btn-danger position-absolute';
+            deleteBtn.style.top = '5px';
+            deleteBtn.style.right = '5px';
+            deleteBtn.style.padding = '2px 6px';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.addEventListener('click', function () {
+                // Remover archivo del array
+                nuevosMediosSeleccionados.splice(index, 1);
+                // Actualizar previsualización
+                actualizarPrevisualizacionNuevosMedios();
+            });
+
+            card.appendChild(cardBody);
+            card.appendChild(deleteBtn);
+
+            // Nombre del archivo
+            const fileName = document.createElement('small');
+            fileName.className = 'd-block text-muted mt-1 text-center';
+            fileName.textContent = archivo.name.length > 15 ? archivo.name.substring(0, 15) + '...' : archivo.name;
+
+            col.appendChild(card);
+            col.appendChild(fileName);
+            nuevosMediosGrid.appendChild(col);
+        });
+    }
+
+    // ==========================
+    // Manejo de archivos múltiples con selección acumulativa
+    // ==========================
+    let archivosSeleccionados = []; // Array para almacenar todos los archivos seleccionados
+
+    const fotoRegistrarAnimalInput = document.getElementById('fotoRegistrarAnimal');
+    const previewType = document.getElementById('previewType');
+    const fotoPreviewContainer = document.getElementById('fotoPreviewContainer');
+    const previewGrid = document.getElementById('previewGrid');
+
+    if (fotoRegistrarAnimalInput && previewType && fotoPreviewContainer && previewGrid) {
         fotoRegistrarAnimalInput.addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    fotoPreviewRegistrarAnimal.src = e.target.result;
-                    fotoPreviewContainer.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                fotoPreviewRegistrarAnimal.src = '#';
-                fotoPreviewContainer.style.display = 'none';
+            const nuevosArchivos = Array.from(event.target.files);
+            console.log('Nuevos archivos seleccionados:', nuevosArchivos.length);
+
+            // Agregar nuevos archivos a la lista existente
+            archivosSeleccionados = archivosSeleccionados.concat(nuevosArchivos);
+            console.log('Total de archivos acumulados:', archivosSeleccionados.length);
+
+            // Limpiar el input para permitir selecciones futuras
+            event.target.value = '';
+
+            // Actualizar la previsualización
+            actualizarPrevisualizacion();
+        });
+    }
+
+    // Función para actualizar la previsualización de todos los archivos
+    function actualizarPrevisualizacion() {
+        if (archivosSeleccionados.length === 0) {
+            fotoPreviewContainer.style.display = 'none';
+            return;
+        }
+
+        // Mostrar contenedor
+        fotoPreviewContainer.style.display = 'block';
+
+        // Limpiar grid anterior
+        previewGrid.innerHTML = '';
+
+        // Contar tipos de archivos
+        let imagenesCount = 0;
+        let videosCount = 0;
+        let archivosInfo = [];
+
+        archivosSeleccionados.forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                imagenesCount++;
+                archivosInfo.push(`📷 ${file.name}`);
+            } else if (file.type.startsWith('video/')) {
+                videosCount++;
+                archivosInfo.push(`🎥 ${file.name}`);
             }
         });
+
+        // Mostrar información general
+        previewType.innerHTML = `
+            <strong>Archivos seleccionados (${archivosSeleccionados.length}):</strong><br>
+            ${archivosInfo.join('<br>')}
+        `;
+
+        // Crear previsualizaciones para cada archivo
+        archivosSeleccionados.forEach((file, index) => {
+            const col = document.createElement('div');
+            col.className = 'col-md-3 col-sm-4 col-6';
+
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            card.style.position = 'relative';
+
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body p-2 text-center';
+
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'img-thumbnail';
+                img.style.maxWidth = '100px';
+                img.style.maxHeight = '100px';
+                img.style.objectFit = 'cover';
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                cardBody.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.className = 'img-thumbnail';
+                video.style.maxWidth = '100px';
+                video.style.maxHeight = '100px';
+                video.style.objectFit = 'cover';
+                video.controls = true;
+                video.muted = true;
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    video.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                cardBody.appendChild(video);
+            }
+
+            // Botón para eliminar archivo
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-sm btn-danger position-absolute';
+            deleteBtn.style.top = '5px';
+            deleteBtn.style.right = '5px';
+            deleteBtn.style.padding = '2px 6px';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = function () {
+                eliminarArchivo(index);
+            };
+
+            // Nombre del archivo
+            const fileName = document.createElement('small');
+            fileName.className = 'd-block text-muted mt-1';
+            fileName.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+            fileName.title = file.name;
+
+            cardBody.appendChild(fileName);
+            card.appendChild(cardBody);
+            card.appendChild(deleteBtn);
+            col.appendChild(card);
+            previewGrid.appendChild(col);
+        });
+    }
+
+    // Función para eliminar un archivo específico
+    function eliminarArchivo(index) {
+        archivosSeleccionados.splice(index, 1);
+        console.log('Archivo eliminado. Restantes:', archivosSeleccionados.length);
+        actualizarPrevisualizacion();
     }
 
     // Filtrar razas cuando cambie la especie en el modal de registrar
@@ -451,13 +994,284 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
+    // Limpiar archivos cuando se abra el modal de registrar
+    const modalRegistrar = document.getElementById('modalRegistrarAnimal');
+    if (modalRegistrar) {
+        modalRegistrar.addEventListener('show.bs.modal', function () {
+            // Limpiar archivos seleccionados al abrir el modal
+            archivosSeleccionados = [];
+            actualizarPrevisualizacion();
+        });
+    }
+
     // Hacer funciones globales
     window.registrarAnimal = registrarAnimal;
     window.actualizarAnimal = actualizarAnimal;
 
     // ============================================================
+    // CARGAR TIPOS DE ENFERMEDAD Y ENFERMEDADES
+    // ============================================================
+    async function loadTiposEnfermedad() {
+        try {
+            console.log('=== INICIANDO CARGA DE TIPOS DE ENFERMEDAD ===');
+            console.log('Cargando tipos de enfermedad...');
+
+            const response = await apiRequest('/animals/tipos-enfermedad');
+            console.log('Respuesta completa de tipos:', response);
+            console.log('Tipo de respuesta:', typeof response);
+            console.log('Propiedades de la respuesta:', Object.keys(response));
+
+            const tipos = response.data || [];
+            console.log('Tipos extraídos:', tipos);
+            console.log('Cantidad de tipos:', tipos.length);
+
+            const selectTipo = document.getElementById('tipoEnfermedadRegistrarAnimal');
+            console.log('Select tipo encontrado:', selectTipo);
+
+            if (selectTipo) {
+                // Limpiar el select
+                selectTipo.innerHTML = '';
+
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Seleccionar tipo';
+                selectTipo.appendChild(defaultOption);
+
+                // Agregar tipos
+                if (tipos.length > 0) {
+                    console.log('Agregando tipos al select...');
+                    tipos.forEach((tipo, index) => {
+                        console.log(`Tipo ${index + 1}:`, tipo);
+                        const option = document.createElement('option');
+                        option.value = tipo.idTipoEnfermedad || tipo.idtipoenfermedad;
+                        option.textContent = tipo.tipoEnfermedad || tipo.tipoenfermedad;
+                        selectTipo.appendChild(option);
+                        console.log(`Agregado: ${option.textContent} con valor: ${option.value}`);
+                    });
+                } else {
+                    console.log('No hay tipos para mostrar');
+                    const noTiposOption = document.createElement('option');
+                    noTiposOption.value = '';
+                    noTiposOption.textContent = 'No hay tipos disponibles';
+                    selectTipo.appendChild(noTiposOption);
+                }
+
+                console.log('Select final con opciones:', selectTipo.options.length);
+                console.log('Opciones del select:', Array.from(selectTipo.options).map(opt => ({ value: opt.value, text: opt.textContent })));
+            } else {
+                console.error('No se encontró el select tipoEnfermedadRegistrarAnimal');
+            }
+        } catch (error) {
+            console.error('Error cargando tipos de enfermedad:', error);
+            console.error('Detalles del error:', error.message);
+        }
+    }
+
+    async function loadEnfermedadesPorTipo(tipoId) {
+        try {
+            console.log('=== INICIANDO CARGA DE ENFERMEDADES ===');
+            console.log('Cargando enfermedades para tipo ID:', tipoId);
+
+            // Verificar que tipoId sea válido
+            if (!tipoId || tipoId === 'undefined' || tipoId === '') {
+                console.error('ID de tipo inválido:', tipoId);
+                return;
+            }
+
+            console.log('Haciendo request a:', `/animals/enfermedades-por-tipo/${tipoId}`);
+            const response = await apiRequest(`/animals/enfermedades-por-tipo/${tipoId}`);
+            console.log('Respuesta completa de enfermedades:', response);
+            console.log('Tipo de respuesta:', typeof response);
+            console.log('Propiedades de la respuesta:', Object.keys(response));
+
+            const enfermedades = response.data || [];
+            console.log('Enfermedades extraídas:', enfermedades);
+            console.log('Cantidad de enfermedades:', enfermedades.length);
+
+            const selectEnfermedad = document.getElementById('enfermedadRegistrarAnimal');
+            console.log('Select enfermedad encontrado:', selectEnfermedad);
+
+            if (selectEnfermedad) {
+                // Limpiar el select
+                selectEnfermedad.innerHTML = '';
+
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Seleccionar enfermedad';
+                selectEnfermedad.appendChild(defaultOption);
+
+                // Agregar enfermedades
+                if (enfermedades.length > 0) {
+                    console.log('Agregando enfermedades al select...');
+                    enfermedades.forEach((enfermedad, index) => {
+                        console.log(`Enfermedad ${index + 1}:`, enfermedad);
+                        const option = document.createElement('option');
+                        option.value = enfermedad.idEnfermedad || enfermedad.idenfermedad;
+                        option.textContent = enfermedad.nombEnfermedad || enfermedad.nombenfermedad;
+                        selectEnfermedad.appendChild(option);
+                        console.log(`Agregada: ${option.textContent} con valor: ${option.value}`);
+                    });
+                } else {
+                    console.log('No hay enfermedades para mostrar');
+                    const noEnfermedadesOption = document.createElement('option');
+                    noEnfermedadesOption.value = '';
+                    noEnfermedadesOption.textContent = 'No hay enfermedades disponibles';
+                    selectEnfermedad.appendChild(noEnfermedadesOption);
+                }
+
+                selectEnfermedad.disabled = false;
+                console.log('Select final con opciones:', selectEnfermedad.options.length);
+                console.log('Opciones del select:', Array.from(selectEnfermedad.options).map(opt => ({ value: opt.value, text: opt.textContent })));
+            } else {
+                console.error('No se encontró el select enfermedadRegistrarAnimal');
+            }
+        } catch (error) {
+            console.error('Error cargando enfermedades por tipo:', error);
+            console.error('Detalles del error:', error.message);
+        }
+    }
+
+    async function loadRazasPorEspecie(especieId) {
+        try {
+            console.log('=== INICIANDO CARGA DE RAZAS ===');
+            console.log('Cargando razas para especie ID:', especieId);
+
+            // Verificar que especieId sea válido
+            if (!especieId || especieId === 'undefined' || especieId === '') {
+                console.error('ID de especie inválido:', especieId);
+                return;
+            }
+
+            console.log('Haciendo request a:', `/especieRaza/razas?especie=${especieId}`);
+            const response = await apiRequest(`/especieRaza/razas?especie=${especieId}`);
+            console.log('Respuesta completa de la API:', response);
+            console.log('Tipo de respuesta:', typeof response);
+            console.log('Propiedades de la respuesta:', Object.keys(response));
+
+            const razas = response.data || [];
+            console.log('Razas extraídas:', razas);
+            console.log('Cantidad de razas:', razas.length);
+
+            const selectRaza = document.getElementById('razaRegistrarAnimal');
+            console.log('Select raza encontrado:', selectRaza);
+
+            if (selectRaza) {
+                // Limpiar el select
+                selectRaza.innerHTML = '';
+
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Seleccionar raza';
+                selectRaza.appendChild(defaultOption);
+
+                // Agregar razas
+                if (razas.length > 0) {
+                    console.log('Agregando razas al select...');
+                    razas.forEach((raza, index) => {
+                        console.log(`Raza ${index + 1}:`, raza);
+                        const option = document.createElement('option');
+                        option.value = raza.idRaza || raza.idraza;
+                        option.textContent = raza.razaAnimal || raza.razaanimal;
+                        selectRaza.appendChild(option);
+                        console.log(`Agregada: ${option.textContent} con valor: ${option.value}`);
+                    });
+                } else {
+                    console.log('No hay razas para mostrar');
+                    const noRazasOption = document.createElement('option');
+                    noRazasOption.value = '';
+                    noRazasOption.textContent = 'No hay razas disponibles';
+                    selectRaza.appendChild(noRazasOption);
+                }
+
+                selectRaza.disabled = false;
+                console.log('Select final con opciones:', selectRaza.options.length);
+                console.log('Opciones del select:', Array.from(selectRaza.options).map(opt => ({ value: opt.value, text: opt.textContent })));
+            } else {
+                console.error('No se encontró el select razaRegistrarAnimal');
+            }
+        } catch (error) {
+            console.error('Error cargando razas por especie:', error);
+            console.error('Detalles del error:', error.message);
+        }
+    }
+
+    // ============================================================
+    // CONFIGURAR EVENT LISTENERS PARA ENFERMEDADES
+    // ============================================================
+    function configurarEventListenersEnfermedades() {
+        const tipoEnfermedadSelect = document.getElementById('tipoEnfermedadRegistrarAnimal');
+        if (tipoEnfermedadSelect) {
+            // Remover listener anterior si existe
+            tipoEnfermedadSelect.removeEventListener('change', handleTipoEnfermedadChange);
+            // Agregar nuevo listener
+            tipoEnfermedadSelect.addEventListener('change', handleTipoEnfermedadChange);
+        }
+    }
+
+    function handleTipoEnfermedadChange() {
+        const tipoId = this.value;
+        const tipoText = this.options[this.selectedIndex].text;
+        console.log('Tipo de enfermedad seleccionado:', tipoText, 'con ID:', tipoId);
+        const selectEnfermedad = document.getElementById('enfermedadRegistrarAnimal');
+
+        if (tipoId && tipoId !== '') {
+            console.log('Cargando enfermedades para tipo:', tipoText, 'ID:', tipoId);
+            loadEnfermedadesPorTipo(tipoId);
+        } else {
+            console.log('Bloqueando enfermedad - no hay tipo seleccionado');
+            if (selectEnfermedad) {
+                selectEnfermedad.innerHTML = '<option value="">Primero selecciona un tipo</option>';
+                selectEnfermedad.disabled = true;
+            }
+        }
+    }
+
+    // ============================================================
+    // CONFIGURAR EVENT LISTENERS DESPUÉS DE CARGAR ESPECIES
+    // ============================================================
+    function configurarEventListeners() {
+        const especieSelect = document.getElementById('especieRegistrarAnimal');
+        console.log('Configurando event listener para especie:', especieSelect);
+        if (especieSelect) {
+            // Remover listener anterior si existe
+            especieSelect.removeEventListener('change', handleEspecieChange);
+            // Agregar nuevo listener
+            especieSelect.addEventListener('change', handleEspecieChange);
+            console.log('Event listener configurado para especie');
+        } else {
+            console.error('No se encontró el select especieRegistrarAnimal');
+        }
+    }
+
+    function handleEspecieChange() {
+        const especieId = this.value;
+        const especieText = this.options[this.selectedIndex].text;
+        console.log('Especie seleccionada:', especieText, 'con ID:', especieId);
+        const selectRaza = document.getElementById('razaRegistrarAnimal');
+
+        if (especieId && especieId !== '') {
+            console.log('Cargando razas para especie:', especieText, 'ID:', especieId);
+            loadRazasPorEspecie(especieId);
+        } else {
+            console.log('Bloqueando raza - no hay especie seleccionada');
+            if (selectRaza) {
+                selectRaza.innerHTML = '<option value="">Primero selecciona una especie</option>';
+                selectRaza.disabled = true;
+            }
+        }
+    }
+
+    // ============================================================
     // INICIALIZAR
     // ============================================================
     await loadAnimals();
+    await loadEspecies(); // Cargar especies primero
+    await loadRazas(); // Cargar todas las razas
+    await loadTiposEnfermedad(); // Cargar tipos de enfermedad
+    configurarEventListeners(); // Configurar event listeners de especies
+    configurarEventListenersEnfermedades(); // Configurar event listeners de enfermedades
     console.log("Módulo de administración de animales inicializado");
 });
