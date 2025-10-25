@@ -16,6 +16,7 @@ function requireAdmin(req, res, next) {
 router.get('/especies', async (req, res) => {
     try {
         const result = await query('SELECT idEspecie, especieAnimal FROM especie ORDER BY especieAnimal');
+        console.log('Especies desde la base de datos:', result.rows);
         res.json({ message: 'Especies obtenidas exitosamente', data: result.rows });
     } catch (error) {
         console.error('Error obteniendo especies:', error);
@@ -118,12 +119,25 @@ router.delete('/especies/:id', authenticateToken, requireAdmin, async (req, res)
 // GET /api/especieRaza/razas - Obtener todas las razas con sus especies (público para cargar combos)
 router.get('/razas', async (req, res) => {
     try {
+        const { especie } = req.query;
+        console.log('Solicitud de razas con especie:', especie);
+        let whereClause = '';
+        let params = [];
+
+        if (especie) {
+            whereClause = 'WHERE e.idEspecie = $1';
+            params = [especie];
+            console.log('Filtrando por especie ID:', especie);
+        }
+
         const result = await query(`
             SELECT r.idRaza, r.razaAnimal, r.idEspecie, e.especieAnimal
             FROM raza r
             JOIN especie e ON r.idEspecie = e.idEspecie
+            ${whereClause}
             ORDER BY e.especieAnimal, r.razaAnimal
-        `);
+        `, params);
+        console.log('Razas encontradas en BD:', result.rows);
         res.json({ message: 'Razas obtenidas exitosamente', data: result.rows });
     } catch (error) {
         console.error('Error obteniendo razas:', error);
