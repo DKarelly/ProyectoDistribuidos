@@ -1,0 +1,104 @@
+body {
+  padding-top: 90px ; /* evita que el contenido se oculte bajo el navbar */
+  background-color: #ffe6ee !important;
+}
+
+.admin-adopcion {
+  background-color: #ffe6ee;
+  min-height: 100vh;
+}
+
+/* Botones */
+.btn-pink {
+  background-color: #ff4d88;
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-pink:hover {
+  background-color: #ff3872;
+}
+
+/* Tablas */
+.table-pink th {
+  background-color: #ffb6c1;
+  color: #333;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.table td {
+  vertical-align: middle;
+  font-size: 15px;
+}
+
+/* Botones de acción */
+.btn-editar, .btn-eliminar {
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btn-editar {
+  background-color: #d9ffd9;
+  color: #2e7d32;
+}
+
+.btn-editar:hover {
+  background-color: #b3ffb3;
+}
+
+.btn-eliminar {
+  background-color: #ffd6d6;
+  color: #c62828;
+}
+
+.btn-eliminar:hover {
+  background-color: #ffb3b3;
+}
+
+/* Modal */
+.modal-content {
+  border-radius: 20px;
+  background-color: #fffdfd;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content .form-control,
+.modal-content .form-select {
+  border-radius: 15px;
+  border-color: #ffc1d6;
+}
+
+.modal-content .form-control:focus,
+.modal-content .form-select:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 77, 136, 0.25);
+  border-color: #ff4d88;
+}
+
+.modal-content .btn-pink {
+  width: 100%;
+  font-weight: 600;
+  border-radius: 25px;
+}
+
+/* Scroll bonito para tablas */
+.table-responsive::-webkit-scrollbar {
+  width: 8px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: #ff99bb;
+  border-radius: 10px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background-color: #ff77aa;
+}
