@@ -6,40 +6,47 @@ const router = express.Router();
 // GET /api/donations/historial
 router.get('/historial', async (req, res) => {
     try {
-        const { categoria, fecha } = req.query;
-        
+        const { categoria, fecha, usuario } = req.query;
+
         let whereConditions = [];
         let params = [];
         let paramCount = 0;
 
         if (categoria) {
             paramCount++;
-            whereConditions.push(`cd.categoria = $${paramCount}`);
-            params.push(categoria);
+            whereConditions.push(`cd.nombcategoria ILIKE $${paramCount}`);
+            params.push(`%${categoria}%`);
         }
 
         if (fecha) {
             paramCount++;
-            whereConditions.push(`d.fechadonacion = $${paramCount}`);
+            whereConditions.push(`d.f_donacion = $${paramCount}::date`);
             params.push(fecha);
+        }
+
+        if (usuario) {
+            paramCount++;
+            whereConditions.push(`u.aliasusuario ILIKE $${paramCount}`);
+            params.push(`%${usuario}%`);
         }
 
         const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
         const sql = `
-            SELECT 
+            SELECT
                 dd.iddetalledonacion,
                 dd.cantidaddonacion,
-                dd.detalledonacion,
-                cd.categoria,
-                d.fechadonacion,
+                dd.detalleDonacion,
+                cd.nombcategoria,
+                d.f_donacion,
+                d.h_donacion,
                 u.aliasusuario
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
             JOIN usuario u ON d.idusuario = u.idusuario
             ${whereClause}
-            ORDER BY d.fechadonacion DESC, d.horadonacion DESC
+            ORDER BY d.f_donacion DESC, d.h_donacion DESC
         `;
 
         const result = await query(sql, params);
@@ -81,7 +88,7 @@ router.post('/crear', authenticateToken, async (req, res) => {
 
         // Crear donación principal
         const donacionResult = await query(`
-            INSERT INTO donacion (idusuario, fechadonacion, horadonacion)
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
             VALUES ($1, CURRENT_DATE, CURRENT_TIME)
             RETURNING iddonacion
         `, [idUsuario]);
@@ -143,7 +150,7 @@ router.post('/economica', authenticateToken, async (req, res) => {
 
         // Crear donación económica
         const donacionResult = await query(`
-            INSERT INTO donacion (idusuario, fechadonacion, horadonacion)
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
             VALUES ($1, CURRENT_DATE, CURRENT_TIME)
             RETURNING iddonacion
         `, [idUsuario]);
@@ -175,8 +182,8 @@ router.post('/economica', authenticateToken, async (req, res) => {
 // GET /api/donations/categorias
 router.get('/categorias', async (req, res) => {
     try {
-        const result = await query('SELECT * FROM categoria_donacion ORDER BY categoria');
-        
+        const result = await query('SELECT * FROM categoria_donacion ORDER BY nombcategoria');
+
         res.json({
             message: 'Categorías obtenidas exitosamente',
             data: result.rows
@@ -229,7 +236,7 @@ router.post('/apadrinamiento', authenticateToken, async (req, res) => {
 
         // Crear donación
         const donacionResult = await query(`
-            INSERT INTO donacion (idusuario, fechadonacion, horadonacion)
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
             VALUES ($1, CURRENT_DATE, CURRENT_TIME)
             RETURNING iddonacion
         `, [idUsuario]);
@@ -245,10 +252,10 @@ router.post('/apadrinamiento', authenticateToken, async (req, res) => {
 
         // Crear registro de apadrinamiento
         const apadrinamientoResult = await query(`
-            INSERT INTO apadrinamiento (f_inicio, frecuencia, f_fin, idanimal, iddonacion)
-            VALUES (CURRENT_DATE, $1, $2, $3, $4)
+            INSERT INTO apadrinamiento (f_inicio, frecuencia, idanimal, iddonacion)
+            VALUES (CURRENT_DATE, $1, $2, $3)
             RETURNING idapadrinamiento
-        `, [frecuencia, f_fin || null, idanimal, idDonacion]);
+        `, [frecuencia, idanimal, idDonacion]);
 
         res.status(201).json({
             message: 'Apadrinamiento creado exitosamente',
@@ -338,7 +345,7 @@ router.post('/general', authenticateToken, async (req, res) => {
 
         // Crear donación
         const donacionResult = await query(`
-            INSERT INTO donacion (idusuario, fechadonacion, horadonacion)
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
             VALUES ($1, CURRENT_DATE, CURRENT_TIME)
             RETURNING iddonacion
         `, [idUsuario]);
@@ -382,18 +389,18 @@ router.get('/generales', authenticateToken, async (req, res) => {
         const idUsuario = req.user.idusuario;
 
         const result = await query(`
-            SELECT 
+            SELECT
                 dg.idgeneral,
                 dg.proposito,
                 dg.notadonante,
                 dd.cantidaddonacion as monto,
                 dd.detalledonacion,
-                d.fechadonacion
+                d.f_donacion
             FROM donaciongeneral dg
             JOIN donacion d ON dg.iddonacion = d.iddonacion
             JOIN detalle_donacion dd ON d.iddonacion = dd.iddonacion
             WHERE d.idusuario = $1
-            ORDER BY d.fechadonacion DESC
+            ORDER BY d.f_donacion DESC
         `, [idUsuario]);
 
         res.json({
