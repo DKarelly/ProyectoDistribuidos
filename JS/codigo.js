@@ -656,13 +656,19 @@ function showAnimalModal(animal) {
                                         <div class="accordion-item">
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#historial${index}">
-                                                    ${h.fechaHistorial} - ${h.horaHistorial}
+                                                    ${(() => {
+                                                        const f = h.f_historial || h.fechaHistorial;
+                                                        const fechaFmt = f ? new Date(f).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: '2-digit' }) : '';
+                                                        const rawHora = String(h.h_historial || h.horaHistorial || '');
+                                                        const horaFmt = rawHora.includes('.') ? rawHora.split('.')[0] : rawHora;
+                                                        return `${fechaFmt} - ${horaFmt}`.trim();
+                                                    })()}
                                                 </button>
                                             </h2>
                                             <div id="historial${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#historialAccordion">
                                                 <div class="accordion-body">
-                                                    ${h.descripcionHistorial}
-                                                    ${h.pesoHistorial ? `<br><strong>Peso:</strong> ${h.pesoHistorial} kg` : ''}
+                                                    ${(h.descripcionhistorial || h.descripcionHistorial) || ''}
+                                                    ${(h.pesohistorial || h.pesoHistorial) ? `<br><strong>Peso:</strong> ${(h.pesohistorial || h.pesoHistorial)} kg` : ''}
                                                 </div>
                                             </div>
                                         </div>

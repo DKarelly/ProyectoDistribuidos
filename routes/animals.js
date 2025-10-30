@@ -58,6 +58,78 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
+// GET /api/animals/perfil/:id - Perfil enriquecido para blog/modal
+router.get('/perfil/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sql = `
+            SELECT
+              a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal, a.pesoanimal, a.pelaje, a.tamaño,
+              r.razaanimal, e.especieanimal,
+              (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) AS imagen,
+              h.idhistorial, h.f_historial, h.h_historial, h.descripcionhistorial, h.nombveterinario,
+              en.nombenfermedad, te.tipoenfermedad, de.gravedadenfermedad, de.medicinas,
+              COALESCE((CURRENT_DATE - ca.f_entrada), (CURRENT_DATE - h.f_historial)) AS dias_en_refugio,
+              CASE
+                WHEN EXISTS (SELECT 1 FROM adopcion ad2 WHERE ad2.idanimal = a.idanimal AND ad2.estadoadopcion = 'Aprobada') THEN 'adoptado'
+                WHEN EXISTS (SELECT 1 FROM adopcion ad2 WHERE ad2.idanimal = a.idanimal AND ad2.estadoadopcion IN ('Pendiente','En proceso')) THEN 'en_proceso'
+                ELSE 'disponible'
+              END AS estado
+            FROM animal a
+            JOIN raza r ON a.idraza = r.idraza
+            JOIN especie e ON r.idespecie = e.idespecie
+            LEFT JOIN LATERAL (
+              SELECT * FROM historial_animal h1 WHERE h1.idanimal = a.idanimal ORDER BY h1.f_historial DESC, h1.h_historial DESC LIMIT 1
+            ) h ON TRUE
+            LEFT JOIN detalle_enfermedad de ON de.idhistorial = h.idhistorial
+            LEFT JOIN enfermedad en ON en.idenfermedad = de.idenfermedad
+            LEFT JOIN tipo_enfermedad te ON te.idtipoenfermedad = en.idtipoenfermedad
+            LEFT JOIN LATERAL (
+              SELECT f_entrada FROM caso_animal ca1 WHERE ca1.idanimal = a.idanimal ORDER BY f_entrada ASC LIMIT 1
+            ) ca ON TRUE
+            WHERE a.idanimal = $1
+            LIMIT 1
+        `;
+        const result = await query(sql, [id]);
+        if (!result.rows.length) return res.status(404).json({ message: 'Animal no encontrado' });
+        res.json({ message: 'Perfil obtenido', data: result.rows[0] });
+    } catch (error) {
+        console.error('Error obteniendo perfil:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/animals/:id/assign-vet - Asignar/editar veterinario en el último historial
+router.post('/:id/assign-vet', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombVeterinario } = req.body;
+        if (!nombVeterinario || !nombVeterinario.trim()) {
+            return res.status(400).json({ message: 'Nombre de veterinario requerido' });
+        }
+
+        // Buscar último historial; si no existe, crear uno básico
+        const lastHist = await query(
+            `SELECT idhistorial FROM historial_animal WHERE idanimal = $1 ORDER BY f_historial DESC, h_historial DESC LIMIT 1`,
+            [id]
+        );
+
+        if (lastHist.rows.length) {
+            await query(`UPDATE historial_animal SET nombveterinario = $1 WHERE idhistorial = $2`, [nombVeterinario, lastHist.rows[0].idhistorial]);
+        } else {
+            await query(`
+                INSERT INTO historial_animal (idanimal, pesohistorial, f_historial, h_historial, descripcionhistorial, nombveterinario)
+                VALUES ($1, NULL, (now() at time zone 'America/Lima')::date, (now() at time zone 'America/Lima')::time, 'Veterinario asignado', $2)
+            `, [id, nombVeterinario]);
+        }
+
+        res.json({ message: 'Veterinario asignado/actualizado correctamente' });
+    } catch (error) {
+        console.error('Error asignando veterinario:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
 // GET /api/animals/disponibles
 router.get('/disponibles', async (req, res) => {
     try {
@@ -274,17 +346,21 @@ router.post('/agregar', upload.fields([
             return res.status(400).json({ message: 'Al menos una imagen es obligatoria' });
         }
 
-        const { nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño, descripcion, enfermedadId, gravedad, medicinas } = req.body;
+        const { nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño, tamano, descripcion, enfermedadId, gravedad, medicinas } = req.body;
+
+        // Normalizar tamaño: aceptar tanto 'tamaño' (con ñ) como 'tamano' (sin ñ)
+        const tamañoNormalizado = (typeof tamaño !== 'undefined' && tamaño !== '')
+            ? tamaño
+            : (typeof tamano !== 'undefined' && tamano !== '' ? tamano : null);
 
         console.log('Datos procesados:', {
-            nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño, descripcion
+            nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño: tamañoNormalizado, descripcion
         });
 
         console.log('=== DEBUG TAMAÑO BACKEND ===');
-        console.log('Tamaño recibido:', tamaño);
-        console.log('Tipo de tamaño:', typeof tamaño);
-        console.log('Tamaño es null/undefined:', tamaño === null || tamaño === undefined);
-        console.log('Tamaño es string vacío:', tamaño === '');
+        console.log('Tamaño recibido (raw):', tamaño);
+        console.log('Tamaño recibido (alt):', tamano);
+        console.log('Tamaño normalizado:', tamañoNormalizado);
 
         if (!nombreAnimal || !especie || !raza || !edadMeses || !genero)
             return res.status(400).json({ message: 'Los campos obligatorios son: nombre, especie, raza, edad y género' });
@@ -301,15 +377,23 @@ router.post('/agregar', upload.fields([
             (await query('INSERT INTO raza (idespecie, razaanimal) VALUES ($1, $2) RETURNING idraza', [idEspecie, raza])).rows[0].idraza;
         console.log('ID Raza:', idRaza);
 
+        // Validaciones numéricas
+        if (isNaN(parseInt(edadMeses)) || parseInt(edadMeses) < 0) {
+            return res.status(400).json({ message: 'La edad en meses debe ser >= 0' });
+        }
+        if (peso !== undefined && peso !== null && peso !== '' && (isNaN(parseFloat(peso)) || parseFloat(peso) < 0)) {
+            return res.status(400).json({ message: 'El peso debe ser >= 0' });
+        }
+
         console.log('Insertando animal con datos:', {
             nombreAnimal, edadMeses: parseInt(edadMeses), genero, peso: peso ? parseFloat(peso) : null,
-            pelaje: pelaje || null, tamaño: tamaño || null, idRaza
+            pelaje: pelaje || null, tamaño: tamañoNormalizado || null, idRaza
         });
 
         const animalResult = await query(`
-            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, tamaño, idraza)
+            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, "tamaño", idraza)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idanimal
-        `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje || null, tamaño || null, idRaza]);
+        `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje || null, tamañoNormalizado || null, idRaza]);
 
         const idAnimal = animalResult.rows[0].idanimal;
         console.log('Animal insertado con ID:', idAnimal);
@@ -413,8 +497,16 @@ router.put('/:id', authenticateToken, async (req, res) => {
         console.log('Datos recibidos:', req.body);
 
         // Validaciones
-        if (!nombreanimal || !especieanimal || !razaanimal || !edadmesesanimal || !generoanimal) {
+        if (!nombreanimal || !especieanimal || !razaanimal || edadmesesanimal === undefined || edadmesesanimal === null || !generoanimal) {
             return res.status(400).json({ message: 'Los campos obligatorios son: nombre, especie, raza, edad y género' });
+        }
+
+        // Validaciones anti-negativos
+        if (isNaN(parseInt(edadmesesanimal)) || parseInt(edadmesesanimal) < 0) {
+            return res.status(400).json({ message: 'La edad en meses debe ser >= 0' });
+        }
+        if (pesoanimal !== undefined && pesoanimal !== null && pesoanimal !== '' && (isNaN(parseFloat(pesoanimal)) || parseFloat(pesoanimal) < 0)) {
+            return res.status(400).json({ message: 'El peso debe ser >= 0' });
         }
 
         // Buscar/crear especie
@@ -431,7 +523,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         await query(`
             UPDATE animal 
             SET nombreanimal = $1, edadmesesanimal = $2, generoanimal = $3, 
-                pesoanimal = $4, pelaje = $5, tamaño = $6, idraza = $7
+                pesoanimal = $4, pelaje = $5, "tamaño" = $6, idraza = $7
             WHERE idanimal = $8
         `, [nombreanimal, parseInt(edadmesesanimal), generoanimal,
             pesoanimal ? parseFloat(pesoanimal) : null, pelaje || null, tamaño || null, idRaza, id]);

@@ -506,20 +506,34 @@ document.addEventListener("DOMContentLoaded", async () => {
             ) : null;
             const nombreRaza = razaEncontrada ? (razaEncontrada.razaAnimal || razaEncontrada.razaanimal) : '';
             formData.append('raza', nombreRaza);
-            formData.append('edadMeses', parseInt(formRegistrarAnimal.querySelector('input[placeholder="Ingresar edad"]').value));
+            const edadMesesInput = formRegistrarAnimal.querySelector('input[placeholder="Ingresar edad"]').value;
+            const edadMesesParsed = parseInt(edadMesesInput);
+            if (isNaN(edadMesesParsed) || edadMesesParsed < 0) {
+                Swal.fire('Error', 'La edad en meses debe ser un número mayor o igual a 0', 'error');
+                return;
+            }
+            formData.append('edadMeses', edadMesesParsed);
             // Obtener género del select (ya está en formato BD: M/F)
             const generoValue = formRegistrarAnimal.querySelectorAll('select')[2].value.trim();
             formData.append('genero', generoValue);
-            formData.append('peso', parseFloat(formRegistrarAnimal.querySelector('input[placeholder="Ingresar peso"]').value) || null);
+            const pesoInput = formRegistrarAnimal.querySelector('input[placeholder="Ingresar peso"]').value;
+            const pesoParsed = pesoInput === '' ? null : parseFloat(pesoInput);
+            if (pesoParsed !== null && (isNaN(pesoParsed) || pesoParsed < 0)) {
+                Swal.fire('Error', 'El peso debe ser un número mayor o igual a 0', 'error');
+                return;
+            }
+            formData.append('peso', pesoParsed);
             formData.append('pelaje', formRegistrarAnimal.querySelectorAll('select')[3].value.trim() || null);
             // Obtener tamaño del select específico
-            const tamañoSelect = document.getElementById('tamañoRegistrarAnimal');
+            const tamañoSelect = document.getElementById('tamanoRegistrarAnimal');
             const tamañoValue = tamañoSelect ? tamañoSelect.value.trim() : '';
             console.log('=== DEBUG TAMAÑO ===');
             console.log('Select de tamaño encontrado:', tamañoSelect);
             console.log('Valor de tamaño seleccionado:', tamañoValue);
             console.log('Opciones disponibles:', tamañoSelect ? Array.from(tamañoSelect.options).map(opt => ({ value: opt.value, text: opt.textContent })) : 'No encontrado');
-            formData.append('tamaño', tamañoValue || null);
+            // Enviar ambas claves por compatibilidad
+            formData.append('tamaño', tamañoValue || '');
+            formData.append('tamano', tamañoValue || '');
 
             // Campos de enfermedad
             const enfermedadId = document.getElementById('enfermedadRegistrarAnimal').value;
@@ -631,15 +645,28 @@ document.addEventListener("DOMContentLoaded", async () => {
                 razaanimal: document.getElementById('razaEditarAnimal').value.trim(),
                 edadmesesanimal: parseInt(document.getElementById('edadEditarAnimal').value),
                 generoanimal: document.getElementById('generoEditarAnimal').value.trim(),
-                pesoanimal: parseFloat(document.getElementById('pesoEditarAnimal').value) || null,
+                pesoanimal: (function(){
+                    const v = document.getElementById('pesoEditarAnimal').value;
+                    if (v === '') return null;
+                    const n = parseFloat(v);
+                    return isNaN(n) ? null : n;
+                })(),
                 pelaje: document.getElementById('pelajeEditarAnimal').value.trim() || null,
                 tamaño: document.getElementById('tamanoEditarAnimal').value.trim() || null,
                 descripcion: document.getElementById('descripcionEditarAnimal').value.trim() || null
             };
 
             // Validaciones
-            if (!formData.nombreanimal || !formData.especieanimal || !formData.razaanimal || !formData.edadmesesanimal || !formData.generoanimal) {
+            if (!formData.nombreanimal || !formData.especieanimal || !formData.razaanimal || isNaN(formData.edadmesesanimal) || !formData.generoanimal) {
                 Swal.fire('Advertencia', 'Todos los campos obligatorios deben ser completados', 'warning');
+                return;
+            }
+            if (formData.edadmesesanimal < 0) {
+                Swal.fire('Error', 'La edad en meses debe ser mayor o igual a 0', 'error');
+                return;
+            }
+            if (formData.pesoanimal !== null && formData.pesoanimal < 0) {
+                Swal.fire('Error', 'El peso debe ser mayor o igual a 0', 'error');
                 return;
             }
 
@@ -1021,7 +1048,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             console.log('Tipo de respuesta:', typeof response);
             console.log('Propiedades de la respuesta:', Object.keys(response));
 
-            const tipos = response.data || [];
+            let tipos = response.data || [];
+            // Ordenar por ID ascendente (según la BD)
+            tipos = tipos.sort((a, b) => (a.idTipoEnfermedad || a.idtipoenfermedad) - (b.idTipoEnfermedad || b.idtipoenfermedad));
             console.log('Tipos extraídos:', tipos);
             console.log('Cantidad de tipos:', tipos.length);
 
@@ -1273,5 +1302,76 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadTiposEnfermedad(); // Cargar tipos de enfermedad
     configurarEventListeners(); // Configurar event listeners de especies
     configurarEventListenersEnfermedades(); // Configurar event listeners de enfermedades
+    // Bloquear negativos en inputs numéricos (edad/peso)
+    (function attachNonNegativeGuards() {
+        function guardInput(el, allowDecimal = false) {
+            if (!el) return;
+            el.setAttribute('min', '0');
+            el.addEventListener('keydown', (e) => {
+                const invalidKeys = ['-', '+', 'e', 'E'];
+                if (invalidKeys.includes(e.key)) e.preventDefault();
+                if (!allowDecimal && e.key === '.') e.preventDefault();
+            });
+            el.addEventListener('input', () => {
+                const v = el.value;
+                // Quitar signos y normalizar
+                let cleaned = v.replace(/[eE+\-]/g, '');
+                if (!allowDecimal) cleaned = cleaned.replace(/\./g, '');
+                el.value = cleaned;
+                if (el.value !== '' && parseFloat(el.value) < 0) el.value = '0';
+            });
+        }
+
+        // Registrar
+        guardInput(document.querySelector('#formRegistrarAnimal input[placeholder="Ingresar edad"]'), false);
+        guardInput(document.querySelector('#formRegistrarAnimal input[placeholder="Ingresar peso"]'), true);
+        // Editar
+        guardInput(document.getElementById('edadEditarAnimal'), false);
+        guardInput(document.getElementById('pesoEditarAnimal'), true);
+    })();
+
+    // ==========================
+    // Asignar Veterinario (modal)
+    // ==========================
+    (function initAsignarVet() {
+        const selectAnimal = document.getElementById('selectAnimalVet');
+        const inputNombreVet = document.getElementById('inputNombreVet');
+        const btnGuardarVet = document.getElementById('btnGuardarVet');
+        const modalAsignarVet = document.getElementById('modalAsignarVet');
+
+        if (!selectAnimal || !btnGuardarVet || !modalAsignarVet) return;
+
+        // Cargar animales en el select cada vez que se abre
+        modalAsignarVet.addEventListener('show.bs.modal', () => {
+            selectAnimal.innerHTML = '';
+            animalesData.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.idanimal;
+                opt.textContent = `${a.idanimal} - ${a.nombreanimal} (${a.especieanimal} / ${a.razaanimal})`;
+                selectAnimal.appendChild(opt);
+            });
+            inputNombreVet.value = '';
+        });
+
+        btnGuardarVet.addEventListener('click', async () => {
+            const id = selectAnimal.value;
+            const nombre = inputNombreVet.value.trim();
+            if (!id || !nombre) {
+                Swal.fire('Advertencia', 'Selecciona un animal e ingresa el nombre del veterinario', 'warning');
+                return;
+            }
+            try {
+                await apiRequest(`/animals/${id}/assign-vet`, {
+                    method: 'POST',
+                    body: JSON.stringify({ nombVeterinario: nombre })
+                });
+                Swal.fire('Éxito', 'Veterinario asignado/actualizado', 'success');
+                const modal = bootstrap.Modal.getInstance(modalAsignarVet);
+                modal.hide();
+            } catch (err) {
+                Swal.fire('Error', err.message || 'No se pudo asignar el veterinario', 'error');
+            }
+        });
+    })();
     console.log("Módulo de administración de animales inicializado");
 });
