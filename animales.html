@@ -57,10 +57,15 @@
             <h2 class="fw-bold">Módulo de administración de animales</h2>
             <hr class="mx-auto mb-4" style="width:60px; height:3px; background-color:#ff5c8d; border:none;">
 
-            <!-- BOTÓN REGISTRAR -->
-            <button class="btn btn-pink mb-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarAnimal">
-                <i class="bi bi-plus-lg me-2"></i>Registrar nuevo animal
-            </button>
+            <!-- ACCIONES -->
+            <div class="d-flex justify-content-center gap-2 mb-4 flex-wrap">
+                <button class="btn btn-pink" data-bs-toggle="modal" data-bs-target="#modalRegistrarAnimal">
+                    <i class="bi bi-plus-lg me-2"></i>Registrar nuevo animal
+                </button>
+                <button class="btn btn-outline-pink" data-bs-toggle="modal" data-bs-target="#modalAsignarVet">
+                    <i class="bi bi-person-heart me-2"></i>Asignar veterinario
+                </button>
+            </div>
 
             <!-- BUSCAR Y FILTRAR -->
             <div class="row justify-content-center mb-4">
@@ -101,6 +106,32 @@
             </div>
         </div>
     </section>
+
+    <!-- MODAL ASIGNAR VETERINARIO -->
+    <div class="modal fade" id="modalAsignarVet" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">Asignar/Editar veterinario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Animal</label>
+                        <select id="selectAnimalVet" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del veterinario</label>
+                        <input id="inputNombreVet" type="text" class="form-control" placeholder="Ej: Dra. Pérez" maxlength="150">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink" id="btnGuardarVet">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- FOOTER -->
     <footer class="py-5 bg-pink text-white">
@@ -221,7 +252,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tamaño</label>
-                            <select class="form-select" name="tamaño" id="tamañoRegistrarAnimal">
+                            <select class="form-select" name="tamano" id="tamanoRegistrarAnimal">
                                 <option value="">Seleccionar tamaño</option>
                                 <option value="Pequeño">Pequeño</option>
                                 <option value="Mediano">Mediano</option>

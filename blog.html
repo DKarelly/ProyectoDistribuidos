@@ -264,9 +264,15 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header border-0 bg-light">
-                    <h5 class="modal-title fw-bold text-dark" id="detalleAnimalLabel">Panchito</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- Hero con imagen de fondo difuminada -->
+                <div class="position-relative" style="height: 160px; overflow: hidden; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+                    <div id="modalHero" class="w-100 h-100" style="background: #eee center/cover no-repeat; filter: blur(8px); transform: scale(1.08);"></div>
+                    <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));"></div>
+                    <div class="position-absolute top-50 start-50 translate-middle text-white text-center px-3">
+                        <h5 class="fw-bold mb-1" id="detalleAnimalLabel">Nombre</h5>
+                        <small id="resumenHero" class="opacity-75">Esperando un hogar...</small>
+                    </div>
+                    <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
@@ -282,6 +288,13 @@
                         </div>
                         <div class="col-md-7">
                             <form id="formDetalleAnimal">
+                                <!-- Resumen emotivo -->
+                                <div class="mb-3">
+                                    <div class="d-flex flex-wrap gap-2 small">
+                                        <span class="badge text-bg-light">Días en refugio: <span id="diasRefugio">-</span></span>
+                                        <span class="badge text-bg-light">Estado: <span id="estadoAnimal">-</span></span>
+                                    </div>
+                                </div>
                                 <div class="row mb-3">
                                     <div class="col">
                                         <label class="form-label fw-semibold">Edad en Meses</label>

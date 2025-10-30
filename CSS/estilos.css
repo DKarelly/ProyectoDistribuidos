@@ -658,6 +658,37 @@ footer a:hover {
   background: #fafafa;
 }
 
+/* Blog - tarjetas con fondo difuminado */
+.card-historia {
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.card-historia .card-bg-blur {
+  position: absolute;
+  inset: 0;
+  background: var(--bg) center/cover no-repeat;
+  filter: blur(12px);
+  transform: scale(1.1);
+  opacity: 0.35;
+  z-index: 0;
+}
+.card-historia > * { position: relative; z-index: 1; }
+.card-historia .carousel-inner img { border-top-left-radius: 16px; border-top-right-radius: 16px; }
+
+/* Blog - hero en tarjeta */
+.card-hero-blur { position: relative; height: 220px; overflow: hidden; border-top-left-radius: 16px; border-top-right-radius: 16px; }
+.card-hero-blur .card-hero-bg { position: absolute; inset: 0; background: var(--bg) center/cover no-repeat; filter: blur(14px); transform: scale(1.08); }
+.card-hero-blur .card-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.15)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 1.4rem; }
+
+/* Blog - tarjeta cubierta completa con imagen sombreada */
+.card-hero-full { position: relative; height: 360px; border-radius: 16px; overflow: hidden; }
+.card-hero-full .card-photo { position: absolute; inset: 0; background: var(--bg) center/cover no-repeat; background-position: center center !important; transform: scale(1.02); }
+.card-hero-full .card-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55)); }
+.card-hero-full .card-content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.card-hero-full .card-title { font-size: 1.5rem; font-weight: 800; margin: 0; color: #ffffff !important; }
+.card-hero-full .btn { box-shadow: 0 8px 18px rgba(255, 92, 141, .4); }
+
 #historial .section-title {
   font-size: 2rem;
   font-weight: 700;

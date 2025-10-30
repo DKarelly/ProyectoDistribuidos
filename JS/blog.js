@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log('Primer animal:', animales[0]);
 
     // === 2. Generar tarjetas dinámicamente ===
-    animales.forEach((animal, index) => {
+    animales.forEach(async (animal, index) => {
       const card = document.createElement("div");
       card.classList.add("col-12", "col-sm-6", "col-lg-4");
 
@@ -42,29 +42,38 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
       }
 
+      const imageUrl = animal.imagenAnimal ? `/files/${animal.imagenAnimal}` : '';
+      const photoStyle = imageUrl ? `style=\"background-image:url('${imageUrl}')\"` : '';
       card.innerHTML = `
         <div class="card card-historia shadow-sm mx-auto">
-          <div id="carousel${index}" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-inner">
-              ${carouselItems}
+          <div class="card-hero-full">
+            <div class="card-photo" ${photoStyle}></div>
+            <div class="card-shade"></div>
+            <div class="card-content">
+              <h5 class="card-title">${animal.nombreanimal}</h5>
+              <a href="#" class="btn btn-pink btn-ver-historia" data-id="${animal.idanimal}">Ver historia</a>
             </div>
-            ${animal.imagenAnimal ? `
-              <button class="carousel-control-prev" type="button" data-bs-target="#carousel${index}" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-              </button>
-              <button class="carousel-control-next" type="button" data-bs-target="#carousel${index}" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-              </button>
-            ` : ''}
-          </div>
-          <div class="card-body">
-            <h5 class="card-title">${animal.nombreanimal}</h5>
-            <p class="card-text">${animal.especieanimal} - ${animal.razaanimal}</p>
-            <a href="#" class="btn btn-pink btn-ver-historia" data-id="${animal.idanimal}">Ver historia</a>
           </div>
         </div>
       `;
       contenedorAnimales.appendChild(card);
+
+      // Si no vino imagen en /disponibles, cargar primera de la galería
+      if (!imageUrl) {
+        try {
+          const resDetalle = await fetch(`${window.location.origin}/api/animals/${animal.idanimal}`);
+          if (resDetalle.ok) {
+            const detalle = await resDetalle.json();
+            const primera = detalle.data?.galeria?.find(m => m.imagen)?.imagen;
+            if (primera) {
+              const photoDiv = card.querySelector('.card-photo');
+              if (photoDiv) photoDiv.style.backgroundImage = `url('/files/${primera}')`;
+            }
+          }
+        } catch (e) {
+          console.warn('No se pudo cargar imagen de galería para', animal.idanimal, e);
+        }
+      }
     });
 
     // === 3. Reusar tu lógica de modales (ajustado al fetch) ===
@@ -89,7 +98,10 @@ function inicializarEventosVerHistoria() {
 
       try {
         console.log('Obteniendo detalles del animal ID:', idAnimal);
-        // Obtener detalle del animal desde backend usando /api/animals/:id
+        // Obtener perfil enriquecido para hero y resumen
+        const perfilRes = await fetch(`${window.location.origin}/api/animals/perfil/${idAnimal}`);
+        const perfil = perfilRes.ok ? (await perfilRes.json()).data : null;
+        // Obtener detalle del animal (galería e historial completo)
         const res = await fetch(`${window.location.origin}/api/animals/${idAnimal}`);
         console.log('Respuesta del servidor:', res.status, res.statusText);
 
@@ -103,8 +115,24 @@ function inicializarEventosVerHistoria() {
         console.log('Datos del animal recibidos:', result);
         const animal = result.data; // La respuesta tiene { message, data: animal }
 
-        // Rellenar modal con datos reales
-        document.getElementById("detalleAnimalLabel").textContent = animal.nombreanimal;
+        // Rellenar hero/resumen si hay perfil
+        const hero = document.getElementById('modalHero');
+        const titulo = document.getElementById('detalleAnimalLabel');
+        const resumenHero = document.getElementById('resumenHero');
+        const diasRef = document.getElementById('diasRefugio');
+        const estadoEl = document.getElementById('estadoAnimal');
+
+        titulo.textContent = animal.nombreanimal;
+        if (perfil) {
+          if (hero && perfil.imagen) hero.style.background = `url('/files/${perfil.imagen}') center/cover no-repeat`;
+          if (resumenHero && typeof perfil.dias_en_refugio !== 'undefined') resumenHero.textContent = `Lleva ${perfil.dias_en_refugio} días esperando`;
+          if (diasRef && typeof perfil.dias_en_refugio !== 'undefined') diasRef.textContent = perfil.dias_en_refugio;
+          if (estadoEl && perfil.estado) estadoEl.textContent = perfil.estado;
+        } else if (hero) {
+          // Fallback: usa primera imagen del detalle
+          const primeraImagen = animal.galeria?.find(m => m.imagen)?.imagen;
+          if (primeraImagen) hero.style.background = `url('/files/${primeraImagen}') center/cover no-repeat`;
+        }
 
         // Mostrar galería completa si existe
         const galeriaContainer = document.querySelector("#modalDetalleAnimal .galeria-container");
