@@ -34,6 +34,241 @@ const upload = multer({
     }
 });
 
+// =========================
+// Solicitudes de animales
+// =========================
+
+// Crear tabla para solicitudes si no existe
+(async () => {
+    try {
+        await query(`
+            CREATE TABLE IF NOT EXISTS solicitud_animal (
+                idSolicitud SERIAL PRIMARY KEY,
+                idUsuario INT REFERENCES usuario(idUsuario),
+                payload JSONB NOT NULL,
+                imagenes TEXT[],
+                videos TEXT[],
+                estado VARCHAR(20) DEFAULT 'Pendiente',
+                mensaje_admin VARCHAR(255),
+                comentario_usuario VARCHAR(255),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('Tabla solicitud_animal verificada/creada');
+    } catch (e) {
+        console.error('Error creando/verificando solicitud_animal:', e.message);
+    }
+})();
+
+// POST /api/animals/solicitar - Usuario envía solicitud con archivos
+router.post('/solicitar', authenticateToken, upload.fields([
+    { name: 'imagenAnimal', maxCount: 5 },
+    { name: 'videoAnimal', maxCount: 2 }
+]), async (req, res) => {
+    try {
+        const idUsuario = req.user.idusuario;
+
+        // Capturar archivos subidos
+        const imagenes = (req.files?.imagenAnimal || []).map(f => f.filename);
+        const videos = (req.files?.videoAnimal || []).map(f => f.filename);
+
+        // Guardar todo el body como payload JSONB para revisión
+        const payload = {
+            body: req.body,
+            tamañoNormalizado: req.body.tamaño || req.body.tamano || null
+        };
+
+        const result = await query(`
+            INSERT INTO solicitud_animal (idUsuario, payload, imagenes, videos)
+            VALUES ($1, $2::jsonb, $3, $4)
+            RETURNING idSolicitud
+        `, [idUsuario, JSON.stringify(payload), imagenes, videos]);
+
+        res.status(201).json({
+            message: 'Solicitud registrada. Un administrador la revisará pronto.',
+            data: { idSolicitud: result.rows[0].idsolicitud }
+        });
+    } catch (error) {
+        console.error('Error registrando solicitud:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/animals/solicitudes - Listado para admin (solo conteo o detalle)
+router.get('/solicitudes', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.idrol !== 1) return res.status(403).json({ message: 'Acceso denegado' });
+        const result = await query(`
+            SELECT idSolicitud, idUsuario, estado, created_at FROM solicitud_animal
+            WHERE estado = 'Pendiente'
+            ORDER BY idSolicitud DESC
+        `);
+        res.json({ message: 'Solicitudes pendientes', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo solicitudes:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/animals/solicitudes/:id - detalle para visualizar (admin)
+router.get('/solicitudes/:id', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.idrol !== 1) return res.status(403).json({ message: 'Acceso denegado' });
+        const { id } = req.params;
+        const result = await query(`
+            SELECT idSolicitud, idUsuario, payload, imagenes, videos, estado, mensaje_admin, created_at
+            FROM solicitud_animal
+            WHERE idSolicitud = $1
+        `, [id]);
+        if (!result.rows.length) return res.status(404).json({ message: 'Solicitud no encontrada' });
+        res.json({ message: 'Detalle de solicitud', data: result.rows[0] });
+    } catch (error) {
+        console.error('Error obteniendo detalle de solicitud:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/animals/solicitudes/mias - para usuario ver estado y mensajes
+// Temporalmente sin auth para pruebas de UI
+router.get('/solicitudes/mias', async (req, res) => {
+    try {
+        // Intentar obtener id desde token si llega; si no, aceptar query param temporalmente
+        let idUsuario = null;
+        try {
+            const authHeader = req.headers['authorization'];
+            if (authHeader) {
+                const token = authHeader.split(' ')[1];
+                const jwt = require('jsonwebtoken');
+                const user = jwt.verify(token, process.env.JWT_SECRET);
+                idUsuario = user.idusuario;
+            }
+        } catch (_) {}
+        // fallback para pruebas
+        if (!idUsuario && req.query && req.query.idUsuario) {
+            idUsuario = parseInt(req.query.idUsuario);
+        }
+        if (!idUsuario) return res.status(200).json({ message: 'OK', data: [] });
+        const result = await query(`
+            SELECT idSolicitud, estado, mensaje_admin, comentario_usuario, created_at
+            FROM solicitud_animal
+            WHERE idUsuario = $1
+            ORDER BY idSolicitud DESC
+        `, [idUsuario]);
+        res.json({ message: 'Mis solicitudes', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo mis solicitudes:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/animals/solicitudes/mias-public - pública con idUsuario (solo lectura)
+router.get('/solicitudes/mias-public', async (req, res) => {
+    try {
+        const idUsuario = parseInt(req.query.idUsuario);
+        if (!idUsuario) return res.status(400).json({ message: 'idUsuario requerido' });
+        const result = await query(`
+            SELECT idSolicitud, estado, mensaje_admin, comentario_usuario, created_at
+            FROM solicitud_animal
+            WHERE idUsuario = $1
+            ORDER BY idSolicitud DESC
+        `, [idUsuario]);
+        res.json({ message: 'Mis solicitudes', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo mis solicitudes (public):', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// PUT /api/animals/solicitudes/:id/apelar - usuario agrega comentario
+router.put('/solicitudes/:id/apelar', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { comentario } = req.body;
+        await query('UPDATE solicitud_animal SET comentario_usuario = $1 WHERE idSolicitud = $2', [comentario || null, id]);
+        res.json({ message: 'Comentario enviado' });
+    } catch (error) {
+        console.error('Error en apelación:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// PUT /api/animals/solicitudes/:id/aprobar - admin crea animal real
+router.put('/solicitudes/:id/aprobar', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.idrol !== 1) return res.status(403).json({ message: 'Acceso denegado' });
+        const { id } = req.params;
+        const solRes = await query('SELECT * FROM solicitud_animal WHERE idSolicitud = $1', [id]);
+        if (!solRes.rows.length) return res.status(404).json({ message: 'Solicitud no encontrada' });
+
+        const sol = solRes.rows[0];
+        const body = sol.payload.body || {};
+
+        // Reusar la lógica del alta real (parcial del /agregar)
+        const nombreAnimal = body.nombreAnimal;
+        const especie = body.especie;
+        const raza = body.raza;
+        const edadMeses = body.edadMeses;
+        const genero = body.genero;
+        const peso = body.peso;
+        const pelaje = body.pelaje || null;
+        const tamañoNormalizado = body.tamaño || body.tamano || null;
+
+        if (!nombreAnimal || !especie || !raza || !edadMeses || !genero) {
+            return res.status(400).json({ message: 'Solicitud incompleta' });
+        }
+
+        // Especie
+        let especieResult = await query('SELECT idespecie FROM especie WHERE especieanimal = $1', [especie]);
+        let idEspecie = especieResult.rows.length ? especieResult.rows[0].idespecie :
+            (await query('INSERT INTO especie (especieanimal) VALUES ($1) RETURNING idespecie', [especie])).rows[0].idespecie;
+
+        // Raza
+        let razaResult = await query('SELECT idraza FROM raza WHERE razaanimal = $1 AND idespecie = $2', [raza, idEspecie]);
+        let idRaza = razaResult.rows.length ? razaResult.rows[0].idraza :
+            (await query('INSERT INTO raza (idespecie, razaanimal) VALUES ($1, $2) RETURNING idraza', [idEspecie, raza])).rows[0].idraza;
+
+        const animalRes = await query(`
+            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, "tamaño", idraza)
+            VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idanimal
+        `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje, tamañoNormalizado, idRaza]);
+        const idAnimal = animalRes.rows[0].idanimal;
+
+        await query(`
+            INSERT INTO historial_animal (idanimal, pesohistorial, f_historial, h_historial, descripcionhistorial)
+            VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3)
+        `, [idAnimal, peso ? parseFloat(peso) : null, body.descripcion || 'Registro inicial del animal']);
+
+        // Galería desde archivos guardados en la solicitud
+        for (const img of (sol.imagenes || [])) {
+            await query('INSERT INTO galeria (idanimal, imagen) VALUES ($1, $2)', [idAnimal, img]);
+        }
+        for (const vid of (sol.videos || [])) {
+            await query('INSERT INTO galeria (idanimal, video) VALUES ($1, $2)', [idAnimal, vid]);
+        }
+
+        await query('UPDATE solicitud_animal SET estado = ' + "'Aprobada'" + ', mensaje_admin = $1 WHERE idSolicitud = $2', [req.body?.mensaje || null, id]);
+
+        res.json({ message: 'Solicitud aprobada y animal publicado', data: { idAnimal } });
+    } catch (error) {
+        console.error('Error aprobando solicitud:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// PUT /api/animals/solicitudes/:id/rechazar - admin rechaza con mensaje
+router.put('/solicitudes/:id/rechazar', authenticateToken, async (req, res) => {
+    try {
+        if (req.user.idrol !== 1) return res.status(403).json({ message: 'Acceso denegado' });
+        const { id } = req.params;
+        const { mensaje } = req.body;
+        await query('UPDATE solicitud_animal SET estado = $1, mensaje_admin = $2 WHERE idSolicitud = $3', ['Rechazada', mensaje || null, id]);
+        res.json({ message: 'Solicitud rechazada' });
+    } catch (error) {
+        console.error('Error rechazando solicitud:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
 // GET /api/animals - Obtener todos los animales
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -208,7 +443,7 @@ router.get('/disponibles', async (req, res) => {
 router.get('/tipos-enfermedad', async (req, res) => {
     try {
         console.log('Solicitud de tipos de enfermedad recibida');
-        const result = await query('SELECT * FROM tipo_enfermedad ORDER BY tipoEnfermedad');
+        const result = await query('SELECT * FROM tipo_enfermedad ORDER BY idTipoEnfermedad');
         console.log('Tipos de enfermedad encontrados en BD:', result.rows);
         res.json({ message: 'Tipos de enfermedad obtenidos exitosamente', data: result.rows });
     } catch (error) {

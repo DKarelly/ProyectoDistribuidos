@@ -15,7 +15,7 @@ function requireAdmin(req, res, next) {
 // GET /api/especieRaza/especies - Obtener todas las especies (público para cargar combos)
 router.get('/especies', async (req, res) => {
     try {
-        const result = await query('SELECT idEspecie, especieAnimal FROM especie ORDER BY especieAnimal');
+        const result = await query('SELECT idEspecie, especieAnimal FROM especie ORDER BY idEspecie');
         console.log('Especies desde la base de datos:', result.rows);
         res.json({ message: 'Especies obtenidas exitosamente', data: result.rows });
     } catch (error) {
@@ -135,7 +135,7 @@ router.get('/razas', async (req, res) => {
             FROM raza r
             JOIN especie e ON r.idEspecie = e.idEspecie
             ${whereClause}
-            ORDER BY e.especieAnimal, r.razaAnimal
+            ORDER BY r.idRaza
         `, params);
         console.log('Razas encontradas en BD:', result.rows);
         res.json({ message: 'Razas obtenidas exitosamente', data: result.rows });

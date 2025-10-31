@@ -39,6 +39,24 @@ async function apiRequest(endpoint, options = {}) {
         console.log('Response data:', data);
 
         if (!response.ok) {
+            // Manejar errores de autenticación (token expirado o inválido)
+            if (response.status === 401 || response.status === 403) {
+                if (data.message === 'Token requerido' || data.message === 'Token inválido') {
+                    // Limpiar datos de sesión
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    authToken = null;
+                    currentUser = null;
+
+                    // Redirigir al login con mensaje
+                    showMessage('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+                    setTimeout(() => {
+                        window.location.href = 'iniciarSesion.html';
+                    }, 2000);
+                    throw new Error('Sesión expirada');
+                }
+            }
+
             // Manejar errores de validación específicos
             if (data.errors && Array.isArray(data.errors)) {
                 const errorMessages = data.errors.map(error => {
@@ -186,6 +204,10 @@ function updateAuthUI() {
                                 <i class="bi bi-gift"></i>
                                 Mis Donaciones
                             </a>
+                            <a href="agregarMascota.html" class="user-menu-item">
+                                <i class="bi bi-plus-circle"></i>
+                                Agregar Mascota
+                            </a>
                             
                             ${hasRole([1]) ? `
                                 <div class="user-menu-divider"></div>
@@ -208,6 +230,19 @@ function updateAuthUI() {
             loginLink.innerHTML = userMenuHtml;
             loginLink.href = '#';
             loginLink.onclick = null;
+
+            // Aviso simple para administradores con solicitudes pendientes
+            if (hasRole([1])) {
+                (async () => {
+                    try {
+                        const resp = await apiRequest('/animals/solicitudes');
+                        const pendientes = resp.data?.length || 0;
+                        if (pendientes > 0) {
+                            showMessage(`Tienes ${pendientes} solicitudes de animales pendientes de revisión`, 'info');
+                        }
+                    } catch (_) { }
+                })();
+            }
         } else {
             loginLink.innerHTML = 'Iniciar Sesión';
             loginLink.href = 'iniciarSesion.html';
@@ -657,12 +692,12 @@ function showAnimalModal(animal) {
                                             <h2 class="accordion-header">
                                                 <button class="accordion-button ${index > 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#historial${index}">
                                                     ${(() => {
-                                                        const f = h.f_historial || h.fechaHistorial;
-                                                        const fechaFmt = f ? new Date(f).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: '2-digit' }) : '';
-                                                        const rawHora = String(h.h_historial || h.horaHistorial || '');
-                                                        const horaFmt = rawHora.includes('.') ? rawHora.split('.')[0] : rawHora;
-                                                        return `${fechaFmt} - ${horaFmt}`.trim();
-                                                    })()}
+            const f = h.f_historial || h.fechaHistorial;
+            const fechaFmt = f ? new Date(f).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: '2-digit' }) : '';
+            const rawHora = String(h.h_historial || h.horaHistorial || '');
+            const horaFmt = rawHora.includes('.') ? rawHora.split('.')[0] : rawHora;
+            return `${fechaFmt} - ${horaFmt}`.trim();
+        })()}
                                                 </button>
                                             </h2>
                                             <div id="historial${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#historialAccordion">
