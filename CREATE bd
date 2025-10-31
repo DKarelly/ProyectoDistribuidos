@@ -363,3 +363,18 @@ CREATE TABLE apadrinamiento (
     idDonacion INT REFERENCES donacion(idDonacion),
     idAnimal INT REFERENCES animal(idAnimal)
 );
+
+-- ======================
+-- TABLA: SOLICITUD_ANIMAL
+-- ======================
+CREATE TABLE solicitud_animal (
+    idSolicitud SERIAL PRIMARY KEY,
+    idUsuario INT REFERENCES usuario(idUsuario),
+    payload JSONB NOT NULL,
+    imagenes TEXT[],
+    videos TEXT[],
+    estado VARCHAR(20) DEFAULT 'Pendiente',
+    mensaje_admin VARCHAR(255),
+    comentario_usuario VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

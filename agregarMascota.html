@@ -41,6 +41,16 @@
             border-radius: 10px;
             margin-top: 1rem;
         }
+
+        /* Espaciado con el footer solo en esta página */
+        .page-spacer {
+            margin-bottom: 140px;
+        }
+
+        /* Ocultar acceso rápido al dashboard en esta página */
+        #boton {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -49,9 +59,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-        <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
-        HUELLA FELIZ
-      </a>
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                HUELLA FELIZ
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -66,21 +76,24 @@
                     <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html">
                     <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar
                             Sesion</a></li>
-                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <div class="container" style="margin-top: 100px;">
+    <div class="container page-spacer" style="margin-top: 100px;">
         <div class="row justify-content-center">
             <div class="col-lg-8">
                 <div class="card shadow">
-                    <div class="card-header bg-pink text-white">
-                        <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Agregar Nueva Mascota</h4>
+                    <div class="card-header bg-pink text-white d-flex align-items-center gap-2" style="cursor:pointer"
+                        onclick="toggleFormCard()">
+                        <i class="bi bi-dash-circle" id="formIcon"></i>
+                        <h4 class="mb-0">Agregar Nueva Mascota</h4>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="card-body p-4" id="formCardBody">
                         <form id="formAgregarMascota" enctype="multipart/form-data">
                             <div class="row g-3">
                                 <!-- Información básica -->
@@ -105,12 +118,14 @@
 
                                 <div class="col-md-6">
                                     <label for="raza" class="form-label">Raza *</label>
-                                    <input type="text" class="form-control" id="raza" name="raza" required>
+                                    <select class="form-select" id="raza" name="raza" required disabled>
+                                        <option value="">Primero selecciona una especie</option>
+                                    </select>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="edadMeses" class="form-label">Edad (meses) *</label>
-                                    <input type="number" class="form-control" id="edadMeses" name="edadMeses" min="1"
+                                    <input type="number" class="form-control" id="edadMeses" name="edadMeses" min="0"
                                         max="240" required>
                                 </div>
 
@@ -149,21 +164,33 @@
                                     </select>
                                 </div>
 
-                                <!-- Subida de imagen -->
+                                <!-- Foto del Animal (igual que modal admin) -->
+                                <h5 class="text-pink mb-3 mt-4">Foto del Animal *</h5>
                                 <div class="col-12">
-                                    <h5 class="text-pink mb-3 mt-4">Foto del Animal *</h5>
-                                    <div class="upload-area" id="uploadArea">
-                                        <i class="bi bi-cloud-upload fs-1 text-muted"></i>
-                                        <p class="mt-2 mb-0">Arrastra y suelta una imagen aquí o haz clic para
+                                    <div class="upload-area"
+                                        style="border: 2px dashed #ff5c8d; border-radius: 10px; padding: 30px; text-align: center; background-color: #f8f9fa;">
+                                        <i class="bi bi-cloud-upload" style="font-size: 3rem; color: #ff5c8d;"></i>
+                                        <p class="mt-2 mb-1">Arrastra y suelta imágenes o videos aquí o haz clic para
                                             seleccionar</p>
-                                        <small class="text-muted">Formatos: JPG, PNG, GIF (máx. 5MB)</small>
-                                        <input type="file" id="imagenAnimal" name="imagenAnimal" accept="image/*"
-                                            style="display: none;" required>
+                                        <p class="text-muted small">Formatos: JPG, PNG, GIF, MP4, AVI, MOV (máx. 10MB
+                                            cada uno)
+                                        </p>
+                                        <p class="text-muted small"><strong>Puedes seleccionar múltiples
+                                                archivos</strong></p>
+                                        <input type="file" class="form-control d-none" id="fotoAgregarAnimal"
+                                            accept="image/*,video/*" multiple>
+                                        <button type="button" class="btn btn-outline-pink mt-2"
+                                            onclick="document.getElementById('fotoAgregarAnimal').click()">
+                                            <i class="bi bi-camera me-2"></i>Seleccionar Archivo
+                                        </button>
                                     </div>
-                                    <div id="imagePreview" class="text-center" style="display: none;">
-                                        <img id="previewImg" class="image-preview" alt="Vista previa">
-                                        <p class="mt-2 text-success"><i class="bi bi-check-circle me-1"></i>Imagen
-                                            seleccionada</p>
+                                    <div class="mt-3" id="fotoPreviewContainer" style="display: none;">
+                                        <div class="text-center">
+                                            <p id="previewType" class="mt-2 text-muted small"></p>
+                                            <div id="previewGrid" class="row g-2 mt-2">
+                                                <!-- Las previsualizaciones se insertarán aquí dinámicamente -->
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -172,8 +199,36 @@
                                     <h5 class="text-pink mb-3 mt-4">Información Adicional</h5>
                                 </div>
 
+                                <div class="col-md-6">
+                                    <label class="form-label">Tipo de Enfermedad (opcional)</label>
+                                    <select class="form-select" id="tipoEnfermedadRegistrarAnimal">
+                                        <option value="">Seleccionar tipo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Enfermedad (opcional)</label>
+                                    <select class="form-select" id="enfermedadRegistrarAnimal" disabled>
+                                        <option value="">Primero selecciona un tipo</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Gravedad (opcional)</label>
+                                    <select class="form-select" id="gravedadRegistrarAnimal">
+                                        <option value="">Seleccionar gravedad</option>
+                                        <option value="Leve">Leve</option>
+                                        <option value="Moderada">Moderada</option>
+                                        <option value="Grave">Grave</option>
+                                        <option value="Crítica">Crítica</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Medicinas (opcional)</label>
+                                    <input type="text" class="form-control" id="medicinasRegistrarAnimal"
+                                        placeholder="Ej: Amoxicilina, Ivermectina">
+                                </div>
                                 <div class="col-12">
-                                    <label for="descripcion" class="form-label">Descripción / Historial</label>
+                                    <label for="descripcion" class="form-label">Descripción / Historial
+                                        (opcional)</label>
                                     <textarea class="form-control" id="descripcion" name="descripcion" rows="4"
                                         placeholder="Cuéntanos sobre el animal, su personalidad, historial médico, etc."></textarea>
                                 </div>
@@ -193,9 +248,13 @@
                         </form>
                     </div>
                 </div>
+
+
             </div>
         </div>
     </div>
+
+
 
     <footer class="py-5 bg-pink text-white">
         <div class="container">
@@ -217,9 +276,11 @@
                 <div class="col-6 col-md-3 mb-4">
                     <h5 class="fw-bold">Redes sociales</h5>
                     <ul class="list-unstyled">
-                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank" class="text-white text-decoration-none"><i
-                                    class="bi bi-facebook me-2"></i>Facebook</a></li>
-                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank" class="text-white text-decoration-none"><i
+                        <li><a href="https://www.facebook.com/PatitasSolidariasChiclayo" target="_blank"
+                                class="text-white text-decoration-none"><i class="bi bi-facebook me-2"></i>Facebook</a>
+                        </li>
+                        <li><a href="https://www.instagram.com/refugioanimal.chiclayo/" target="_blank"
+                                class="text-white text-decoration-none"><i
                                     class="bi bi-instagram me-2"></i>Instagram</a>
                         </li>
                     </ul>
@@ -229,8 +290,10 @@
                 <div class="col-6 col-md-3 mb-4">
                     <h5 class="fw-bold">Acerca de</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
-                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalPrivacidad">Política de Privacidad</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" data-bs-toggle="modal"
+                                data-bs-target="#modalTerminos">Términos y Condiciones</a></li>
                     </ul>
                 </div>
 
@@ -257,73 +320,197 @@
     <!-- Custom JS -->
     <script src="JS/codigo.js"></script>
     <script>
-        // Verificar acceso al dashboard cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            if (!checkDashboardAccess()) {
-                return; // Si no tiene acceso, la función ya redirige
-            }
+        // Para esta página pública no restringimos por rol; solo actualizamos la UI si está logueado
+        document.addEventListener('DOMContentLoaded', function () {
             updateAuthUI();
         });
     </script>
     <script>
-        // Manejo de subida de imágenes
+        // Manejo de múltiples archivos (igual que modal admin)
+        let archivosSeleccionados = [];
+
+        // Cargar combos de ESPECIE y RAZA
         document.addEventListener('DOMContentLoaded', function () {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('imagenAnimal');
-            const imagePreview = document.getElementById('imagePreview');
-            const previewImg = document.getElementById('previewImg');
+            const especieSelect = document.getElementById('especie');
+            const razaSelect = document.getElementById('raza');
+            (async () => {
+                try {
+                    const resp = await fetch('/api/especieRaza/especies');
+                    const data = await resp.json();
+                    if (resp.ok && data.data) {
+                        especieSelect.innerHTML = '<option value="">Seleccionar especie</option>';
+                        data.data.forEach(e => {
+                            const opt = document.createElement('option');
+                            opt.value = e.especieanimal || e.especieAnimal;
+                            opt.textContent = e.especieanimal || e.especieAnimal;
+                            opt.dataset.id = e.idespecie || e.idEspecie;
+                            especieSelect.appendChild(opt);
+                        });
+                    }
+                } catch (_) { }
+            })();
 
-            // Click en el área de subida
-            uploadArea.addEventListener('click', () => fileInput.click());
-
-            // Arrastrar y soltar
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    fileInput.files = files;
-                    handleFileSelect(files[0]);
+            especieSelect.addEventListener('change', async function () {
+                const selected = this.options[this.selectedIndex];
+                const especieId = selected?.dataset?.id;
+                razaSelect.innerHTML = '<option value="">Cargando razas...</option>';
+                razaSelect.disabled = true;
+                if (!especieId) {
+                    razaSelect.innerHTML = '<option value="">Primero selecciona una especie</option>';
+                    return;
+                }
+                try {
+                    const resp = await fetch(`/api/especieRaza/razas?especie=${encodeURIComponent(especieId)}`);
+                    const data = await resp.json();
+                    if (resp.ok && data.data) {
+                        razaSelect.innerHTML = '<option value="">Seleccionar raza</option>';
+                        data.data.forEach(r => {
+                            const opt = document.createElement('option');
+                            opt.value = r.razaanimal || r.razaAnimal;
+                            opt.textContent = r.razaanimal || r.razaAnimal;
+                            razaSelect.appendChild(opt);
+                        });
+                        razaSelect.disabled = false;
+                    } else {
+                        razaSelect.innerHTML = '<option value="">No se encontraron razas</option>';
+                    }
+                } catch (_) {
+                    razaSelect.innerHTML = '<option value="">Error cargando razas</option>';
                 }
             });
 
-            // Cambio de archivo
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    handleFileSelect(e.target.files[0]);
-                }
-            });
+            // Sistema de múltiples archivos (igual que admin)
+            const fotoAgregarAnimalInput = document.getElementById('fotoAgregarAnimal');
+            const previewType = document.getElementById('previewType');
+            const fotoPreviewContainer = document.getElementById('fotoPreviewContainer');
+            const previewGrid = document.getElementById('previewGrid');
+            const uploadArea = fotoAgregarAnimalInput?.closest('.upload-area');
 
-            function handleFileSelect(file) {
-                // Validar tipo de archivo
-                if (!file.type.startsWith('image/')) {
-                    alert('Por favor selecciona un archivo de imagen válido.');
+            if (fotoAgregarAnimalInput && previewType && fotoPreviewContainer && previewGrid) {
+                // Cambio de archivo
+                fotoAgregarAnimalInput.addEventListener('change', function (event) {
+                    const nuevosArchivos = Array.from(event.target.files);
+                    archivosSeleccionados = archivosSeleccionados.concat(nuevosArchivos);
+                    event.target.value = '';
+                    actualizarPrevisualizacion();
+                });
+
+                // Arrastrar y soltar
+                if (uploadArea) {
+                    uploadArea.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        uploadArea.style.backgroundColor = '#f0f0f0';
+                    });
+
+                    uploadArea.addEventListener('dragleave', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        uploadArea.style.backgroundColor = '#f8f9fa';
+                    });
+
+                    uploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        uploadArea.style.backgroundColor = '#f8f9fa';
+                        const droppedFiles = Array.from(e.dataTransfer.files);
+                        archivosSeleccionados = archivosSeleccionados.concat(droppedFiles);
+                        actualizarPrevisualizacion();
+                    });
+                }
+            }
+
+            function actualizarPrevisualizacion() {
+                if (archivosSeleccionados.length === 0) {
+                    fotoPreviewContainer.style.display = 'none';
                     return;
                 }
 
-                // Validar tamaño (5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('La imagen es demasiado grande. Máximo 5MB.');
-                    return;
-                }
+                fotoPreviewContainer.style.display = 'block';
+                previewGrid.innerHTML = '';
 
-                // Mostrar vista previa
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    previewImg.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    uploadArea.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
+                let imagenesCount = 0;
+                let videosCount = 0;
+                let archivosInfo = [];
+
+                archivosSeleccionados.forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        imagenesCount++;
+                        archivosInfo.push(`📷 ${file.name}`);
+                    } else if (file.type.startsWith('video/')) {
+                        videosCount++;
+                        archivosInfo.push(`🎥 ${file.name}`);
+                    }
+                });
+
+                previewType.innerHTML = `
+                    <strong>Archivos seleccionados (${archivosSeleccionados.length}):</strong><br>
+                    ${archivosInfo.join('<br>')}
+                `;
+
+                archivosSeleccionados.forEach((file, index) => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-3 col-sm-4 col-6';
+
+                    const card = document.createElement('div');
+                    card.className = 'card mb-2';
+                    card.style.position = 'relative';
+
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.className = 'img-thumbnail';
+                        img.style.maxWidth = '100px';
+                        img.style.maxHeight = '100px';
+                        img.style.objectFit = 'cover';
+
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            img.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                        cardBody.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.className = 'img-thumbnail';
+                        video.style.maxWidth = '100px';
+                        video.style.maxHeight = '100px';
+                        video.style.objectFit = 'cover';
+                        video.controls = true;
+                        video.muted = true;
+
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            video.src = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                        cardBody.appendChild(video);
+                    }
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-sm btn-danger position-absolute';
+                    deleteBtn.style.top = '5px';
+                    deleteBtn.style.right = '5px';
+                    deleteBtn.style.padding = '2px 6px';
+                    deleteBtn.innerHTML = '×';
+                    deleteBtn.onclick = function () {
+                        archivosSeleccionados.splice(index, 1);
+                        actualizarPrevisualizacion();
+                    };
+
+                    const fileName = document.createElement('small');
+                    fileName.className = 'd-block text-muted mt-1';
+                    fileName.textContent = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+                    fileName.title = file.name;
+
+                    cardBody.appendChild(fileName);
+                    card.appendChild(cardBody);
+                    card.appendChild(deleteBtn);
+                    col.appendChild(card);
+                    previewGrid.appendChild(col);
+                });
             }
 
             // Manejo del formulario
@@ -336,29 +523,102 @@
         // Función para agregar mascota
         async function agregarMascota() {
             const form = document.getElementById('formAgregarMascota');
-            const formData = new FormData(form);
+            const formData = new FormData();
 
-            // Mostrar loading
+            // Campos requeridos
+            formData.append('nombreAnimal', document.getElementById('nombreAnimal').value.trim());
+            formData.append('especie', document.getElementById('especie').value);
+            formData.append('raza', document.getElementById('raza').value.trim());
+            formData.append('edadMeses', document.getElementById('edadMeses').value);
+            formData.append('genero', document.getElementById('genero').value);
+
+            // Opcionales
+            const peso = document.getElementById('peso').value;
+            const pelaje = document.getElementById('pelaje').value;
+            const tamaño = document.getElementById('tamaño').value;
+            const descripcion = document.getElementById('descripcion').value;
+            const tipoEnf = document.getElementById('tipoEnfermedadRegistrarAnimal').value;
+            const enfermedadId = document.getElementById('enfermedadRegistrarAnimal').value;
+            const gravedad = document.getElementById('gravedadRegistrarAnimal').value;
+            const medicinas = document.getElementById('medicinasRegistrarAnimal').value;
+
+            if (peso) formData.append('peso', peso);
+            if (pelaje) formData.append('pelaje', pelaje);
+            if (tamaño) formData.append('tamaño', tamaño);
+            if (descripcion) formData.append('descripcion', descripcion);
+            if (enfermedadId) formData.append('enfermedadId', enfermedadId);
+            if (gravedad) formData.append('gravedad', gravedad);
+            if (medicinas) formData.append('medicinas', medicinas);
+
+            // Obtener botón de submit
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
+
+            // Archivos: separar imágenes y videos del array archivosSeleccionados
+            if (archivosSeleccionados.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Debes seleccionar al menos una imagen o video'
+                });
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+
+            archivosSeleccionados.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    formData.append('imagenAnimal', file);
+                } else if (file.type.startsWith('video/')) {
+                    formData.append('videoAnimal', file);
+                }
+            });
+
+            // Mostrar loading
             submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Agregando...';
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/animals/agregar', {
+                // Enviar a solicitud si no es admin, de lo contrario alta directa
+                const cur = JSON.parse(localStorage.getItem('currentUser') || 'null');
+                const isAdmin = cur && cur.idRol === 1;
+                const endpoint = isAdmin ? '/api/animals/agregar' : '/api/animals/solicitar';
+                const headers = {};
+                const tokSubmit = localStorage.getItem('authToken');
+                if (tokSubmit) headers['Authorization'] = `Bearer ${tokSubmit}`;
+
+                const response = await fetch(endpoint, {
                     method: 'POST',
+                    headers,
                     body: formData
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    showMessage('¡Mascota agregada exitosamente!', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'adopciones.html';
-                    }, 2000);
+                    const successMsg = isAdmin ? '¡Mascota agregada exitosamente!' : '¡Solicitud enviada! Un administrador revisará tu petición.';
+                    showMessage(successMsg, 'success');
+                    // Limpiar archivos y vista previa
+                    archivosSeleccionados = [];
+                    const fotoPreviewContainerClean = document.getElementById('fotoPreviewContainer');
+                    const previewGridClean = document.getElementById('previewGrid');
+                    if (fotoPreviewContainerClean) fotoPreviewContainerClean.style.display = 'none';
+                    if (previewGridClean) previewGridClean.innerHTML = '';
+                    // Resetear formulario
+                    document.getElementById('formAgregarMascota').reset();
+
+                    if (isAdmin) {
+                        setTimeout(() => { window.location.href = 'adopciones.html'; }, 2000);
+                    }
                 } else {
-                    showMessage(data.message || 'Error al agregar la mascota', 'danger');
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('currentUser');
+                        showMessage('Tu sesión ha expirado. Inicia sesión nuevamente.', 'warning');
+                        setTimeout(() => { window.location.href = 'iniciarSesion.html'; }, 1500);
+                    } else {
+                        showMessage(data.message || 'Error al agregar la mascota', 'danger');
+                    }
                 }
             } catch (error) {
                 showMessage('Error de conexión. Intenta nuevamente.', 'danger');
@@ -368,6 +628,54 @@
                 submitBtn.disabled = false;
             }
         }
+
+        // Cargar listas de tipos de enfermedad y enfermedades (opcional)
+        document.addEventListener('DOMContentLoaded', async function () {
+            try {
+                // Tipos de enfermedad
+                const tiposResp = await fetch('/api/animals/tipos-enfermedad');
+                const tiposData = await tiposResp.json();
+                const tipoSelect = document.getElementById('tipoEnfermedadRegistrarAnimal');
+                if (tiposResp.ok && tiposData.data) {
+                    tiposData.data.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t.idtipoenfermedad;
+                        opt.textContent = t.tipoenfermedad;
+                        tipoSelect.appendChild(opt);
+                    });
+                }
+
+                // Al cambiar tipo cargar enfermedades
+                tipoSelect.addEventListener('change', async function () {
+                    const enfSelect = document.getElementById('enfermedadRegistrarAnimal');
+                    enfSelect.innerHTML = '<option value="">Seleccionar enfermedad</option>';
+                    enfSelect.disabled = true;
+                    const tipoId = this.value;
+                    if (!tipoId) return;
+                    const enfResp = await fetch(`/api/animals/enfermedades-por-tipo/${tipoId}`);
+                    const enfData = await enfResp.json();
+                    if (enfResp.ok && enfData.data) {
+                        enfData.data.forEach(e => {
+                            const opt = document.createElement('option');
+                            opt.value = e.idenfermedad;
+                            opt.textContent = e.nombenfermedad;
+                            enfSelect.appendChild(opt);
+                        });
+                        enfSelect.disabled = false;
+                    }
+                });
+            } catch (_) { /* silencioso */ }
+        });
+
+        // (Se eliminó la sección de Mis Solicitudes a pedido del usuario)
+        function toggleFormCard() {
+            const body = document.getElementById('formCardBody');
+            const icon = document.getElementById('formIcon');
+            const visible = body.style.display !== 'none';
+            body.style.display = visible ? 'none' : 'block';
+            icon.className = visible ? 'bi bi-plus-circle' : 'bi bi-dash-circle';
+        }
+        // (Se removió la sección Mis Solicitudes a solicitud del usuario)
     </script>
 </body>
 

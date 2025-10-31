@@ -66,6 +66,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             animalesBody.appendChild(tr);
         });
 
+        const badge = document.getElementById('badgeAnimales');
+        if (badge) {
+            badge.style.display = 'inline-block';
+            badge.textContent = `${animales.length} registros`;
+        }
+
         attachAnimalButtons();
     }
 
@@ -1374,4 +1380,180 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     })();
     console.log("Módulo de administración de animales inicializado");
+
+    // =============================
+    // Solicitudes (Admin)
+    // =============================
+    const solicitudesBody = document.getElementById('solicitudesBody');
+    const contenedorSolicitudes = document.getElementById('contenedorSolicitudes');
+    const badgeSolicitudes = document.getElementById('badgeSolicitudes');
+    const iconSolicitudes = document.getElementById('iconSolicitudes');
+
+    async function loadSolicitudesAdmin() {
+        if (!solicitudesBody) return;
+        try {
+            const resp = await apiRequest('/animals/solicitudes');
+            const items = resp.data || [];
+            badgeSolicitudes.style.display = items.length ? 'inline-block' : 'none';
+            badgeSolicitudes.textContent = `${items.length} pendientes`;
+            if (!items.length) {
+                solicitudesBody.innerHTML = '<tr><td colspan="5" class="text-center">Sin solicitudes pendientes</td></tr>';
+                return;
+            }
+            solicitudesBody.innerHTML = items.map(s => {
+                const fechaLocal = new Date(s.created_at).toLocaleString('es-PE', { hour12: false, timeZone: 'America/Lima' });
+                return `
+                <tr>
+                    <td>${s.idsolicitud || s.idSolicitud}</td>
+                    <td>${s.idusuario || s.idUsuario}</td>
+                    <td>${fechaLocal}</td>
+                    <td><span class="badge bg-warning">${s.estado}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary me-2" onclick="window.visualizarSolicitud(${s.idsolicitud || s.idSolicitud})">Visualizar</button>
+                        <button class="btn btn-sm btn-success me-2" onclick="window.aprobarSolicitud(${s.idsolicitud || s.idSolicitud})">Aprobar</button>
+                        <button class="btn btn-sm btn-danger" onclick="window.rechazarSolicitud(${s.idsolicitud || s.idSolicitud})">Rechazar</button>
+                    </td>
+                </tr>
+            `}).join('');
+        } catch (err) {
+            solicitudesBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${err.message || 'Error cargando solicitudes'}</td></tr>`;
+        }
+    }
+
+    window.toggleSolicitudes = function() {
+        if (!contenedorSolicitudes) return;
+        const visible = contenedorSolicitudes.style.display !== 'none';
+        contenedorSolicitudes.style.display = visible ? 'none' : 'block';
+        if (iconSolicitudes) iconSolicitudes.className = visible ? 'bi bi-plus-circle' : 'bi bi-dash-circle';
+        if (!visible) loadSolicitudesAdmin();
+    }
+
+    // Visualizar detalle de solicitud
+    window.visualizarSolicitud = async function(id) {
+        try {
+            const resp = await apiRequest(`/animals/solicitudes/${id}`);
+            const s = resp.data;
+            const payload = (s.payload && s.payload.body) || {};
+            const fechaLocal = new Date(s.created_at).toLocaleString('es-PE', { hour12: false, timeZone: 'America/Lima' });
+
+            const carouselId = `carousel-solicitud-${id}`;
+            const mediaItems = [
+                ...(s.imagenes || []).map(fn => ({ type: 'img', src: `/files/${fn}` })),
+                ...(s.videos || []).map(fn => ({ type: 'video', src: `/files/${fn}` }))
+            ];
+
+            const indicators = mediaItems.map((_, idx) => `
+                <button type="button" data-bs-target="#${carouselId}" data-bs-slide-to="${idx}" ${idx===0?'class="active" aria-current="true"':''} aria-label="Slide ${idx+1}"></button>
+            `).join('');
+
+            const slides = mediaItems.map((m, idx) => `
+                <div class="carousel-item ${idx===0?'active':''}">
+                    ${m.type==='img'
+                        ? `<img src="${m.src}" class="d-block w-100" style="object-fit:contain; max-height:420px;">`
+                        : `<video src="${m.src}" class="d-block w-100" style="max-height:420px" controls></video>`}
+                </div>
+            `).join('');
+
+            const carouselHtml = mediaItems.length ? `
+                <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
+                        ${indicators}
+                    </div>
+                    <div class="carousel-inner">
+                        ${slides}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Siguiente</span>
+                    </button>
+                </div>
+            ` : '<div class="text-muted">Sin medios adjuntos</div>';
+
+            const html = `
+                <div class="container-fluid text-start">
+                    <div class="row g-4">
+                        <div class="col-12 col-lg-6">
+                            <p><strong>ID:</strong> ${s.idsolicitud || s.idSolicitud}</p>
+                            <p><strong>Usuario:</strong> ${s.idusuario || s.idUsuario}</p>
+                            <p><strong>Fecha:</strong> ${fechaLocal}</p>
+                            <hr/>
+                            <p><strong>Nombre:</strong> ${payload.nombreAnimal || ''}</p>
+                            <p><strong>Especie:</strong> ${payload.especie || ''}</p>
+                            <p><strong>Raza:</strong> ${payload.raza || ''}</p>
+                            <p><strong>Edad (meses):</strong> ${payload.edadMeses || ''}</p>
+                            <p><strong>Género:</strong> ${payload.genero || ''}</p>
+                            <p><strong>Peso:</strong> ${payload.peso || ''}</p>
+                            <p><strong>Pelaje:</strong> ${payload.pelaje || ''}</p>
+                            <p><strong>Tamaño:</strong> ${payload.tamaño || payload.tamano || ''}</p>
+                            <p><strong>Descripción:</strong> ${payload.descripcion || ''}</p>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <h5 class="mb-2">Medios</h5>
+                            ${carouselHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+            Swal.fire({ title: 'Solicitud', html, width: 800 });
+        } catch (err) {
+            Swal.fire('Error', err.message || 'No se pudo cargar el detalle', 'error');
+        }
+    }
+
+    // Plegar/expandir tabla de animales
+    window.toggleAnimalesSection = function() {
+        const cont = document.getElementById('contenedorAnimales');
+        const icon = document.getElementById('iconAnimales');
+        if (!cont) return;
+        const visible = cont.style.display !== 'none';
+        cont.style.display = visible ? 'none' : 'block';
+        if (icon) icon.className = visible ? 'bi bi-plus-circle' : 'bi bi-dash-circle';
+    }
+
+    window.aprobarSolicitud = async function(id) {
+        const { value: comentario } = await Swal.fire({
+            title: 'Aprobar solicitud',
+            input: 'text',
+            inputLabel: 'Mensaje opcional para el usuario',
+            inputPlaceholder: 'Ej: Aprobado. Gracias por el aporte!',
+            showCancelButton: true
+        });
+        if (comentario === undefined) return;
+        try {
+            await apiRequest(`/animals/solicitudes/${id}/aprobar`, {
+                method: 'PUT',
+                body: JSON.stringify({ mensaje: comentario || null })
+            });
+            Swal.fire('Éxito', 'Solicitud aprobada y publicada', 'success');
+            loadSolicitudesAdmin();
+            loadAnimals();
+        } catch (err) {
+            Swal.fire('Error', err.message || 'No se pudo aprobar', 'error');
+        }
+    }
+
+    window.rechazarSolicitud = async function(id) {
+        const { value: comentario } = await Swal.fire({
+            title: 'Rechazar solicitud',
+            input: 'text',
+            inputLabel: 'Motivo del rechazo (se enviará al usuario)',
+            inputPlaceholder: 'Ej: Información insuficiente / fotos no válidas',
+            showCancelButton: true
+        });
+        if (comentario === undefined) return;
+        try {
+            await apiRequest(`/animals/solicitudes/${id}/rechazar`, {
+                method: 'PUT',
+                body: JSON.stringify({ mensaje: comentario || null })
+            });
+            Swal.fire('Listo', 'Solicitud rechazada', 'success');
+            loadSolicitudesAdmin();
+        } catch (err) {
+            Swal.fire('Error', err.message || 'No se pudo rechazar', 'error');
+        }
+    }
 });

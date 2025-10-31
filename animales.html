@@ -79,9 +79,16 @@
                 </div>
             </div>
 
-            <!-- TABLA DE ANIMALES -->
+            <!-- TABLA DE ANIMALES (PLEGABLE) -->
             <div class="card">
-                <div class="card-body">
+                <div class="card-header bg-pink text-white d-flex align-items-center justify-content-between" style="cursor:pointer" onclick="toggleAnimalesSection()">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-dash-circle" id="iconAnimales"></i>
+                        <h5 class="mb-0">Animales</h5>
+                    </div>
+                    <span class="badge bg-light text-dark" id="badgeAnimales" style="display:none"></span>
+                </div>
+                <div class="card-body" id="contenedorAnimales">
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-danger">
@@ -99,6 +106,35 @@
                             </thead>
                             <tbody id="animalesBody">
                                 <!-- Los animales se cargarán aquí dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOLICITUDES DE USUARIOS (ADMIN) -->
+            <div class="card mt-4">
+                <div class="card-header bg-pink text-white d-flex align-items-center justify-content-between" style="cursor:pointer" onclick="toggleSolicitudes()">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle" id="iconSolicitudes"></i>
+                        <h5 class="mb-0">Solicitudes de usuarios</h5>
+                    </div>
+                    <span class="badge bg-light text-dark" id="badgeSolicitudes" style="display:none"></span>
+                </div>
+                <div class="card-body" id="contenedorSolicitudes" style="display:none">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-danger">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Usuario</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="solicitudesBody">
+                                <tr><td colspan="5" class="text-center">Cargando...</td></tr>
                             </tbody>
                         </table>
                     </div>

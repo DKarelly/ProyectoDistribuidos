@@ -159,4 +159,10 @@ router.post('/login', async (req, res) => {
     }
 });
 
+/* ------------------ VERIFY TOKEN ------------------ */
+router.get('/verify', authenticateToken, (req, res) => {
+    // Devuelve los datos básicos del usuario extraídos del token
+    res.json({ message: 'Token válido', data: req.user });
+});
+
 module.exports = { router, authenticateToken };
