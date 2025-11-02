@@ -446,7 +446,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById('generoEditarAnimal').value = animal.generoanimal;
             document.getElementById('pesoEditarAnimal').value = animal.pesoanimal || '';
             document.getElementById('pelajeEditarAnimal').value = animal.pelaje || '';
-            document.getElementById('tamanoEditarAnimal').value = animal.tamaño || '';
+            document.getElementById('tamanoEditarAnimal').value = animal.tamano || animal.tamaño || '';
             document.getElementById('descripcionEditarAnimal').value = animal.descripcion || '';
 
             // Cargar especies y seleccionar la correcta
@@ -1421,11 +1421,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     window.toggleSolicitudes = function() {
-        if (!contenedorSolicitudes) return;
-        const visible = contenedorSolicitudes.style.display !== 'none';
-        contenedorSolicitudes.style.display = visible ? 'none' : 'block';
-        if (iconSolicitudes) iconSolicitudes.className = visible ? 'bi bi-plus-circle' : 'bi bi-dash-circle';
-        if (!visible) loadSolicitudesAdmin();
+        const contenedor = document.getElementById('contenedorSolicitudes');
+        const icon = document.getElementById('iconSolicitudes');
+        if (!contenedor) {
+            console.error('No se encontró el contenedor de solicitudes');
+            return;
+        }
+        const visible = contenedor.style.display !== 'none';
+        contenedor.style.display = visible ? 'none' : 'block';
+        if (icon) {
+            icon.className = visible ? 'bi bi-plus-circle' : 'bi bi-dash-circle';
+        }
+        if (!visible) {
+            loadSolicitudesAdmin();
+        }
     }
 
     // Visualizar detalle de solicitud
@@ -1433,8 +1442,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             const resp = await apiRequest(`/animals/solicitudes/${id}`);
             const s = resp.data;
-            const payload = (s.payload && s.payload.body) || {};
-            const fechaLocal = new Date(s.created_at).toLocaleString('es-PE', { hour12: false, timeZone: 'America/Lima' });
+            if (!s) {
+                Swal.fire('Error', 'No se encontró la solicitud', 'error');
+                return;
+            }
+            
+            // Manejar diferentes formatos del payload
+            let payload = {};
+            if (s.payload) {
+                if (typeof s.payload === 'string') {
+                    try {
+                        payload = JSON.parse(s.payload);
+                    } catch (e) {
+                        payload = {};
+                    }
+                } else if (s.payload.body) {
+                    payload = s.payload.body;
+                } else {
+                    payload = s.payload;
+                }
+            }
+            
+            const fechaLocal = s.created_at 
+                ? new Date(s.created_at).toLocaleString('es-PE', { hour12: false, timeZone: 'America/Lima' })
+                : 'Fecha no disponible';
 
             const carouselId = `carousel-solicitud-${id}`;
             const mediaItems = [
@@ -1488,7 +1519,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             <p><strong>Género:</strong> ${payload.genero || ''}</p>
                             <p><strong>Peso:</strong> ${payload.peso || ''}</p>
                             <p><strong>Pelaje:</strong> ${payload.pelaje || ''}</p>
-                            <p><strong>Tamaño:</strong> ${payload.tamaño || payload.tamano || ''}</p>
+                            <p><strong>Tamaño:</strong> ${payload.tamano || payload.tamaño || ''}</p>
                             <p><strong>Descripción:</strong> ${payload.descripcion || ''}</p>
                         </div>
                         <div class="col-12 col-lg-6">
@@ -1528,7 +1559,39 @@ document.addEventListener("DOMContentLoaded", async () => {
                 method: 'PUT',
                 body: JSON.stringify({ mensaje: comentario || null })
             });
-            Swal.fire('Éxito', 'Solicitud aprobada y publicada', 'success');
+            
+            // Lanzar confeti de celebración
+            if (typeof confetti !== 'undefined') {
+                const duration = 3000;
+                const end = Date.now() + duration;
+                (function frame() {
+                    confetti({
+                        particleCount: 2,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#ff5c8d', '#ffc107', '#20c997', '#0dcaf0']
+                    });
+                    confetti({
+                        particleCount: 2,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#ff5c8d', '#ffc107', '#20c997', '#0dcaf0']
+                    });
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Solicitud aprobada! 🎉',
+                text: 'La solicitud ha sido aprobada y el animal publicado',
+                timer: 3000,
+                showConfirmButton: false
+            });
             loadSolicitudesAdmin();
             loadAnimals();
         } catch (err) {

@@ -162,7 +162,9 @@
         <!-- Carrusel de imágenes -->
         <div class="col-lg-6 mb-4 mb-lg-0">
           <div id="adopcionCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="2000">
-            <div class="carousel-inner rounded shadow">
+            <div id="carouselInner" class="carousel-inner rounded shadow">
+              <!-- Las imágenes se cargarán dinámicamente aquí -->
+              <!-- Fallback: imágenes estáticas si no hay animales -->
               <div class="carousel-item active">
                 <img src="files/adop_1.jpg" class="d-block w-100" alt="Perro y gato">
               </div>
@@ -415,6 +417,122 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Custom JS -->
   <script src="JS/codigo.js"></script>
+  <!-- Script para cargar imágenes de animales en el carrusel -->
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        console.log('=== CARGANDO ANIMALES PARA CARRUSEL ===');
+        // Obtener animales disponibles desde la API
+        const response = await fetch(window.location.origin + '/api/animals/disponibles');
+        if (!response.ok) {
+          console.error('Error en respuesta:', response.status);
+          throw new Error('Error al cargar animales');
+        }
+        
+        const result = await response.json();
+        console.log('Resultado completo:', result);
+        const animales = result.data || [];
+        console.log('Animales recibidos:', animales.length);
+        console.log('Primeros 3 animales:', animales.slice(0, 3));
+        
+        // Recopilar todas las imágenes de los animales
+        const imagenesAnimales = [];
+        
+        for (const animal of animales.slice(0, 12)) { // Revisar hasta 12 animales para obtener más imágenes
+          let imagenUrl = null;
+          
+          // Primero intentar con imagenAnimal del endpoint
+          if (animal.imagenAnimal) {
+            imagenUrl = `/files/${animal.imagenAnimal}`;
+            imagenesAnimales.push({
+              url: imagenUrl,
+              nombre: animal.nombreanimal || 'Animal',
+              id: animal.idanimal
+            });
+            console.log(`Imagen encontrada para ${animal.nombreanimal} (desde imagenAnimal):`, imagenUrl);
+          } else {
+            // Si no tiene imagenAnimal, obtener desde la galería del animal
+            try {
+              const detalleResponse = await fetch(window.location.origin + `/api/animals/${animal.idanimal}`);
+              if (detalleResponse.ok) {
+                const detalle = await detalleResponse.json();
+                const galeria = detalle.data?.galeria || [];
+                const primeraImagen = galeria.find(g => g.imagen);
+                if (primeraImagen) {
+                  imagenUrl = `/files/${primeraImagen.imagen}`;
+                  imagenesAnimales.push({
+                    url: imagenUrl,
+                    nombre: animal.nombreanimal || 'Animal',
+                    id: animal.idanimal
+                  });
+                  console.log(`Imagen encontrada para ${animal.nombreanimal} (desde galería):`, imagenUrl);
+                }
+              }
+            } catch (e) {
+              console.warn(`No se pudo obtener detalle para animal ${animal.idanimal}:`, e);
+            }
+          }
+          
+          // Limitar a 6 imágenes para el carrusel
+          if (imagenesAnimales.length >= 6) break;
+        }
+        
+        console.log('Imágenes recopiladas:', imagenesAnimales.length);
+        console.log('Lista de imágenes:', imagenesAnimales);
+        
+        if (imagenesAnimales.length > 0) {
+          const carouselInner = document.getElementById('carouselInner');
+          if (carouselInner) {
+            // Limpiar el carrusel
+            carouselInner.innerHTML = '';
+            
+            // Crear items del carrusel con las imágenes de los animales
+            imagenesAnimales.forEach((item, index) => {
+              const carouselItem = document.createElement('div');
+              carouselItem.className = index === 0 ? 'carousel-item active' : 'carousel-item';
+              
+              const img = document.createElement('img');
+              img.src = item.url;
+              img.className = 'd-block w-100';
+              img.alt = item.nombre;
+              img.style.height = '350px';
+              img.style.objectFit = 'cover';
+              img.onerror = function() {
+                console.error('Error cargando imagen:', item.url);
+                // Si la imagen no carga, usar placeholder
+                this.src = `https://placehold.co/600x350?text=${encodeURIComponent(item.nombre)}`;
+              };
+              
+              carouselItem.appendChild(img);
+              carouselInner.appendChild(carouselItem);
+            });
+            
+            // Reinicializar el carrusel de Bootstrap
+            const carouselElement = document.getElementById('adopcionCarousel');
+            if (carouselElement) {
+              // Destruir carrusel anterior si existe
+              const existingCarousel = bootstrap.Carousel.getInstance(carouselElement);
+              if (existingCarousel) {
+                existingCarousel.dispose();
+              }
+              
+              const carousel = new bootstrap.Carousel(carouselElement, {
+                interval: 2000,
+                ride: 'carousel'
+              });
+              console.log('Carrusel inicializado con', imagenesAnimales.length, 'imágenes');
+            }
+          }
+        } else {
+          console.log('No se encontraron imágenes de animales, manteniendo imágenes estáticas');
+        }
+        // Si no hay animales con imágenes, se mantienen las imágenes estáticas por defecto
+      } catch (error) {
+        console.error('Error cargando imágenes de animales para el carrusel:', error);
+        // Si hay error, se mantienen las imágenes estáticas por defecto
+      }
+    });
+  </script>
 </body>
 
 </html>
