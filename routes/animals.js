@@ -72,10 +72,32 @@ router.post('/solicitar', authenticateToken, upload.fields([
         const imagenes = (req.files?.imagenAnimal || []).map(f => f.filename);
         const videos = (req.files?.videoAnimal || []).map(f => f.filename);
 
-        // Guardar todo el body como payload JSONB para revisión
+        // Debug: ver qué está llegando en el body
+        console.log('=== DEBUG SOLICITAR ===');
+        console.log('Body recibido completo:', JSON.stringify(req.body, null, 2));
+        console.log('Tamaño recibido (con ñ):', req.body.tamaño);
+        console.log('Tamano recibido (sin ñ):', req.body.tamano);
+        console.log('Tipo de tamano:', typeof req.body.tamano);
+        console.log('Tipo de tamaño:', typeof req.body.tamaño);
+        console.log('Keys del body:', Object.keys(req.body));
+
+        // Priorizar 'tamano' (sin ñ) para evitar problemas de encoding con multer
+        let tamañoParaPayload = null;
+        if (req.body.tamano && typeof req.body.tamano === 'string' && req.body.tamano.trim() !== '') {
+            tamañoParaPayload = req.body.tamano.trim();
+            console.log('Usando tamano (sin ñ):', tamañoParaPayload);
+        } else if (req.body.tamaño && typeof req.body.tamaño === 'string' && req.body.tamaño.trim() !== '') {
+            tamañoParaPayload = req.body.tamaño.trim();
+            console.log('Usando tamaño (con ñ):', tamañoParaPayload);
+        } else {
+            console.log('Tamaño no encontrado o vacío');
+        }
+
+        console.log('Tamaño normalizado para payload:', tamañoParaPayload);
+
         const payload = {
             body: req.body,
-            tamañoNormalizado: req.body.tamaño || req.body.tamano || null
+            tamañoNormalizado: tamañoParaPayload
         };
 
         const result = await query(`
@@ -129,31 +151,42 @@ router.get('/solicitudes/:id', authenticateToken, async (req, res) => {
 });
 
 // GET /api/animals/solicitudes/mias - para usuario ver estado y mensajes
-// Temporalmente sin auth para pruebas de UI
 router.get('/solicitudes/mias', async (req, res) => {
     try {
-        // Intentar obtener id desde token si llega; si no, aceptar query param temporalmente
+        // Intentar obtener id desde token
         let idUsuario = null;
-        try {
-            const authHeader = req.headers['authorization'];
-            if (authHeader) {
+        const authHeader = req.headers['authorization'];
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            try {
                 const token = authHeader.split(' ')[1];
                 const jwt = require('jsonwebtoken');
                 const user = jwt.verify(token, process.env.JWT_SECRET);
-                idUsuario = user.idusuario;
+                idUsuario = user.idusuario || user.idUsuario;
+                console.log('Token verificado exitosamente para usuario:', idUsuario);
+            } catch (err) {
+                // Token inválido o expirado
+                console.error('Error verificando token:', err.message);
+                return res.status(401).json({ message: 'Token inválido o expirado. Por favor, inicia sesión nuevamente.' });
             }
-        } catch (_) {}
-        // fallback para pruebas
-        if (!idUsuario && req.query && req.query.idUsuario) {
-            idUsuario = parseInt(req.query.idUsuario);
+        } else {
+            // Si no hay header de autorización, retornar sin solicitudes (no es un error crítico)
+            return res.status(200).json({ message: 'No autenticado', data: [] });
         }
-        if (!idUsuario) return res.status(200).json({ message: 'OK', data: [] });
+
+        // Si no se pudo obtener idUsuario del token, retornar error
+        if (!idUsuario) {
+            console.error('No se pudo obtener idUsuario del token');
+            return res.status(401).json({ message: 'Error al obtener información del usuario del token' });
+        }
+
         const result = await query(`
-            SELECT idSolicitud, estado, mensaje_admin, comentario_usuario, created_at
+            SELECT "idSolicitud", estado, mensaje_admin, comentario_usuario, created_at
             FROM solicitud_animal
-            WHERE idUsuario = $1
-            ORDER BY idSolicitud DESC
+            WHERE "idUsuario" = $1
+            ORDER BY "idSolicitud" DESC
         `, [idUsuario]);
+
         res.json({ message: 'Mis solicitudes', data: result.rows });
     } catch (error) {
         console.error('Error obteniendo mis solicitudes:', error);
@@ -201,7 +234,27 @@ router.put('/solicitudes/:id/aprobar', authenticateToken, async (req, res) => {
         if (!solRes.rows.length) return res.status(404).json({ message: 'Solicitud no encontrada' });
 
         const sol = solRes.rows[0];
-        const body = sol.payload.body || {};
+
+        // Debug: mostrar el payload completo
+        console.log('=== DEBUG APROBAR SOLICITUD ===');
+        console.log('Solicitud ID:', id);
+        console.log('Payload completo:', JSON.stringify(sol.payload, null, 2));
+
+        // Manejar el payload según su tipo
+        let payloadParsed = {};
+        if (typeof sol.payload === 'string') {
+            try {
+                payloadParsed = JSON.parse(sol.payload);
+            } catch (e) {
+                console.error('Error parseando payload JSON:', e);
+                payloadParsed = {};
+            }
+        } else if (typeof sol.payload === 'object') {
+            payloadParsed = sol.payload;
+        }
+
+        // Extraer body del payload
+        const body = payloadParsed.body || payloadParsed || {};
 
         // Reusar la lógica del alta real (parcial del /agregar)
         const nombreAnimal = body.nombreAnimal;
@@ -209,12 +262,46 @@ router.put('/solicitudes/:id/aprobar', authenticateToken, async (req, res) => {
         const raza = body.raza;
         const edadMeses = body.edadMeses;
         const genero = body.genero;
-        const peso = body.peso;
+        const peso = body.peso || null;
         const pelaje = body.pelaje || null;
-        const tamañoNormalizado = body.tamaño || body.tamano || null;
+
+        // Normalizar tamaño: buscar en múltiples ubicaciones posibles
+        let tamañoNormalizado = null;
+
+        // Primero intentar desde body
+        if (body.tamaño !== undefined && body.tamaño !== null) {
+            tamañoNormalizado = (typeof body.tamaño === 'string' && body.tamaño.trim() !== '') ? body.tamaño.trim() : null;
+        } else if (body.tamano !== undefined && body.tamano !== null) {
+            tamañoNormalizado = (typeof body.tamano === 'string' && body.tamano.trim() !== '') ? body.tamano.trim() : null;
+        }
+
+        // Si no está en body, buscar en el payload raíz
+        if (!tamañoNormalizado) {
+            if (payloadParsed.tamañoNormalizado !== undefined && payloadParsed.tamañoNormalizado !== null) {
+                tamañoNormalizado = (typeof payloadParsed.tamañoNormalizado === 'string' && payloadParsed.tamañoNormalizado.trim() !== '')
+                    ? payloadParsed.tamañoNormalizado.trim()
+                    : null;
+            } else if (payloadParsed.tamaño !== undefined && payloadParsed.tamaño !== null) {
+                tamañoNormalizado = (typeof payloadParsed.tamaño === 'string' && payloadParsed.tamaño.trim() !== '')
+                    ? payloadParsed.tamaño.trim()
+                    : null;
+            } else if (payloadParsed.tamano !== undefined && payloadParsed.tamano !== null) {
+                tamañoNormalizado = (typeof payloadParsed.tamano === 'string' && payloadParsed.tamano.trim() !== '')
+                    ? payloadParsed.tamano.trim()
+                    : null;
+            }
+        }
+
+        console.log('=== DEBUG TAMAÑO ===');
+        console.log('Tamaño desde body.tamaño:', body.tamaño);
+        console.log('Tamaño desde body.tamano:', body.tamano);
+        console.log('Tamaño desde payload.tamaño:', payloadParsed.tamaño);
+        console.log('Tamaño desde payload.tamano:', payloadParsed.tamano);
+        console.log('Tamaño desde payload.tamañoNormalizado:', payloadParsed.tamañoNormalizado);
+        console.log('Tamaño normalizado final:', tamañoNormalizado);
 
         if (!nombreAnimal || !especie || !raza || !edadMeses || !genero) {
-            return res.status(400).json({ message: 'Solicitud incompleta' });
+            return res.status(400).json({ message: 'Solicitud incompleta. Faltan campos requeridos: nombreAnimal, especie, raza, edadMeses o genero' });
         }
 
         // Especie
@@ -227,23 +314,44 @@ router.put('/solicitudes/:id/aprobar', authenticateToken, async (req, res) => {
         let idRaza = razaResult.rows.length ? razaResult.rows[0].idraza :
             (await query('INSERT INTO raza (idespecie, razaanimal) VALUES ($1, $2) RETURNING idraza', [idEspecie, raza])).rows[0].idraza;
 
+        console.log('=== DEBUG INSERTAR ANIMAL (APROBAR) ===');
+        console.log('Datos a insertar:', {
+            nombreAnimal, edadMeses, genero, peso, pelaje, tamañoNormalizado, idRaza
+        });
+        console.log('Tamaño normalizado:', tamañoNormalizado);
+        console.log('Tipo de tamaño normalizado:', typeof tamañoNormalizado);
+
         const animalRes = await query(`
-            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, "tamaño", idraza)
+            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, tamano, idraza)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idanimal
         `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje, tamañoNormalizado, idRaza]);
         const idAnimal = animalRes.rows[0].idanimal;
 
+        // Verificar que se insertó correctamente
+        const verificarAnimal = await query('SELECT idanimal, nombreanimal, tamano FROM animal WHERE idanimal = $1', [idAnimal]);
+        console.log('=== ANIMAL INSERTADO (APROBAR) ===');
+        console.log('Animal verificado completo:', verificarAnimal.rows[0]);
+        console.log('Tamano en BD:', verificarAnimal.rows[0].tamano);
+
         await query(`
             INSERT INTO historial_animal (idanimal, pesohistorial, f_historial, h_historial, descripcionhistorial)
-            VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3)
+            VALUES ($1,$2,(now() at time zone 'America/Lima')::date,(now() at time zone 'America/Lima')::time,$3)
         `, [idAnimal, peso ? parseFloat(peso) : null, body.descripcion || 'Registro inicial del animal']);
 
-        // Galería desde archivos guardados en la solicitud
-        for (const img of (sol.imagenes || [])) {
-            await query('INSERT INTO galeria (idanimal, imagen) VALUES ($1, $2)', [idAnimal, img]);
+        // Galería desde archivos guardados en la solicitud (OPCIONAL - solo si existen)
+        if (sol.imagenes && Array.isArray(sol.imagenes) && sol.imagenes.length > 0) {
+            for (const img of sol.imagenes) {
+                if (img && img.trim() !== '') {
+                    await query('INSERT INTO galeria (idanimal, imagen) VALUES ($1, $2)', [idAnimal, img]);
+                }
+            }
         }
-        for (const vid of (sol.videos || [])) {
-            await query('INSERT INTO galeria (idanimal, video) VALUES ($1, $2)', [idAnimal, vid]);
+        if (sol.videos && Array.isArray(sol.videos) && sol.videos.length > 0) {
+            for (const vid of sol.videos) {
+                if (vid && vid.trim() !== '') {
+                    await query('INSERT INTO galeria (idanimal, video) VALUES ($1, $2)', [idAnimal, vid]);
+                }
+            }
         }
 
         await query('UPDATE solicitud_animal SET estado = ' + "'Aprobada'" + ', mensaje_admin = $1 WHERE idSolicitud = $2', [req.body?.mensaje || null, id]);
@@ -273,7 +381,10 @@ router.put('/solicitudes/:id/rechazar', authenticateToken, async (req, res) => {
 router.get('/', authenticateToken, async (req, res) => {
     try {
         const result = await query(`
-            SELECT a.*, e.especieanimal, r.razaanimal,
+            SELECT a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal, 
+                   a.pesoanimal, a.pelaje, 
+                   a.tamano,
+                   a.idraza, e.especieanimal, r.razaanimal,
                    CASE 
                        WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
                        WHEN ad.estadoadopcion = 'En proceso' THEN 'en_proceso'
@@ -299,7 +410,8 @@ router.get('/perfil/:id', async (req, res) => {
         const { id } = req.params;
         const sql = `
             SELECT
-              a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal, a.pesoanimal, a.pelaje, a.tamaño,
+              a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal, a.pesoanimal, a.pelaje, 
+              a.tamano,
               r.razaanimal, e.especieanimal,
               (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) AS imagen,
               h.idhistorial, h.f_historial, h.h_historial, h.descripcionhistorial, h.nombveterinario,
@@ -375,7 +487,7 @@ router.get('/disponibles', async (req, res) => {
 
         if (especie) { paramCount++; whereConditions.push(`e.especieanimal = $${paramCount}`); params.push(especie); }
         if (pelaje) { paramCount++; whereConditions.push(`a.pelaje = $${paramCount}`); params.push(pelaje); }
-        if (tamaño) { paramCount++; whereConditions.push(`a.tamaño = $${paramCount}`); params.push(tamaño); }
+        if (tamaño) { paramCount++; whereConditions.push(`a.tamano = $${paramCount}`); params.push(tamaño); }
         if (genero) { paramCount++; whereConditions.push(`a.generoanimal = $${paramCount}`); params.push(genero); }
         if (edad) {
             // Convertir rango de edad a condiciones de meses
@@ -414,7 +526,7 @@ router.get('/disponibles', async (req, res) => {
 
         const sql = `
             SELECT DISTINCT a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal,
-                   a.pesoanimal, a.pelaje, a.tamaño, r.razaanimal, e.especieanimal,
+                   a.pesoanimal, a.pelaje, a.tamano, r.razaanimal, e.especieanimal,
                    (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) as imagenAnimal,
                    CASE 
                        WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
@@ -476,7 +588,9 @@ router.get('/:id', async (req, res) => {
         const { id } = req.params;
         const animalResult = await query(`
             SELECT a.idanimal, a.nombreanimal, a.edadmesesanimal, a.generoanimal,
-                   a.pesoanimal, a.pelaje, a.tamaño, r.razaanimal, e.especieanimal,
+                   a.pesoanimal, a.pelaje, 
+                   a.tamano, 
+                   r.razaanimal, e.especieanimal,
                    (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) as imagenAnimal,
                    CASE 
                        WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
@@ -495,6 +609,13 @@ router.get('/:id', async (req, res) => {
         if (!animalResult.rows.length) return res.status(404).json({ message: 'Animal no encontrado' });
 
         const animal = animalResult.rows[0];
+
+        // Debug: ver qué tamaño tiene el animal
+        console.log('=== DEBUG GET ANIMAL BY ID ===');
+        console.log('Animal completo:', animal);
+        console.log('Tamaño (tamano alias):', animal.tamano);
+        console.log('Keys del animal:', Object.keys(animal));
+
         const historialResult = await query(`
             SELECT h.idhistorial, h.pesohistorial, h.f_historial, h.h_historial, h.descripcionhistorial, h.nombveterinario,
                    e.nombEnfermedad, d.gravedadEnfermedad, d.medicinas
@@ -583,10 +704,20 @@ router.post('/agregar', upload.fields([
 
         const { nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño, tamano, descripcion, enfermedadId, gravedad, medicinas } = req.body;
 
-        // Normalizar tamaño: aceptar tanto 'tamaño' (con ñ) como 'tamano' (sin ñ)
-        const tamañoNormalizado = (typeof tamaño !== 'undefined' && tamaño !== '')
-            ? tamaño
-            : (typeof tamano !== 'undefined' && tamano !== '' ? tamano : null);
+        // Normalizar tamaño: Priorizar 'tamano' (sin ñ) para evitar problemas de encoding con multer
+        // También aceptar valores vacíos o strings vacíos y convertirlos a null
+        let tamañoNormalizado = null;
+        // Priorizar 'tamano' (sin ñ) primero
+        if (tamano && typeof tamano === 'string' && tamano.trim() !== '') {
+            tamañoNormalizado = tamano.trim();
+        } else if (tamaño && typeof tamaño === 'string' && tamaño.trim() !== '') {
+            tamañoNormalizado = tamaño.trim();
+        }
+
+        console.log('=== DEBUG TAMAÑO AGREGAR ===');
+        console.log('Tamaño recibido (con ñ):', tamaño);
+        console.log('Tamano recibido (sin ñ):', tamano);
+        console.log('Tamaño normalizado:', tamañoNormalizado);
 
         console.log('Datos procesados:', {
             nombreAnimal, especie, raza, edadMeses, genero, peso, pelaje, tamaño: tamañoNormalizado, descripcion
@@ -620,22 +751,32 @@ router.post('/agregar', upload.fields([
             return res.status(400).json({ message: 'El peso debe ser >= 0' });
         }
 
-        console.log('Insertando animal con datos:', {
+        console.log('=== DEBUG INSERTAR ANIMAL DIRECTO ===');
+        console.log('Datos a insertar:', {
             nombreAnimal, edadMeses: parseInt(edadMeses), genero, peso: peso ? parseFloat(peso) : null,
             pelaje: pelaje || null, tamaño: tamañoNormalizado || null, idRaza
         });
+        console.log('Tamaño normalizado:', tamañoNormalizado);
+        console.log('Tipo de tamaño normalizado:', typeof tamañoNormalizado);
 
         const animalResult = await query(`
-            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, "tamaño", idraza)
+            INSERT INTO animal (nombreanimal, edadmesesanimal, generoanimal, pesoanimal, pelaje, tamano, idraza)
             VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING idanimal
         `, [nombreAnimal, parseInt(edadMeses), genero, peso ? parseFloat(peso) : null, pelaje || null, tamañoNormalizado || null, idRaza]);
+
+        // Verificar que se insertó correctamente
+        const verificarAnimalDirecto = await query('SELECT idanimal, nombreanimal, tamano FROM animal WHERE idanimal = $1', [animalResult.rows[0].idanimal]);
+        console.log('=== ANIMAL DIRECTO INSERTADO ===');
+        console.log('Animal verificado completo:', verificarAnimalDirecto.rows[0]);
+        console.log('Tamaño en BD (con ñ):', verificarAnimalDirecto.rows[0].tamaño);
+        console.log('Tamano en BD (alias):', verificarAnimalDirecto.rows[0].tamano);
 
         const idAnimal = animalResult.rows[0].idanimal;
         console.log('Animal insertado con ID:', idAnimal);
 
         const historialResult = await query(`
             INSERT INTO historial_animal (idanimal, pesohistorial, f_historial, h_historial, descripcionhistorial)
-            VALUES ($1,$2,CURRENT_DATE,CURRENT_TIME,$3) RETURNING idhistorial
+            VALUES ($1,$2,(now() at time zone 'America/Lima')::date,(now() at time zone 'America/Lima')::time,$3) RETURNING idhistorial
         `, [idAnimal, peso ? parseFloat(peso) : null, descripcion || 'Registro inicial del animal']);
 
         const idHistorial = historialResult.rows[0].idhistorial;
@@ -758,7 +899,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         await query(`
             UPDATE animal 
             SET nombreanimal = $1, edadmesesanimal = $2, generoanimal = $3, 
-                pesoanimal = $4, pelaje = $5, "tamaño" = $6, idraza = $7
+                pesoanimal = $4, pelaje = $5, tamano = $6, idraza = $7
             WHERE idanimal = $8
         `, [nombreanimal, parseInt(edadmesesanimal), generoanimal,
             pesoanimal ? parseFloat(pesoanimal) : null, pelaje || null, tamaño || null, idRaza, id]);
@@ -986,11 +1127,11 @@ router.get('/filtros/opciones', async (req, res) => {
 
         // Obtener tamaños únicos
         const tamañosResult = await query(`
-            SELECT DISTINCT tamaño
+            SELECT DISTINCT tamano
             FROM animal
-            WHERE tamaño IS NOT NULL AND tamaño != ''
+            WHERE tamano IS NOT NULL AND tamano != ''
             AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY tamaño
+            ORDER BY tamano
         `);
 
         // Obtener géneros únicos
@@ -1027,7 +1168,7 @@ router.get('/filtros/opciones', async (req, res) => {
         const opciones = {
             especies: especiesResult.rows.map(row => row.especieanimal),
             pelajes: pelajesResult.rows.map(row => row.pelaje),
-            tamaños: tamañosResult.rows.map(row => row.tamaño),
+            tamaños: tamañosResult.rows.map(row => row.tamano),
             generos: generosResult.rows.map(row => ({
                 valor: row.generoanimal,
                 display: row.genero_display

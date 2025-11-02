@@ -605,6 +605,8 @@ function createAnimalCard(animal) {
     const raza = animal.razaanimal || animal.razaAnimal || 'Sin raza';
     const edad = animal.edadmesesanimal || animal.edadMesesAnimal || 0;
     const genero = animal.generoanimal || animal.generoAnimal || 'N';
+    const tamaño = animal.tamano || animal.tamaño || null;
+    const pelaje = animal.pelaje || null;
     const id = animal.idanimal || animal.idAnimal || 0;
     const imagen = animal.imagenanimal || animal.imagenAnimal;
 
@@ -615,6 +617,15 @@ function createAnimalCard(animal) {
 
     console.log(`Imagen para ${nombre}: ${imagen} -> ${imagenUrl}`);
 
+    // Construir información adicional (tamaño y pelaje si están disponibles)
+    let infoAdicional = `${edad} meses - ${genero === 'M' ? 'Macho' : 'Hembra'}`;
+    if (tamaño) {
+        infoAdicional += ` - ${tamaño}`;
+    }
+    if (pelaje) {
+        infoAdicional += ` - ${pelaje}`;
+    }
+
     col.innerHTML = `
         <div class="card shadow-sm card-animal" onclick="viewAnimalDetails(${id})">
             <img src="${imagenUrl}" class="card-img-top" alt="${nombre}" style="height: 200px; object-fit: cover;" 
@@ -622,7 +633,7 @@ function createAnimalCard(animal) {
             <div class="card-body p-2">
                 <h6 class="card-title mb-1">${nombre}</h6>
                 <small class="text-muted">${especie} - ${raza}</small><br>
-                <small class="text-muted">${edad} meses - ${genero === 'M' ? 'Macho' : 'Hembra'}</small>
+                <small class="text-muted">${infoAdicional}</small>
             </div>
         </div>
     `;
@@ -648,9 +659,9 @@ function showAnimalModal(animal) {
     const raza = animal.razaanimal || animal.razaAnimal || 'Sin raza';
     const edad = animal.edadmesesanimal || animal.edadMesesAnimal || 0;
     const genero = animal.generoanimal || animal.generoAnimal || 'N';
-    const peso = animal.pesoanimal || animal.pesoAnimal || 'No especificado';
-    const pelaje = animal.pelaje || 'No especificado';
-    const tamaño = animal.tamaño || 'No especificado';
+    const peso = animal.pesoanimal || animal.pesoAnimal;
+    const pelaje = animal.pelaje;
+    const tamaño = animal.tamano || animal.tamaño;
     const id = animal.idanimal || animal.idAnimal || 0;
     const imagen = animal.imagenanimal || animal.imagenAnimal;
 
@@ -678,9 +689,9 @@ function showAnimalModal(animal) {
                                 <p><strong>Raza:</strong> ${raza}</p>
                                 <p><strong>Edad:</strong> ${edad} meses</p>
                                 <p><strong>Género:</strong> ${genero === 'M' ? 'Macho' : 'Hembra'}</p>
-                                <p><strong>Peso:</strong> ${peso} kg</p>
-                                <p><strong>Pelaje:</strong> ${pelaje}</p>
-                                <p><strong>Tamaño:</strong> ${tamaño}</p>
+                                <p><strong>Peso:</strong> ${peso ? peso + ' kg' : 'No especificado'}</p>
+                                <p><strong>Pelaje:</strong> ${pelaje || 'No especificado'}</p>
+                                <p><strong>Tamaño:</strong> ${tamaño || 'No especificado'}</p>
                             </div>
                         </div>
                         ${animal.historial && animal.historial.length > 0 ? `

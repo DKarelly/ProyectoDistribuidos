@@ -170,7 +170,7 @@ CREATE TABLE animal (
     generoAnimal CHAR(1),
     pesoAnimal DECIMAL(5,2),
     pelaje VARCHAR(30),
-    tamaño VARCHAR(20),
+    tamano VARCHAR(20),
     idRaza INT REFERENCES raza(idRaza)
 );
 
