@@ -78,10 +78,10 @@ router.post('/crear', authenticateToken, async (req, res) => {
                 'SELECT idcategoria FROM categoria_donacion WHERE idcategoria = $1',
                 [donacion.idcategoria]
             );
-            
+
             if (categoriaResult.rows.length === 0) {
-                return res.status(400).json({ 
-                    message: `Categoría con ID ${donacion.idcategoria} no encontrada` 
+                return res.status(400).json({
+                    message: `Categoría con ID ${donacion.idcategoria} no encontrada`
                 });
             }
         }
@@ -96,7 +96,7 @@ router.post('/crear', authenticateToken, async (req, res) => {
         const idDonacion = donacionResult.rows[0].iddonacion;
 
         // Crear detalles de donación
-        const detallesPromises = donaciones.map(donacion => 
+        const detallesPromises = donaciones.map(donacion =>
             query(`
                 INSERT INTO detalle_donacion (iddonacion, idcategoria, cantidaddonacion, detalledonacion)
                 VALUES ($1, $2, $3, $4)
@@ -225,7 +225,7 @@ router.get('/metodos-pago', async (req, res) => {
 router.post('/alimentos', async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    
+
     if (token) {
         try {
             const jwt = require('jsonwebtoken');
@@ -246,8 +246,8 @@ router.post('/alimentos', async (req, res, next) => {
         console.log('Donación alimentos recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
 
         if (!descripcion || !cantidad || cantidad <= 0) {
-            return res.status(400).json({ 
-                message: 'Los campos descripción y cantidad son requeridos' 
+            return res.status(400).json({
+                message: 'Los campos descripción y cantidad son requeridos'
             });
         }
 
@@ -258,8 +258,8 @@ router.post('/alimentos', async (req, res, next) => {
         );
 
         if (categoriaResult.rows.length === 0) {
-            return res.status(500).json({ 
-                message: 'Categoría "Alimentos" no encontrada' 
+            return res.status(500).json({
+                message: 'Categoría "Alimentos" no encontrada'
             });
         }
 
@@ -277,7 +277,7 @@ router.post('/alimentos', async (req, res, next) => {
         const idDonacion = donacionResult.rows[0].iddonacion;
 
         // Crear detalle de donación
-        const detalleDescripcion = unidadMedida 
+        const detalleDescripcion = unidadMedida
             ? `${descripcion} - ${cantidad} ${unidadMedida}`
             : `${descripcion} - ${cantidad}`;
 
@@ -302,7 +302,7 @@ router.post('/alimentos', async (req, res, next) => {
 router.post('/medicinas', async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    
+
     if (token) {
         try {
             const jwt = require('jsonwebtoken');
@@ -323,8 +323,8 @@ router.post('/medicinas', async (req, res, next) => {
         console.log('Donación medicinas recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
 
         if (!descripcion || !cantidad || cantidad <= 0) {
-            return res.status(400).json({ 
-                message: 'Los campos descripción y cantidad son requeridos' 
+            return res.status(400).json({
+                message: 'Los campos descripción y cantidad son requeridos'
             });
         }
 
@@ -335,8 +335,8 @@ router.post('/medicinas', async (req, res, next) => {
         );
 
         if (categoriaResult.rows.length === 0) {
-            return res.status(500).json({ 
-                message: 'Categoría "Medicinas" no encontrada' 
+            return res.status(500).json({
+                message: 'Categoría "Medicinas" no encontrada'
             });
         }
 
@@ -354,7 +354,7 @@ router.post('/medicinas', async (req, res, next) => {
         const idDonacion = donacionResult.rows[0].iddonacion;
 
         // Crear detalle de donación
-        const detalleDescripcion = unidadMedida 
+        const detalleDescripcion = unidadMedida
             ? `${descripcion} - ${cantidad} ${unidadMedida}`
             : `${descripcion} - ${cantidad}`;
 
@@ -379,7 +379,7 @@ router.post('/medicinas', async (req, res, next) => {
 router.post('/otros', async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    
+
     if (token) {
         try {
             const jwt = require('jsonwebtoken');
@@ -400,8 +400,8 @@ router.post('/otros', async (req, res, next) => {
         console.log('Donación otros recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
 
         if (!descripcion) {
-            return res.status(400).json({ 
-                message: 'El campo descripción es requerido' 
+            return res.status(400).json({
+                message: 'El campo descripción es requerido'
             });
         }
 
@@ -412,8 +412,8 @@ router.post('/otros', async (req, res, next) => {
         );
 
         if (categoriaResult.rows.length === 0) {
-            return res.status(500).json({ 
-                message: 'Categoría "Otros" no encontrada' 
+            return res.status(500).json({
+                message: 'Categoría "Otros" no encontrada'
             });
         }
 
@@ -434,8 +434,8 @@ router.post('/otros', async (req, res, next) => {
         const detalleDescripcion = cantidad && unidadMedida
             ? `${descripcion} - ${cantidad} ${unidadMedida}`
             : cantidad
-            ? `${descripcion} - ${cantidad}`
-            : descripcion;
+                ? `${descripcion} - ${cantidad}`
+                : descripcion;
 
         await query(`
             INSERT INTO detalle_donacion (iddonacion, idcategoria, cantidaddonacion, detalledonacion)
@@ -461,8 +461,8 @@ router.post('/apadrinamiento', authenticateToken, async (req, res) => {
         const idUsuario = req.user.idusuario;
 
         if (!idanimal || !monto || !frecuencia) {
-            return res.status(400).json({ 
-                message: 'Los campos animal, monto y frecuencia son requeridos' 
+            return res.status(400).json({
+                message: 'Los campos animal, monto y frecuencia son requeridos'
             });
         }
 
@@ -580,8 +580,8 @@ router.post('/general', authenticateToken, async (req, res) => {
         const idUsuario = req.user.idusuario;
 
         if (!proposito || !monto) {
-            return res.status(400).json({ 
-                message: 'Los campos propósito y monto son requeridos' 
+            return res.status(400).json({
+                message: 'Los campos propósito y monto son requeridos'
             });
         }
 
