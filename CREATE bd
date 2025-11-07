@@ -297,15 +297,18 @@ CREATE TABLE caso_animal (
 -- ======================
 CREATE TABLE adopcion (
     idAdopcion SERIAL PRIMARY KEY,
-    f_Adopcion DATE,
+    f_solicitud DATE DEFAULT CURRENT_DATE,
+    f_adopcion DATE,
+    motivoAdopcion VARCHAR(255),
     contrato VARCHAR(255),
     condiciones VARCHAR(255),
-    estadoAdopcion VARCHAR(30),
+    estadoAdopcion VARCHAR(30) DEFAULT 'Pendiente',
     direccionAdoptante VARCHAR(150),
     idAnimal INT REFERENCES animal(idAnimal),
     idPersona INT REFERENCES persona(idPersona),
     idEntregante INT REFERENCES usuario(idUsuario)
 );
+
 
 -- ======================
 -- TABLA: DONACION
