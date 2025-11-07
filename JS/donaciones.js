@@ -48,24 +48,147 @@ function mostrarDonaciones(donaciones) {
     const tbody = document.getElementById('donacionesBody');
     tbody.innerHTML = '';
 
+    if (donaciones.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">No hay donaciones registradas aún</td>
+            </tr>
+        `;
+        return;
+    }
+
     donaciones.forEach(donacion => {
         const row = document.createElement('tr');
 
         // Formatear fecha a YYYY-MM-DD
         const fecha = new Date(donacion.f_donacion).toISOString().split('T')[0];
         // Formatear hora a HH:MM
-        const hora = donacion.h_donacion.substring(0, 5);
+        const hora = donacion.h_donacion ? donacion.h_donacion.substring(0, 5) : 'N/A';
 
         row.innerHTML = `
             <td>${donacion.nombcategoria}</td>
             <td>${fecha}</td>
             <td>${hora}</td>
-            <td>${donacion.cantidaddonacion}</td>
-            <td>${donacion.aliasusuario}</td>
+            <td>
+                ${donacion.cantidaddonacion || 'N/A'}
+                ${donacion.detalledonacion ? `<br><small class="text-muted">${donacion.detalledonacion}</small>` : ''}
+            </td>
+            <td>${donacion.aliasusuario || 'Donante anónimo'}</td>
         `;
 
         tbody.appendChild(row);
     });
+}
+
+// Función para registrar donación (Alimentos, Medicinas, Otros)
+async function registrarDonacion(event, tipo) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+    const descripcion = formData.get('descripcion');
+    const cantidad = parseFloat(formData.get('cantidad'));
+    const unidadMedida = formData.get('unidadMedida') || '';
+
+    // Validar datos según el tipo
+    if (tipo === 'alimentos' || tipo === 'medicinas') {
+        if (!descripcion || !cantidad || cantidad <= 0) {
+            alert('Por favor completa todos los campos requeridos');
+            return;
+        }
+    } else if (tipo === 'otros') {
+        if (!descripcion) {
+            alert('Por favor completa la descripción');
+            return;
+        }
+    }
+
+    // Obtener token si el usuario está logueado
+    const token = localStorage.getItem('authToken');
+    console.log('Token obtenido:', token ? 'Sí' : 'No');
+    const idUsuario = token ? await obtenerIdUsuario(token) : null;
+    console.log('ID Usuario obtenido:', idUsuario);
+
+    const data = {
+        descripcion: descripcion,
+        cantidad: cantidad || 1,
+        unidadMedida: unidadMedida
+    };
+
+    // Preparar headers con token si existe
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    try {
+        const response = await fetch(`/api/donations/${tipo}`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(form.closest('.modal'));
+            modal.hide();
+
+            // Mostrar mensaje de éxito
+            alert(`¡${result.message}! Gracias por tu donación.`);
+
+            // Limpiar formulario
+            form.reset();
+
+            // Recargar historial
+            cargarDonaciones();
+        } else {
+            alert(`Error: ${result.message || 'No se pudo registrar la donación'}`);
+        }
+    } catch (error) {
+        console.error('Error registrando donación:', error);
+        alert('Error al registrar la donación. Por favor intenta nuevamente.');
+    }
+}
+
+// Función auxiliar para obtener ID de usuario desde el token
+async function obtenerIdUsuario(token) {
+    try {
+        const response = await fetch('/api/auth/verify', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            console.error('Error en respuesta de verify:', response.status);
+            return null;
+        }
+        
+        const data = await response.json();
+        console.log('Datos de verify:', data);
+        
+        // El token JWT contiene idusuario directamente
+        if (data.data && data.data.idusuario) {
+            return data.data.idusuario;
+        }
+        
+        // Si no está en data.data, intentar decodificar el token directamente
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.idusuario || null;
+        } catch (e) {
+            console.error('Error decodificando token:', e);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error obteniendo ID de usuario:', error);
+        return null;
+    }
 }
 
 // Función para aplicar filtros
@@ -99,8 +222,55 @@ document.getElementById('limpiarBtn').addEventListener('click', () => {
     cargarDonaciones();
 });
 
+// Función para cargar métodos de pago desde la API
+async function cargarMetodosPago() {
+    try {
+        const response = await fetch('/api/donations/metodos-pago');
+        const data = await response.json();
+
+        if (data.message === 'Métodos de pago obtenidos exitosamente' && data.data.length > 0) {
+            const contenedorMetodos = document.getElementById('metodos-pago-container');
+            if (!contenedorMetodos) return;
+
+            contenedorMetodos.innerHTML = '';
+
+            data.data.forEach(metodo => {
+                const col = document.createElement('div');
+                col.className = 'col-6 col-sm-4 col-md-3';
+
+                const texto = metodo.numeroCuenta 
+                    ? `${metodo.nombreMetodo}: ${metodo.numeroCuenta}`
+                    : metodo.nombreMetodo;
+
+                const idTexto = metodo.nombreMetodo.toLowerCase()
+                    .replace(/\s+/g, '-')
+                    .replace('ñ', 'n');
+
+                col.innerHTML = `
+                    <div class="logo-card p-3 text-center">
+                        <img src="${metodo.imagenQR}" alt="${metodo.nombreMetodo}" 
+                             class="img-fluid mb-3" 
+                             style="max-height: 250px; width: auto; object-fit: contain;" 
+                             id="img-${idTexto}">
+                        <div class="small text-muted" id="texto-${idTexto}">${texto}</div>
+                    </div>
+                `;
+
+                contenedorMetodos.appendChild(col);
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando métodos de pago:', error);
+        // Si falla, se mantienen los valores estáticos del HTML
+    }
+}
+
 // Cargar categorías y donaciones iniciales al cargar la página
 document.addEventListener('DOMContentLoaded', () => {
     cargarCategorias();
     cargarDonaciones();
+    cargarMetodosPago();
 });
+
+// Hacer funciones globales para que los formularios puedan llamarlas
+window.registrarDonacion = registrarDonacion;

@@ -378,3 +378,21 @@ CREATE TABLE solicitud_animal (
     comentario_usuario VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ======================
+-- TABLA: METODO_PAGO
+-- ======================
+CREATE TABLE metodo_pago (
+    idMetodoPago SERIAL PRIMARY KEY,
+    nombreMetodo VARCHAR(50) NOT NULL,
+    numeroCuenta VARCHAR(50),
+    imagenQR VARCHAR(200),
+    activo BOOLEAN DEFAULT true,
+    ordenVisual INT DEFAULT 1
+);
+
+-- INSERT de los métodos de pago actuales
+INSERT INTO metodo_pago (nombreMetodo, numeroCuenta, imagenQR, ordenVisual) VALUES 
+('Cuenta Bancaria', '30570524754011', 'files/donacion1.jpg', 1),
+('Visa', NULL, 'files/donacion2.jpg', 2),
+('Yape', '952 225 506', 'files/donacion3.jpg', 3);
