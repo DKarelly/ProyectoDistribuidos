@@ -182,10 +182,10 @@
                 <table class="table table-striped donaciones-table">
                     <thead>
                         <tr>
-                            <th>Categoria</th>
+                            <th>Categoría</th>
                             <th>Fecha</th>
                             <th>Hora</th>
-                            <th>Cantidad</th>
+                            <th>Cantidad / Detalle</th>
                             <th>Usuario</th>
                         </tr>
                     </thead>
@@ -203,28 +203,25 @@
             <h2 class="section-title">Gracias por tus donaciones</h2>
             <p class="text-muted mb-4">Apoyan a Huella Feliz — métodos y aliados</p>
 
-            <div class="row g-4 justify-content-center">
-                <!-- Método 1: Número de cuenta bancaria -->
+            <div class="row g-4 justify-content-center" id="metodos-pago-container">
+                <!-- Métodos de pago se cargarán dinámicamente desde la BD -->
+                <!-- Fallback estático si no se carga la BD -->
                 <div class="col-6 col-sm-4 col-md-3">
                     <div class="logo-card p-3 text-center">
-                        <img src="files/donacion1.jpg" alt="Cuenta bancaria" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;" id="img-cuenta">
-                        <div class="small text-muted" id="texto-cuenta">Cuenta: 30570524754011</div>
+                        <img src="files/donacion1.jpg" alt="Cuenta bancaria" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;">
+                        <div class="small text-muted">Cuenta: 30570524754011</div>
                     </div>
                 </div>
-
-                <!-- Método 2: QR - Visa -->
                 <div class="col-6 col-sm-4 col-md-3">
                     <div class="logo-card p-3 text-center">
-                        <img src="files/donacion2.jpg" alt="Pago con Visa" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;" id="img-visa">
-                        <div class="small text-muted" id="texto-tarjeta">Visa</div>
+                        <img src="files/donacion2.jpg" alt="Visa" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;">
+                        <div class="small text-muted">Visa</div>
                     </div>
                 </div>
-
-                <!-- Método 3: QR - Yape -->
                 <div class="col-6 col-sm-4 col-md-3">
                     <div class="logo-card p-3 text-center">
-                        <img src="files/donacion3.jpg" alt="Yape" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;" id="img-yape">
-                        <div class="small text-muted" id="texto-movil">Yape: 952 225 506</div>
+                        <img src="files/donacion3.jpg" alt="Yape" class="img-fluid mb-3" style="max-height: 250px; width: auto; object-fit: contain;">
+                        <div class="small text-muted">Yape: 952 225 506</div>
                     </div>
                 </div>
             </div>
@@ -425,37 +422,54 @@
                 <div class="modal-header bg-pink text-white">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-heart-fill me-2"></i>
-                        Informes de Alimentos para Animales
+                        Donar Alimentos
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Qué alimentos aceptamos?</h6>
-                        <p class="small">Aceptamos donaciones de alimentos para perros y gatos en excelente estado, sin caducar y en empaques sellados. Priorizamos alimentos balanceados y nutritivos.</p>
-                        <ul class="small">
-                            <li>Croquetas secas para perros y gatos</li>
-                            <li>Alimento húmedo en latas o sobres</li>
-                            <li>Snacks y premios naturales</li>
-                            <li>Alimentos especializados (para cachorros, adultos, senior)</li>
-                        </ul>
-                    </div>
+                <form id="formAlimentos" onsubmit="registrarDonacion(event, 'alimentos')">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="mb-3">
+                            <label for="descripcionAlimentos" class="form-label">Descripción del alimento *</label>
+                            <textarea class="form-control" id="descripcionAlimentos" name="descripcion" rows="3" 
+                                placeholder="Ej: Croquetas para perro adulto, marca Royal Canin" required></textarea>
+                            <small class="text-muted">Describe qué tipo de alimento estás donando</small>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Dónde entregar?</h6>
-                        <p class="small">Las donaciones de alimentos se pueden entregar directamente en nuestro refugio ubicado en Chiclayo, o coordinar recogida previa cita.</p>
-                        <p class="small"><strong>Dirección:</strong> Calle Los Pinos 123, Chiclayo</p>
-                        <p class="small"><strong>Horarios:</strong> Lunes a Sábado, 9:00 AM - 5:00 PM</p>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cantidadAlimentos" class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="cantidadAlimentos" name="cantidad" 
+                                    step="0.01" min="0.01" placeholder="Ej: 10" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="unidadAlimentos" class="form-label">Unidad de medida</label>
+                                <select class="form-select" id="unidadAlimentos" name="unidadMedida">
+                                    <option value="">Seleccionar unidad</option>
+                                    <option value="kg">Kilogramos (kg)</option>
+                                    <option value="g">Gramos (g)</option>
+                                    <option value="unidades">Unidades</option>
+                                    <option value="latas">Latas</option>
+                                    <option value="bolsas">Bolsas</option>
+                                    <option value="paquetes">Paquetes</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Cómo impacta tu donación?</h6>
-                        <p class="small">Cada bolsa de croquetas alimenta a un animal por semanas, asegurando que nuestros huéspedes tengan una nutrición adecuada para su recuperación y bienestar.</p>
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Nota:</strong> Las donaciones de alimentos se pueden entregar directamente en nuestro refugio ubicado en Chiclayo, o coordinar recogida previa cita.<br>
+                                <strong>Dirección:</strong> Calle Los Pinos 123, Chiclayo<br>
+                                <strong>Horarios:</strong> Lunes a Sábado, 9:00 AM - 5:00 PM
+                            </small>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-pink">
+                            <i class="bi bi-check-circle me-2"></i>Registrar Donación
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -467,37 +481,59 @@
                 <div class="modal-header bg-pink text-white">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-capsule me-2"></i>
-                        Informes de Medicinas
+                        Donar Medicinas
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="mb-4">
-                        <h6 class="text-danger">Medicinas que necesitamos</h6>
-                        <ul class="small">
-                            <li><strong>Vacunas:</strong> Rabia, parvovirus, moquillo, leptospirosis</li>
-                            <li><strong>Antiparasitarios:</strong> Desparasitantes internos y externos</li>
-                            <li><strong>Sueros:</strong> Para tratamientos de emergencia</li>
-                            <li><strong>Antibióticos:</strong> Para infecciones bacterianas</li>
-                            <li><strong>Antiinflamatorios:</strong> Para dolor y inflamación</li>
-                            <li><strong>Suplementos:</strong> Vitaminas y minerales</li>
-                        </ul>
-                    </div>
+                <form id="formMedicinas" onsubmit="registrarDonacion(event, 'medicinas')">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="mb-3">
+                            <label for="descripcionMedicinas" class="form-label">Descripción de la medicina *</label>
+                            <textarea class="form-control" id="descripcionMedicinas" name="descripcion" rows="3" 
+                                placeholder="Ej: Vacuna contra rabia, Antiparasitario interno" required></textarea>
+                            <small class="text-muted">Describe qué tipo de medicina estás donando</small>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">Requisitos importantes</h6>
-                        <p class="small">Solo aceptamos medicamentos veterinarios con fecha de caducidad vigente y en empaques originales. No aceptamos medicamentos humanos.</p>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cantidadMedicinas" class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="cantidadMedicinas" name="cantidad" 
+                                    step="0.01" min="0.01" placeholder="Ej: 5" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="unidadMedicinas" class="form-label">Unidad de medida</label>
+                                <select class="form-select" id="unidadMedicinas" name="unidadMedida">
+                                    <option value="">Seleccionar unidad</option>
+                                    <option value="unidades">Unidades</option>
+                                    <option value="dosis">Dosis</option>
+                                    <option value="ampollas">Ampollas</option>
+                                    <option value="cajas">Cajas</option>
+                                    <option value="frascos">Frascos</option>
+                                    <option value="viales">Viales</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Dónde entregar?</h6>
-                        <p class="small">Coordina la entrega con nuestro veterinario responsable para asegurar el manejo adecuado de los medicamentos.</p>
-                        <p class="small"><strong>Contacto veterinario:</strong> vet@huellafeliz.org | +51 952 225 506</p>
+                        <div class="alert alert-warning">
+                            <small>
+                                <strong>Importante:</strong> Solo aceptamos medicamentos veterinarios con fecha de caducidad vigente y en empaques originales. No aceptamos medicamentos humanos.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Nota:</strong> Coordina la entrega con nuestro veterinario responsable para asegurar el manejo adecuado de los medicamentos.<br>
+                                <strong>Contacto veterinario:</strong> vet@huellafeliz.org | +51 952 225 506
+                            </small>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-pink">
+                            <i class="bi bi-check-circle me-2"></i>Registrar Donación
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -509,39 +545,51 @@
                 <div class="modal-header bg-pink text-white">
                     <h5 class="modal-title fw-bold">
                         <i class="bi bi-gift me-2"></i>
-                        Informes de Otros Aportes
+                        Donar Otros Aportes
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Qué otros aportes aceptamos?</h6>
-                        <p class="small">Además de alimentos y medicinas, valoramos cualquier aporte que mejore la calidad de vida de nuestros animales. Todo lo que dones será utilizado con amor y gratitud.</p>
-                        <ul class="small">
-                            <li><strong>Juguetes:</strong> Pelotas, cuerdas, mordedores para estimular el ejercicio</li>
-                            <li><strong>Camas y mantas:</strong> Para comodidad y calor</li>
-                            <li><strong>Transportes:</strong> Jaulas o transportadoras para traslados seguros</li>
-                            <li><strong>Servicios veterinarios:</strong> Consultas, cirugías o tratamientos</li>
-                            <li><strong>Artículos de limpieza:</strong> Jabón, desinfectantes, bolsas para excrementos</li>
-                            <li><strong>Voluntariado:</strong> Tu tiempo y habilidades son invaluables</li>
-                        </ul>
-                    </div>
+                <form id="formOtros" onsubmit="registrarDonacion(event, 'otros')">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <div class="mb-3">
+                            <label for="descripcionOtros" class="form-label">Descripción del aporte *</label>
+                            <textarea class="form-control" id="descripcionOtros" name="descripcion" rows="3" 
+                                placeholder="Ej: Juguetes para perros, Camas, Transportadora, Servicios veterinarios, etc." required></textarea>
+                            <small class="text-muted">Describe qué estás donando (juguetes, camas, transportes, servicios, etc.)</small>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">¿Cómo donar?</h6>
-                        <p class="small">Contáctanos para coordinar la entrega o recoger tus donaciones. Si prefieres donar servicios, podemos discutir cómo colaborar.</p>
-                        <p class="small"><strong>Email:</strong> donaciones@huellafeliz.org</p>
-                        <p class="small"><strong>Teléfono:</strong> +51 952 225 506</p>
-                    </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cantidadOtros" class="form-label">Cantidad (opcional)</label>
+                                <input type="number" class="form-control" id="cantidadOtros" name="cantidad" 
+                                    step="0.01" min="0.01" placeholder="Ej: 2">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="unidadOtros" class="form-label">Unidad de medida (opcional)</label>
+                                <select class="form-select" id="unidadOtros" name="unidadMedida">
+                                    <option value="">Seleccionar unidad</option>
+                                    <option value="unidades">Unidades</option>
+                                    <option value="horas">Horas (servicios)</option>
+                                    <option value="sesiones">Sesiones</option>
+                                </select>
+                            </div>
+                        </div>
 
-                    <div class="mb-4">
-                        <h6 class="text-danger">Impacto de tu aporte</h6>
-                        <p class="small">Cada juguete trae alegría, cada cama proporciona descanso, y cada servicio salva vidas. Tu generosidad transforma nuestro refugio en un hogar mejor.</p>
+                        <div class="alert alert-info">
+                            <small>
+                                <strong>Nota:</strong> Contáctanos para coordinar la entrega o recoger tus donaciones. Si prefieres donar servicios, podemos discutir cómo colaborar.<br>
+                                <strong>Email:</strong> donaciones@huellafeliz.org<br>
+                                <strong>Teléfono:</strong> +51 952 225 506
+                            </small>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-pink">
+                            <i class="bi bi-check-circle me-2"></i>Registrar Donación
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

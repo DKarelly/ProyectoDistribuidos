@@ -36,15 +36,15 @@ router.get('/historial', async (req, res) => {
             SELECT
                 dd.iddetalledonacion,
                 dd.cantidaddonacion,
-                dd.detalleDonacion,
+                dd.detalledonacion,
                 cd.nombcategoria,
                 d.f_donacion,
                 d.h_donacion,
-                u.aliasusuario
+                COALESCE(u.aliasusuario, 'Donante anónimo') as aliasusuario
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
-            JOIN usuario u ON d.idusuario = u.idusuario
+            LEFT JOIN usuario u ON d.idusuario = u.idusuario
             ${whereClause}
             ORDER BY d.f_donacion DESC, d.h_donacion DESC
         `;
@@ -191,6 +191,265 @@ router.get('/categorias', async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo categorías:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/donations/metodos-pago
+router.get('/metodos-pago', async (req, res) => {
+    try {
+        const result = await query(`
+            SELECT 
+                idMetodoPago,
+                nombreMetodo,
+                numeroCuenta,
+                imagenQR,
+                ordenVisual
+            FROM metodo_pago 
+            WHERE activo = true
+            ORDER BY ordenVisual
+        `);
+
+        res.json({
+            message: 'Métodos de pago obtenidos exitosamente',
+            data: result.rows
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo métodos de pago:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/donations/alimentos
+router.post('/alimentos', async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+        } catch (err) {
+            req.user = null;
+        }
+    } else {
+        req.user = null;
+    }
+    next();
+}, async (req, res) => {
+    try {
+        const { descripcion, cantidad, unidadMedida } = req.body;
+        const idUsuario = req.user ? req.user.idusuario : null;
+
+        console.log('Donación alimentos recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
+
+        if (!descripcion || !cantidad || cantidad <= 0) {
+            return res.status(400).json({ 
+                message: 'Los campos descripción y cantidad son requeridos' 
+            });
+        }
+
+        // Obtener ID de categoría "Alimentos"
+        const categoriaResult = await query(
+            'SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = $1',
+            ['Alimentos']
+        );
+
+        if (categoriaResult.rows.length === 0) {
+            return res.status(500).json({ 
+                message: 'Categoría "Alimentos" no encontrada' 
+            });
+        }
+
+        const idCategoria = categoriaResult.rows[0].idcategoria;
+
+        // Crear donación
+        console.log('Insertando donación con idUsuario:', idUsuario);
+        const donacionResult = await query(`
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
+            VALUES ($1, (now() at time zone 'America/Lima')::date, (now() at time zone 'America/Lima')::time)
+            RETURNING iddonacion, idusuario
+        `, [idUsuario || null]);
+        console.log('Donación creada:', donacionResult.rows[0]);
+
+        const idDonacion = donacionResult.rows[0].iddonacion;
+
+        // Crear detalle de donación
+        const detalleDescripcion = unidadMedida 
+            ? `${descripcion} - ${cantidad} ${unidadMedida}`
+            : `${descripcion} - ${cantidad}`;
+
+        await query(`
+            INSERT INTO detalle_donacion (iddonacion, idcategoria, cantidaddonacion, detalledonacion)
+            VALUES ($1, $2, $3, $4)
+            RETURNING iddetalledonacion
+        `, [idDonacion, idCategoria, cantidad, detalleDescripcion]);
+
+        res.status(201).json({
+            message: 'Donación de alimentos registrada exitosamente',
+            data: { iddonacion: idDonacion }
+        });
+
+    } catch (error) {
+        console.error('Error registrando donación de alimentos:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/donations/medicinas
+router.post('/medicinas', async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+        } catch (err) {
+            req.user = null;
+        }
+    } else {
+        req.user = null;
+    }
+    next();
+}, async (req, res) => {
+    try {
+        const { descripcion, cantidad, unidadMedida } = req.body;
+        const idUsuario = req.user ? req.user.idusuario : null;
+
+        console.log('Donación medicinas recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
+
+        if (!descripcion || !cantidad || cantidad <= 0) {
+            return res.status(400).json({ 
+                message: 'Los campos descripción y cantidad son requeridos' 
+            });
+        }
+
+        // Obtener ID de categoría "Medicinas"
+        const categoriaResult = await query(
+            'SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = $1',
+            ['Medicinas']
+        );
+
+        if (categoriaResult.rows.length === 0) {
+            return res.status(500).json({ 
+                message: 'Categoría "Medicinas" no encontrada' 
+            });
+        }
+
+        const idCategoria = categoriaResult.rows[0].idcategoria;
+
+        // Crear donación
+        console.log('Insertando donación con idUsuario:', idUsuario);
+        const donacionResult = await query(`
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
+            VALUES ($1, (now() at time zone 'America/Lima')::date, (now() at time zone 'America/Lima')::time)
+            RETURNING iddonacion, idusuario
+        `, [idUsuario || null]);
+        console.log('Donación creada:', donacionResult.rows[0]);
+
+        const idDonacion = donacionResult.rows[0].iddonacion;
+
+        // Crear detalle de donación
+        const detalleDescripcion = unidadMedida 
+            ? `${descripcion} - ${cantidad} ${unidadMedida}`
+            : `${descripcion} - ${cantidad}`;
+
+        await query(`
+            INSERT INTO detalle_donacion (iddonacion, idcategoria, cantidaddonacion, detalledonacion)
+            VALUES ($1, $2, $3, $4)
+            RETURNING iddetalledonacion
+        `, [idDonacion, idCategoria, cantidad, detalleDescripcion]);
+
+        res.status(201).json({
+            message: 'Donación de medicinas registrada exitosamente',
+            data: { iddonacion: idDonacion }
+        });
+
+    } catch (error) {
+        console.error('Error registrando donación de medicinas:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/donations/otros
+router.post('/otros', async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+        } catch (err) {
+            req.user = null;
+        }
+    } else {
+        req.user = null;
+    }
+    next();
+}, async (req, res) => {
+    try {
+        const { descripcion, cantidad, unidadMedida } = req.body;
+        const idUsuario = req.user ? req.user.idusuario : null;
+
+        console.log('Donación otros recibida:', { descripcion, cantidad, unidadMedida, idUsuario, token: req.user ? 'Sí' : 'No' });
+
+        if (!descripcion) {
+            return res.status(400).json({ 
+                message: 'El campo descripción es requerido' 
+            });
+        }
+
+        // Obtener ID de categoría "Otros"
+        const categoriaResult = await query(
+            'SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = $1',
+            ['Otros']
+        );
+
+        if (categoriaResult.rows.length === 0) {
+            return res.status(500).json({ 
+                message: 'Categoría "Otros" no encontrada' 
+            });
+        }
+
+        const idCategoria = categoriaResult.rows[0].idcategoria;
+
+        // Crear donación
+        console.log('Insertando donación con idUsuario:', idUsuario);
+        const donacionResult = await query(`
+            INSERT INTO donacion (idusuario, f_donacion, h_donacion)
+            VALUES ($1, (now() at time zone 'America/Lima')::date, (now() at time zone 'America/Lima')::time)
+            RETURNING iddonacion, idusuario
+        `, [idUsuario || null]);
+        console.log('Donación creada:', donacionResult.rows[0]);
+
+        const idDonacion = donacionResult.rows[0].iddonacion;
+
+        // Crear detalle de donación
+        const detalleDescripcion = cantidad && unidadMedida
+            ? `${descripcion} - ${cantidad} ${unidadMedida}`
+            : cantidad
+            ? `${descripcion} - ${cantidad}`
+            : descripcion;
+
+        await query(`
+            INSERT INTO detalle_donacion (iddonacion, idcategoria, cantidaddonacion, detalledonacion)
+            VALUES ($1, $2, $3, $4)
+            RETURNING iddetalledonacion
+        `, [idDonacion, idCategoria, cantidad || 1, detalleDescripcion]);
+
+        res.status(201).json({
+            message: 'Donación de otros artículos registrada exitosamente',
+            data: { iddonacion: idDonacion }
+        });
+
+    } catch (error) {
+        console.error('Error registrando donación de otros:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
