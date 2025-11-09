@@ -12,7 +12,7 @@ function requireAdmin(req, res, next) {
 const router = express.Router();
 
 // GET /api/apadrinamiento - Obtener todos los apadrinamientos (solo admin)
-router.get('/', requireAdmin, async (req, res) => {
+router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { alias, nombre, animal } = req.query;
 
@@ -78,7 +78,7 @@ router.get('/', requireAdmin, async (req, res) => {
 });
 
 // POST /api/apadrinamiento - Crear nuevo apadrinamiento (solo admin)
-router.post('/', requireAdmin, async (req, res) => {
+router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { idAnimal, nombreAnimal, idUsuario, aliasUsuario, frecuencia } = req.body;
 
@@ -163,7 +163,7 @@ router.post('/', requireAdmin, async (req, res) => {
 });
 
 // PUT /api/apadrinamiento/:id - Actualizar apadrinamiento (solo admin)
-router.put('/:id', requireAdmin, async (req, res) => {
+router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { idAnimal, nombreAnimal, idUsuario, aliasUsuario, frecuencia } = req.body;
@@ -223,7 +223,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // DELETE /api/apadrinamiento/:id - Eliminar apadrinamiento (solo admin)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -256,7 +256,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 });
 
 // GET /api/apadrinamiento/usuarios - Obtener lista de usuarios para autocompletado
-router.get('/usuarios', requireAdmin, async (req, res) => {
+router.get('/usuarios', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { search } = req.query;
 
@@ -295,7 +295,7 @@ router.get('/usuarios', requireAdmin, async (req, res) => {
 });
 
 // GET /api/apadrinamiento/animales - Obtener lista de animales para autocompletado
-router.get('/animales', requireAdmin, async (req, res) => {
+router.get('/animales', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { search } = req.query;
 
