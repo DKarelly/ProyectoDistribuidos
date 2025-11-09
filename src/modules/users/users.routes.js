@@ -1,8 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 //const { query } = require('../config/database');
-const { query, getClient } = require('../config/database');
-const { authenticateToken } = require('./auth');
+const { query, getClient } = require('../../config/database');
+const { authenticateToken } = require('../auth/auth.routes');
 const router = express.Router();
 
 /* ------------------ MIDDLEWARE DE ADMIN ------------------ */

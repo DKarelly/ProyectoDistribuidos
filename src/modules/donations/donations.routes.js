@@ -1,6 +1,6 @@
 const express = require('express');
-const { query } = require('../config/database');
-const { authenticateToken } = require('./auth');
+const { query } = require('../../config/database');
+const { authenticateToken } = require('../auth/auth.routes');
 const router = express.Router();
 
 // GET /api/donations/historial
