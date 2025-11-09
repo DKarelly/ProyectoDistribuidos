@@ -35,6 +35,11 @@ Sistema web completo para la gestión de adopciones, donaciones y reportes de an
 - bcryptjs para encriptación
 - express-validator para validaciones
 - Multer para subida de archivos
+- Cors para manejo de CORS
+- Helmet para seguridad
+- Morgan para logging de requests
+- Dotenv para variables de entorno
+- Nodemon para desarrollo
 - Arquitectura Orientada a Servicios (SOA)
 
 ## Requisitos Previos
