@@ -1,6 +1,6 @@
 const express = require('express');
-const { query } = require('../config/database');
-const { authenticateToken } = require('./auth');
+const { query } = require('../../config/database');
+const { authenticateToken } = require('../auth/auth.routes');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
