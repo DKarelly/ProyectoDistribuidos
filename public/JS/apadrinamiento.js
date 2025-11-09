@@ -3,8 +3,13 @@ let apadrinamientosData = [];
 
 // Inicializar cuando se carga la página
 document.addEventListener('DOMContentLoaded', function () {
+    // Verificar acceso al módulo de apadrinamiento (solo admin)
+    if (!checkDashboardAccess()) {
+        return; // Si no tiene acceso, la función ya redirige
+    }
     cargarApadrinamientos();
     configurarEventos();
+    updateAuthUI();
 });
 
 // Configurar eventos
@@ -32,7 +37,11 @@ function configurarEventos() {
 // Cargar apadrinamientos
 async function cargarApadrinamientos() {
     try {
-        const response = await fetch(window.location.origin + '/api/apadrinamiento');
+        const response = await fetch(window.location.origin + '/api/apadrinamiento', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const data = await response.json();
 
         if (response.ok) {
@@ -114,7 +123,11 @@ async function buscarUsuarios(event) {
     if (query.length < 2) return;
 
     try {
-        const response = await fetch(`${window.location.origin}/api/apadrinamiento/usuarios?search=${encodeURIComponent(query)}`);
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/usuarios?search=${encodeURIComponent(query)}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const data = await response.json();
 
         if (response.ok) {
@@ -133,7 +146,11 @@ async function buscarAnimales(event) {
     if (query.length < 2) return;
 
     try {
-        const response = await fetch(`${window.location.origin}/api/apadrinamiento/animales?search=${encodeURIComponent(query)}`);
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento/animales?search=${encodeURIComponent(query)}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const data = await response.json();
 
         if (response.ok) {
@@ -212,6 +229,7 @@ async function registrarApadrinamiento(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(data)
         });
@@ -265,6 +283,7 @@ async function modificarApadrinamiento(event) {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify(data)
         });
@@ -290,7 +309,10 @@ async function eliminarApadrinamiento(id) {
 
     try {
         const response = await fetch(`${window.location.origin}/api/apadrinamiento/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
         });
 
         const result = await response.json();
