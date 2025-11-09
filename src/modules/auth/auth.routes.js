@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
-const { query, getClient } = require('../config/database');
+const { query, getClient } = require('../../config/database');
 
 /* ------------------ MIDDLEWARE DE TOKEN ------------------ */
 function authenticateToken(req, res, next) {
