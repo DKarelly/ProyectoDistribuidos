@@ -1,0 +1,16 @@
+# Configuración de Base de Datos PostgreSQL
+DB_HOST=adopciones-db.c9c84k8mqfv2.us-east-2.rds.amazonaws.com
+DB_DATABASE=adopciones
+DB_USER=postgres
+DB_PASSWORD='Postgres#2025'
+DB_PORT=5432
+DB_SSL=true
+
+# JWT Secret (cambia por uno único)
+JWT_SECRET=jwt_secretito_huellafeliz
+
+# Puerto del servidor
+PORT=3000
+
+# Modo de desarrollo
+NODE_ENV=development
