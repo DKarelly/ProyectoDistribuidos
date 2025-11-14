@@ -81,13 +81,14 @@ function mostrarApadrinamientos(apadrinamientos) {
             <td>${new Date(apadrinamiento.f_inicio).toLocaleDateString()}</td>
             <td>${apadrinamiento.frecuencia}</td>
             <td>${apadrinamiento.iddonacion}</td>
+            <td>${apadrinamiento.idsolicitudapadrinamiento || 'Registrado por el admin'}</td>
             <td>
-                <button class="btn btn-warning btn-sm btn-editar" data-id="${apadrinamiento.idapadrinamiento}">
+                <button class="btn btn-success btn-sm rounded-circle btn-editar" data-id="${apadrinamiento.idapadrinamiento}">
                     <i class="bi bi-pencil-square"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-danger btn-sm btn-eliminar" data-id="${apadrinamiento.idapadrinamiento}">
+                <button class="btn btn-danger btn-sm rounded-circle btn-eliminar" data-id="${apadrinamiento.idapadrinamiento}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -375,11 +376,13 @@ function mostrarSolicitudes(solicitudes) {
             <td>${solicitud.nombreanimal}</td>
             <td>${solicitud.estado}</td>
             <td>
-                <button class="btn btn-success btn-sm btn-aprobar" data-id="${solicitud.idsolicitudapadrinamiento}" data-animal="${solicitud.idanimal}" data-usuario="${solicitud.idusuario}" data-nombre="${solicitud.nombreanimal}">
-                    <i class="bi bi-check-circle"></i> Aprobar
+                <button class="btn btn-success btn-sm rounded-circle btn-aprobar" style="background-color: #90EE90; border-color: #90EE90;" data-id="${solicitud.idsolicitudapadrinamiento}" data-animal="${solicitud.idanimal}" data-usuario="${solicitud.idusuario}" data-nombre="${solicitud.nombreanimal}">
+                    <i class="bi bi-check-circle"></i>
                 </button>
-                <button class="btn btn-danger btn-sm btn-rechazar" data-id="${solicitud.idsolicitudapadrinamiento}">
-                    <i class="bi bi-x-circle"></i> Rechazar
+            </td>
+            <td>
+                <button class="btn btn-danger btn-sm rounded-circle btn-rechazar" style="background-color: #FFB6C1; border-color: #FFB6C1;" data-id="${solicitud.idsolicitudapadrinamiento}">
+                    <i class="bi bi-x-circle"></i>
                 </button>
             </td>
         `;
@@ -458,6 +461,17 @@ async function rechazarSolicitud(idSolicitud) {
 
         if (response.ok) {
             alert('Solicitud rechazada exitosamente.');
+            // Update the status locally to 'Rechazada'
+            const row = document.querySelector(`[data-id="${idSolicitud}"].btn-rechazar`).closest('tr');
+            if (row) {
+                const statusCell = row.cells[4]; // Estado column
+                statusCell.textContent = 'Rechazada';
+                // Optionally disable buttons
+                const approveBtn = row.querySelector('.btn-aprobar');
+                const rejectBtn = row.querySelector('.btn-rechazar');
+                if (approveBtn) approveBtn.disabled = true;
+                if (rejectBtn) rejectBtn.disabled = true;
+            }
             cargarSolicitudes();
         } else {
             alert('Error al rechazar solicitud: ' + result.message);
