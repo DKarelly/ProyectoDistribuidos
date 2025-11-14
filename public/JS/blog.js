@@ -239,7 +239,7 @@ function confirmarApadrinar(button) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Asumiendo que el token está en localStorage
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}` // Asumiendo que el token está en localStorage
         },
         body: JSON.stringify({ idAnimal: idAnimal })
       });
