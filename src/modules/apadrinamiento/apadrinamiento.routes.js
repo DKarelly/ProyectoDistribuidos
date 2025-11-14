@@ -14,7 +14,7 @@ const router = express.Router();
 // GET /api/apadrinamiento - Obtener todos los apadrinamientos (solo admin)
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { alias, nombre, animal } = req.query;
+        const { alias, nombre, animal, page = 1, limit = 10 } = req.query;
 
         let whereConditions = [];
         let params = [];
@@ -40,6 +40,24 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
         const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
+        // Obtener total de registros
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM apadrinamiento ap
+            JOIN animal a ON ap.idanimal = a.idanimal
+            JOIN donacion d ON ap.iddonacion = d.iddonacion
+            JOIN usuario u ON d.idusuario = u.idusuario
+            LEFT JOIN persona p ON u.idusuario = p.idusuario
+            LEFT JOIN empresa e ON u.idusuario = e.idusuario
+            ${whereClause}
+        `;
+
+        const countResult = await query(countSql, params);
+        const totalItems = parseInt(countResult.rows[0].total);
+        const totalPages = Math.ceil(totalItems / limit);
+        const offset = (page - 1) * limit;
+
+        // Obtener registros paginados
         const sql = `
             SELECT
                 ap.idapadrinamiento, ap.f_inicio, ap.frecuencia,
@@ -57,13 +75,22 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
             LEFT JOIN empresa e ON u.idusuario = e.idusuario
             ${whereClause}
             ORDER BY ap.f_inicio DESC
+            LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
         `;
+
+        params.push(limit, offset);
 
         const result = await query(sql, params);
 
         res.json({
             message: 'Apadrinamientos obtenidos exitosamente',
-            data: result.rows
+            data: result.rows,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages,
+                totalItems,
+                itemsPerPage: parseInt(limit)
+            }
         });
 
     } catch (error) {
