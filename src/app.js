@@ -77,6 +77,10 @@ app.get('/CRUDadopcion.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'html', 'CRUDadopcion.html'));
 });
 
+app.get('/enfermedades.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'html', 'enfermedades.html'));
+});
+
 // Rutas base
 app.use('/api/auth', require('./modules/auth/auth.routes').router);
 app.use('/api/animals', require('./modules/animals/animals.routes'));
@@ -89,4 +93,5 @@ app.use('/api/users', require('./modules/users/users.routes'));
 app.use('/api/roles', require('./modules/roles/roles.routes'));
 app.use('/api/stats', require('./modules/stats/stats.routes'));
 app.use('/api/especieRaza', require('./modules/especieRaza/especieRaza.routes'));
+app.use('/api/enfermedades', require('./modules/enfermedades/enfermedades.routes'));
 module.exports = app;
