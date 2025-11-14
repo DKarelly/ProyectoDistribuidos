@@ -98,13 +98,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
-       CARGAR USUARIOS
+       CARGAR USUARIOS CON PAGINACIÓN
     ============================================================ */
-    async function loadUsersTable() {
+    let currentPage = 1;
+    let totalPages = 1;
+    let itemsPerPage = 10;
+
+    async function loadUsersTable(page = 1) {
         try {
-            const response = await apiRequest("/users");
+            const response = await apiRequest(`/users?page=${page}&limit=${itemsPerPage}`);
             usuarios = response.data || [];
+            const pagination = response.pagination || {};
+            currentPage = pagination.currentPage || 1;
+            totalPages = pagination.totalPages || 1;
             renderTable(usuarios);
+            renderPagination(pagination);
         } catch (err) {
             console.error("Error cargando usuarios:", err);
         }
@@ -154,26 +162,109 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /* ============================================================
+       RENDERIZAR PAGINACIÓN
+    ============================================================ */
+    function renderPagination(pagination) {
+        const paginationInfo = document.getElementById("usuariosPaginationInfo");
+        const paginationControls = document.getElementById("usuariosPaginationControls");
+
+        if (!paginationInfo || !paginationControls) return;
+
+        const { currentPage, totalPages, totalItems, itemsPerPage } = pagination;
+        const startItem = (currentPage - 1) * itemsPerPage + 1;
+        const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+        paginationInfo.textContent = `Mostrando ${startItem} a ${endItem} de ${totalItems} usuarios`;
+
+        paginationControls.innerHTML = "";
+
+        // Botón Anterior
+        const prevBtn = document.createElement("li");
+        prevBtn.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+        prevBtn.innerHTML = `<a class="page-link" href="#" aria-label="Anterior"><span aria-hidden="true">&laquo;</span></a>`;
+        prevBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (currentPage > 1) loadUsersTable(currentPage - 1);
+        });
+        paginationControls.appendChild(prevBtn);
+
+        // Páginas
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement("li");
+            pageBtn.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            pageBtn.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            pageBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                loadUsersTable(i);
+            });
+            paginationControls.appendChild(pageBtn);
+        }
+
+        // Botón Siguiente
+        const nextBtn = document.createElement("li");
+        nextBtn.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+        nextBtn.innerHTML = `<a class="page-link" href="#" aria-label="Siguiente"><span aria-hidden="true">&raquo;</span></a>`;
+        nextBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (currentPage < totalPages) loadUsersTable(currentPage + 1);
+        });
+        paginationControls.appendChild(nextBtn);
+    }
+
+    /* ============================================================
        FILTROS DE BÚSQUEDA Y ROL
     ============================================================ */
     function aplicarFiltros() {
-        const texto = inputBuscar.value.toLowerCase();
-        const rolSel = filtroRol.value;
-
-        const filtrados = usuarios.filter((u) => {
-            const alias = u.aliasusuario?.toLowerCase() || "";
-            const correo = u.correousuario?.toLowerCase() || "";
-            const rol = u.rolusuario;
-            const textoCoincide = alias.includes(texto) || correo.includes(texto);
-            const rolCoincide = rolSel ? rolSel === rol : true;
-            return textoCoincide && rolCoincide;
-        });
-
-        renderTable(filtrados);
+        // Para filtros, por ahora recargamos la primera página
+        // En una implementación completa, se enviaría la búsqueda al backend
+        loadUsersTable(1);
     }
 
     inputBuscar.addEventListener("input", aplicarFiltros);
     filtroRol.addEventListener("change", aplicarFiltros);
+
+    /* ============================================================
+       BUSCAR USUARIOS CON FILTROS
+    ============================================================ */
+    async function searchUsers(searchTerm, roleFilter, page = 1) {
+        try {
+            let url = `/users?page=${page}&limit=${itemsPerPage}`;
+            if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+            if (roleFilter) url += `&role=${encodeURIComponent(roleFilter)}`;
+
+            const response = await apiRequest(url);
+            usuarios = response.data || [];
+            const pagination = response.pagination || {};
+            currentPage = pagination.currentPage || 1;
+            totalPages = pagination.totalPages || 1;
+            renderTable(usuarios);
+            renderPagination(pagination);
+        } catch (err) {
+            console.error("Error buscando usuarios:", err);
+        }
+    }
+
+    // Actualizar la función aplicarFiltros para usar búsqueda en backend
+    function aplicarFiltros() {
+        const texto = inputBuscar.value.trim();
+        const rolSel = filtroRol.value;
+        searchUsers(texto, rolSel, 1);
+    }
+
+    // Actualizar loadUsersTable para usar la nueva función de búsqueda
+    async function loadUsersTable(page = 1) {
+        const texto = inputBuscar.value.trim();
+        const rolSel = filtroRol.value;
+        await searchUsers(texto, rolSel, page);
+    }
 
     /* ============================================================
        ELIMINAR USUARIO

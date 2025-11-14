@@ -86,6 +86,7 @@ app.use('/api/auth', require('./modules/auth/auth.routes').router);
 app.use('/api/animals', require('./modules/animals/animals.routes'));
 app.use('/api/adoptions', require('./modules/adoptions/adoptions.routes'));
 app.use('/api/apadrinamiento', require('./modules/apadrinamiento/apadrinamiento.routes'));
+app.use('/api/solicitudes-apadrinamiento', require('./modules/apadrinamiento/solicitudes.routes'));
 app.use('/api/donations', require('./modules/donations/donations.routes'));
 app.use('/api/reports', require('./modules/reports/reports.routes'));
 app.use('/api/blog', require('./modules/blog/blog.routes'));

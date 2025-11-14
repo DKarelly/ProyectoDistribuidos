@@ -195,6 +195,8 @@ function inicializarEventosVerHistoria() {
         const btnApadrinar = document.querySelector("#formDetalleAnimal button[onclick]");
         if (btnApadrinar) {
           btnApadrinar.setAttribute("data-animal", animal.nombreanimal);
+          btnApadrinar.setAttribute("data-id", animal.idanimal);
+          btnApadrinar.setAttribute("onclick", "confirmarSolicitarApadrinamiento(this)");
         }
 
         // Bloquear campos (solo lectura)
@@ -221,8 +223,8 @@ function inicializarEventosVerHistoria() {
   });
 }
 
-// Función para confirmar apadrinamiento
-function confirmarApadrinar(button) {
+// Función para confirmar solicitud de apadrinamiento
+function confirmarSolicitarApadrinamiento(button) {
   const animalName = button.getAttribute("data-animal");
   const idAnimal = button.getAttribute("data-id"); // Asumiendo que el botón tiene data-id
   document.getElementById("nombreAnimalConfirmacion").textContent = animalName;
@@ -235,7 +237,7 @@ function confirmarApadrinar(button) {
   const btnConfirmar = document.getElementById("confirmarApadrinarBtn");
   btnConfirmar.onclick = async () => {
     try {
-      const response = await fetch(window.location.origin + '/api/animals/apadrinar', {
+      const response = await fetch(window.location.origin + '/api/animals/solicitar-apadrinamiento', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -247,7 +249,32 @@ function confirmarApadrinar(button) {
       if (!response.ok) throw new Error('Error en la solicitud');
 
       const result = await response.json();
-      alert(`Apadrinamiento confirmado para ${animalName}`);
+
+      // Crear y mostrar modal de éxito
+      const modalSuccessHTML = `
+        <div class="modal fade" id="modalSuccess" tabindex="-1" aria-labelledby="modalSuccessLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalSuccessLabel">¡Solicitud Enviada!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body text-center">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                <p class="mt-3 mb-0 fs-5">Solicitud de apadrinamiento enviada para <strong>${animalName}</strong></p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Aceptar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML('beforeend', modalSuccessHTML);
+      const modalSuccess = new bootstrap.Modal(document.getElementById('modalSuccess'));
+      modalSuccess.show();
+
       modalConfirmar.hide();
     } catch (error) {
       console.error('Error al registrar apadrinamiento:', error);

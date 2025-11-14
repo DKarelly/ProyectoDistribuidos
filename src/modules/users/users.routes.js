@@ -110,19 +110,67 @@ router.get('/donaciones', authenticateToken, async (req, res) => {
 /* ============================================================
    USUARIOS (ADMIN)
 ============================================================ */
-// Listar todos los usuarios
+// Listar todos los usuarios con paginación y filtros
 router.get('/', authenticateToken, async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+        const search = req.query.search || '';
+        const role = req.query.role || '';
+
+        // Construir consulta base
+        let whereClause = '';
+        let params = [];
+        let paramIndex = 1;
+
+        if (search) {
+            whereClause += ` AND (u.aliasusuario ILIKE $${paramIndex} OR u.correousuario ILIKE $${paramIndex})`;
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        if (role) {
+            whereClause += ` AND r.rolusuario = $${paramIndex}`;
+            params.push(role);
+            paramIndex++;
+        }
+
+        // Obtener total de usuarios filtrados
+        const totalResult = await query(`
+            SELECT COUNT(*) as total
+            FROM usuario u
+            LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario
+            LEFT JOIN rol_usuario r ON ur.idrol = r.idrol
+            WHERE 1=1 ${whereClause}
+        `, params);
+        const totalItems = parseInt(totalResult.rows[0].total);
+        const totalPages = Math.ceil(totalItems / limit);
+
+        // Obtener usuarios paginados y filtrados
         const result = await query(`
-            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario, 
+            SELECT u.idusuario, u.aliasusuario, u.correousuario, u.numerousuario,
                    u.direccionusuario, r.rolusuario, ur.idrol
             FROM usuario u
             LEFT JOIN usuario_roles ur ON u.idusuario = ur.idusuario
             LEFT JOIN rol_usuario r ON ur.idrol = r.idrol
+            WHERE 1=1 ${whereClause}
             ORDER BY u.idusuario ASC
-        `);
-        console.log(result.rows);  // <--- VERIFICA
-        res.json({ message: 'Usuarios obtenidos correctamente', data: result.rows });
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `, [...params, limit, offset]);
+
+        const pagination = {
+            currentPage: page,
+            totalPages,
+            totalItems,
+            itemsPerPage: limit
+        };
+
+        res.json({
+            message: 'Usuarios obtenidos correctamente',
+            data: result.rows,
+            pagination
+        });
     } catch (error) {
         console.error('Error obteniendo usuarios:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
