@@ -39,7 +39,7 @@ async function cargarApadrinamientos() {
     try {
         const response = await fetch(window.location.origin + '/api/apadrinamiento', {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
         const data = await response.json();
@@ -125,7 +125,7 @@ async function buscarUsuarios(event) {
     try {
         const response = await fetch(`${window.location.origin}/api/apadrinamiento/usuarios?search=${encodeURIComponent(query)}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
         const data = await response.json();
@@ -148,7 +148,7 @@ async function buscarAnimales(event) {
     try {
         const response = await fetch(`${window.location.origin}/api/apadrinamiento/animales?search=${encodeURIComponent(query)}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
         const data = await response.json();
@@ -229,7 +229,7 @@ async function registrarApadrinamiento(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify(data)
         });
@@ -283,7 +283,7 @@ async function modificarApadrinamiento(event) {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify(data)
         });
@@ -311,7 +311,7 @@ async function eliminarApadrinamiento(id) {
         const response = await fetch(`${window.location.origin}/api/apadrinamiento/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
 
