@@ -1,5 +1,11 @@
 // Variables globales
 let apadrinamientosData = [];
+let solicitudesData = [];
+
+// Variables para paginación
+let currentApadrinamientosPage = 1;
+let currentSolicitudesPage = 1;
+const itemsPerPage = 10;
 
 // Inicializar cuando se carga la página
 document.addEventListener('DOMContentLoaded', function () {
@@ -8,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return; // Si no tiene acceso, la función ya redirige
     }
     cargarApadrinamientos();
+    cargarSolicitudes();
     configurarEventos();
     updateAuthUI();
 });
@@ -34,10 +41,10 @@ function configurarEventos() {
     document.getElementById('modNombreAnimal').addEventListener('input', buscarAnimales);
 }
 
-// Cargar apadrinamientos
-async function cargarApadrinamientos() {
+// Cargar apadrinamientos con paginación
+async function cargarApadrinamientos(page = 1) {
     try {
-        const response = await fetch(window.location.origin + '/api/apadrinamiento', {
+        const response = await fetch(`${window.location.origin}/api/apadrinamiento?page=${page}&limit=${itemsPerPage}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
@@ -47,6 +54,7 @@ async function cargarApadrinamientos() {
         if (response.ok) {
             apadrinamientosData = data.data;
             mostrarApadrinamientos(apadrinamientosData);
+            renderApadrinamientosPagination(data.pagination);
         } else {
             alert('Error al cargar apadrinamientos: ' + data.message);
         }
@@ -327,4 +335,222 @@ async function eliminarApadrinamiento(id) {
         console.error('Error:', error);
         alert('Error al conectar con el servidor');
     }
+}
+
+// Cargar solicitudes de apadrinamiento con paginación
+async function cargarSolicitudes(page = 1) {
+    try {
+        const response = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento?page=${page}&limit=${itemsPerPage}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+            solicitudesData = data.data;
+            mostrarSolicitudes(solicitudesData);
+            renderSolicitudesPagination(data.pagination);
+            actualizarBadgeSolicitudes();
+        } else {
+            console.error('Error al cargar solicitudes:', data.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Mostrar solicitudes en la tabla
+function mostrarSolicitudes(solicitudes) {
+    const tbody = document.getElementById('solicitudesTableBody');
+    tbody.innerHTML = '';
+
+    solicitudes.forEach(solicitud => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>${solicitud.idsolicitudapadrinamiento}</td>
+            <td>${solicitud.nombreusuario}</td>
+            <td>${solicitud.idanimal}</td>
+            <td>${solicitud.nombreanimal}</td>
+            <td>${solicitud.estado}</td>
+            <td>
+                <button class="btn btn-success btn-sm btn-aprobar" data-id="${solicitud.idsolicitudapadrinamiento}" data-animal="${solicitud.idanimal}" data-usuario="${solicitud.idusuario}" data-nombre="${solicitud.nombreanimal}">
+                    <i class="bi bi-check-circle"></i> Aprobar
+                </button>
+                <button class="btn btn-danger btn-sm btn-rechazar" data-id="${solicitud.idsolicitudapadrinamiento}">
+                    <i class="bi bi-x-circle"></i> Rechazar
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+
+    // Agregar eventos a los botones
+    document.querySelectorAll('.btn-aprobar').forEach(btn => {
+        btn.addEventListener('click', () => aprobarSolicitud(btn.dataset.id, btn.dataset.animal, btn.dataset.usuario, btn.dataset.nombre));
+    });
+
+    document.querySelectorAll('.btn-rechazar').forEach(btn => {
+        btn.addEventListener('click', () => rechazarSolicitud(btn.dataset.id));
+    });
+}
+
+// Actualizar badge de solicitudes
+function actualizarBadgeSolicitudes() {
+    const badge = document.getElementById('badgeSolicitudes');
+    const count = solicitudesData.length;
+
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// Aprobar solicitud de apadrinamiento
+async function aprobarSolicitud(idSolicitud, idAnimal, idUsuario, nombreAnimal) {
+    if (!confirm(`¿Está seguro de que desea aprobar la solicitud de apadrinamiento para ${nombreAnimal}?`)) return;
+
+    try {
+        const response = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento/${idSolicitud}/aprobar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({
+                idanimal: idAnimal,
+                idusuario: idUsuario
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Solicitud aprobada exitosamente. El apadrinamiento ha sido registrado.');
+            cargarSolicitudes();
+            cargarApadrinamientos();
+        } else {
+            alert('Error al aprobar solicitud: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al conectar con el servidor');
+    }
+}
+
+// Rechazar solicitud de apadrinamiento
+async function rechazarSolicitud(idSolicitud) {
+    if (!confirm('¿Está seguro de que desea rechazar esta solicitud de apadrinamiento?')) return;
+
+    try {
+        const response = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento/${idSolicitud}/rechazar`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert('Solicitud rechazada exitosamente.');
+            cargarSolicitudes();
+        } else {
+            alert('Error al rechazar solicitud: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al conectar con el servidor');
+    }
+}
+
+// Funciones de paginación para apadrinamientos
+function renderApadrinamientosPagination(pagination) {
+    const { currentPage, totalPages, totalItems } = pagination;
+    const infoElement = document.getElementById('apadrinamientosInfo');
+    const paginationElement = document.getElementById('apadrinamientosPaginationControls');
+
+    // Actualizar información
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, totalItems);
+    infoElement.textContent = `Mostrando ${start} a ${end} de ${totalItems} apadrinamientos`;
+
+    // Generar controles de paginación
+    paginationElement.innerHTML = '';
+
+    // Botón anterior
+    if (currentPage > 1) {
+        const prevBtn = document.createElement('li');
+        prevBtn.className = 'page-item';
+        prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeApadrinamientosPage(${currentPage - 1})">Anterior</a>`;
+        paginationElement.appendChild(prevBtn);
+    }
+
+    // Páginas
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        const pageBtn = document.createElement('li');
+        pageBtn.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeApadrinamientosPage(${i})">${i}</a>`;
+        paginationElement.appendChild(pageBtn);
+    }
+
+    // Botón siguiente
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement('li');
+        nextBtn.className = 'page-item';
+        nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeApadrinamientosPage(${currentPage + 1})">Siguiente</a>`;
+        paginationElement.appendChild(nextBtn);
+    }
+}
+
+function renderSolicitudesPagination(pagination) {
+    const { currentPage, totalPages, totalItems } = pagination;
+    const infoElement = document.getElementById('solicitudesInfo');
+    const paginationElement = document.getElementById('solicitudesPaginationControls');
+
+    // Actualizar información
+    const start = (currentPage - 1) * itemsPerPage + 1;
+    const end = Math.min(currentPage * itemsPerPage, totalItems);
+    infoElement.textContent = `Mostrando ${start} a ${end} de ${totalItems} solicitudes`;
+
+    // Generar controles de paginación
+    paginationElement.innerHTML = '';
+
+    // Botón anterior
+    if (currentPage > 1) {
+        const prevBtn = document.createElement('li');
+        prevBtn.className = 'page-item';
+        prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeSolicitudesPage(${currentPage - 1})">Anterior</a>`;
+        paginationElement.appendChild(prevBtn);
+    }
+
+    // Páginas
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        const pageBtn = document.createElement('li');
+        pageBtn.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeSolicitudesPage(${i})">${i}</a>`;
+        paginationElement.appendChild(pageBtn);
+    }
+
+    // Botón siguiente
+    if (currentPage < totalPages) {
+        const nextBtn = document.createElement('li');
+        nextBtn.className = 'page-item';
+        nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeSolicitudesPage(${currentPage + 1})">Siguiente</a>`;
+        paginationElement.appendChild(nextBtn);
+    }
+}
+
+function changeApadrinamientosPage(page) {
+    currentApadrinamientosPage = page;
+    cargarApadrinamientos(page);
+}
+
+function changeSolicitudesPage(page) {
+    currentSolicitudesPage = page;
+    cargarSolicitudes(page);
 }

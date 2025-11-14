@@ -1187,7 +1187,50 @@ router.get('/filtros/opciones', async (req, res) => {
     }
 });
 
-// POST /api/animals/apadrinar
+// POST /api/animals/solicitar-apadrinamiento
+router.post('/solicitar-apadrinamiento', authenticateToken, async (req, res) => {
+    try {
+        const { idAnimal } = req.body;
+        const idUsuario = req.user.idusuario;
+
+        if (!idAnimal) return res.status(400).json({ message: 'ID del animal es requerido' });
+
+        // Verificar que el animal existe
+        const animalResult = await query('SELECT idanimal FROM animal WHERE idanimal = $1', [idAnimal]);
+        if (!animalResult.rows.length) return res.status(404).json({ message: 'Animal no encontrado' });
+
+        // Verificar si ya existe una solicitud pendiente para este usuario y animal
+        const existingRequest = await query(`
+            SELECT idsolicitudapadrinamiento FROM solicitud_apadrinamiento
+            WHERE idusuario = $1 AND idanimal = $2 AND estado = 'Pendiente'
+        `, [idUsuario, idAnimal]);
+
+        if (existingRequest.rows.length > 0) {
+            return res.status(400).json({ message: 'Ya tienes una solicitud de apadrinamiento pendiente para este animal' });
+        }
+
+        // Insertar solicitud de apadrinamiento
+        const solicitudResult = await query(`
+            INSERT INTO solicitud_apadrinamiento (idusuario, idanimal, estado)
+            VALUES ($1, $2, 'Pendiente')
+            RETURNING idsolicitudapadrinamiento
+        `, [idUsuario, idAnimal]);
+
+        res.status(201).json({
+            message: 'Solicitud de apadrinamiento registrada exitosamente',
+            data: {
+                idsolicitudapadrinamiento: solicitudResult.rows[0].idsolicitudapadrinamiento,
+                idAnimal: idAnimal,
+                estado: 'Pendiente'
+            }
+        });
+    } catch (error) {
+        console.error('Error registrando solicitud de apadrinamiento:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/animals/apadrinar (mantener la ruta original por compatibilidad)
 router.post('/apadrinar', authenticateToken, async (req, res) => {
     try {
         const { idAnimal } = req.body;
