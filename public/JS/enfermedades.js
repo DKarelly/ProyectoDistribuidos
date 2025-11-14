@@ -100,7 +100,11 @@ function renderTipos(tipos) {
             <tr>
                 <td>${tipo.idtipoenfermedad}</td>
                 <td>${tipo.tipoenfermedad}</td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="abrirEditarTipo(${tipo.idtipoenfermedad}, '${tipo.tipoenfermedad}')"><i class="bi bi-pencil"></i></button></td>
+                <td>
+                    <button class="btn btn-warning btn-sm btn-editar" onclick="abrirEditarTipo(${tipo.idtipoenfermedad}, '${tipo.tipoenfermedad}')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </td>
             </tr>
         `;
         tbody.innerHTML += row;
@@ -117,7 +121,11 @@ function renderEnfermedades(enfermedades) {
                 <td>${enfermedad.idenfermedad}</td>
                 <td>${enfermedad.nombenfermedad}</td>
                 <td>${enfermedad.tipoenfermedad}</td>
-                <td><button class="btn btn-sm btn-outline-primary" onclick="abrirEditarEnfermedad(${enfermedad.idenfermedad}, '${enfermedad.nombenfermedad}', ${enfermedad.idtipoenfermedad})"><i class="bi bi-pencil"></i></button></td>
+                <td>
+                    <button class="btn btn-warning btn-sm btn-editar" onclick="abrirEditarEnfermedad(${enfermedad.idenfermedad}, '${enfermedad.nombenfermedad}', ${enfermedad.idtipoenfermedad})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </td>
             </tr>
         `;
         tbody.innerHTML += row;
