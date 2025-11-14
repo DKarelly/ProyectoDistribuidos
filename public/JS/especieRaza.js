@@ -6,6 +6,11 @@
 let especiesData = [];
 let razasData = [];
 
+// Variables de paginación
+let currentEspeciesPage = 1;
+let currentRazasPage = 1;
+const itemsPerPage = 10;
+
 // Cargar datos iniciales
 async function loadEspeciesYRazas() {
     try {
@@ -25,7 +30,7 @@ async function loadEspeciesYRazas() {
     }
 }
 
-// Mostrar especies en la tabla
+// Mostrar especies en la tabla con paginación
 function displayEspecies() {
     const tbody = document.getElementById('especiesBody');
     if (!tbody) return;
@@ -34,33 +39,41 @@ function displayEspecies() {
 
     if (especiesData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center">No hay especies registradas</td></tr>';
+        updateEspeciesPagination(0);
         return;
     }
 
     // Ordenar por ID antes de mostrar
     especiesData.sort((a, b) => a.idespecie - b.idespecie);
 
-    especiesData.forEach(especie => {
+    // Calcular índices para paginación
+    const startIndex = (currentEspeciesPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedData = especiesData.slice(startIndex, endIndex);
+
+    paginatedData.forEach(especie => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${especie.idespecie}</td>
             <td>${especie.especieanimal}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editEspecie(${especie.idespecie})">
+                <button class="btn btn-warning btn-sm btn-editar" data-id="${especie.idespecie}">
                     <i class="bi bi-pencil"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteEspecie(${especie.idespecie})">
+                <button class="btn btn-danger btn-sm btn-eliminar" data-id="${especie.idespecie}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
         `;
         tbody.appendChild(row);
     });
+
+    updateEspeciesPagination(especiesData.length);
 }
 
-// Mostrar razas en la tabla general
+// Mostrar razas en la tabla general con paginación
 function displayRazas() {
     const tbody = document.getElementById('generalBody');
     if (!tbody) return;
@@ -69,28 +82,39 @@ function displayRazas() {
 
     if (razasData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">No hay razas registradas</td></tr>';
+        updateRazasPagination(0);
         return;
     }
 
-    razasData.forEach(raza => {
+    // Ordenar por ID antes de mostrar
+    razasData.sort((a, b) => a.idraza - b.idraza);
+
+    // Calcular índices para paginación
+    const startIndex = (currentRazasPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedData = razasData.slice(startIndex, endIndex);
+
+    paginatedData.forEach(raza => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${raza.idraza}</td>
             <td>${raza.razaanimal}</td>
             <td>${raza.especieanimal}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editRaza(${raza.idraza})">
+                <button class="btn btn-warning btn-sm btn-editar" data-id="${raza.idraza}">
                     <i class="bi bi-pencil"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteRaza(${raza.idraza})">
+                <button class="btn btn-danger btn-sm btn-eliminar" data-id="${raza.idraza}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
         `;
         tbody.appendChild(row);
     });
+
+    updateRazasPagination(razasData.length);
 }
 
 // Filtrar especies
@@ -114,12 +138,12 @@ function filterEspecies() {
             <td>${especie.idespecie}</td>
             <td>${especie.especieanimal}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editEspecie(${especie.idespecie})">
+                <button class="btn btn-warning btn-sm btn-editar" data-id="${especie.idespecie}">
                     <i class="bi bi-pencil"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteEspecie(${especie.idespecie})">
+                <button class="btn btn-danger btn-sm btn-eliminar" data-id="${especie.idespecie}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -151,12 +175,12 @@ function filterRazas() {
             <td>${raza.razaanimal}</td>
             <td>${raza.especieanimal}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="editRaza(${raza.idraza})">
+                <button class="btn btn-warning btn-sm btn-editar" data-id="${raza.idraza}">
                     <i class="bi bi-pencil"></i>
                 </button>
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteRaza(${raza.idraza})">
+                <button class="btn btn-danger btn-sm btn-eliminar" data-id="${raza.idraza}">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -494,6 +518,34 @@ document.addEventListener('DOMContentLoaded', function () {
         buscarRaza.addEventListener('input', filterRazas);
     }
 
+    // Event listeners para botones de especies
+    const especiesBody = document.getElementById('especiesBody');
+    if (especiesBody) {
+        especiesBody.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-editar')) {
+                const id = e.target.getAttribute('data-id');
+                editEspecie(parseInt(id));
+            } else if (e.target.classList.contains('btn-eliminar')) {
+                const id = e.target.getAttribute('data-id');
+                deleteEspecie(parseInt(id));
+            }
+        });
+    }
+
+    // Event listeners para botones de razas
+    const generalBody = document.getElementById('generalBody');
+    if (generalBody) {
+        generalBody.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-editar')) {
+                const id = e.target.getAttribute('data-id');
+                editRaza(parseInt(id));
+            } else if (e.target.classList.contains('btn-eliminar')) {
+                const id = e.target.getAttribute('data-id');
+                deleteRaza(parseInt(id));
+            }
+        });
+    }
+
     // Evento para cargar especies cuando se abre el modal de raza
     const modalRaza = document.getElementById('modalRegistrarRaza');
     if (modalRaza) {
@@ -592,6 +644,84 @@ async function loadEspeciesForRaza() {
     }
 }
 
+// Actualizar paginación de especies
+function updateEspeciesPagination(totalItems) {
+    const paginationContainer = document.getElementById('especiesPagination');
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    if (totalPages <= 1) return;
+
+    // Botón anterior
+    const prevBtn = document.createElement('li');
+    prevBtn.className = `page-item ${currentEspeciesPage === 1 ? 'disabled' : ''}`;
+    prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeEspeciesPage(${currentEspeciesPage - 1})">Anterior</a>`;
+    paginationContainer.appendChild(prevBtn);
+
+    // Páginas
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('li');
+        pageBtn.className = `page-item ${i === currentEspeciesPage ? 'active' : ''}`;
+        pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeEspeciesPage(${i})">${i}</a>`;
+        paginationContainer.appendChild(pageBtn);
+    }
+
+    // Botón siguiente
+    const nextBtn = document.createElement('li');
+    nextBtn.className = `page-item ${currentEspeciesPage === totalPages ? 'disabled' : ''}`;
+    nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeEspeciesPage(${currentEspeciesPage + 1})">Siguiente</a>`;
+    paginationContainer.appendChild(nextBtn);
+}
+
+// Actualizar paginación de razas
+function updateRazasPagination(totalItems) {
+    const paginationContainer = document.getElementById('razasPagination');
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    if (totalPages <= 1) return;
+
+    // Botón anterior
+    const prevBtn = document.createElement('li');
+    prevBtn.className = `page-item ${currentRazasPage === 1 ? 'disabled' : ''}`;
+    prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeRazasPage(${currentRazasPage - 1})">Anterior</a>`;
+    paginationContainer.appendChild(prevBtn);
+
+    // Páginas
+    for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement('li');
+        pageBtn.className = `page-item ${i === currentRazasPage ? 'active' : ''}`;
+        pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeRazasPage(${i})">${i}</a>`;
+        paginationContainer.appendChild(pageBtn);
+    }
+
+    // Botón siguiente
+    const nextBtn = document.createElement('li');
+    nextBtn.className = `page-item ${currentRazasPage === totalPages ? 'disabled' : ''}`;
+    nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeRazasPage(${currentRazasPage + 1})">Siguiente</a>`;
+    paginationContainer.appendChild(nextBtn);
+}
+
+// Cambiar página de especies
+function changeEspeciesPage(page) {
+    if (page < 1 || page > Math.ceil(especiesData.length / itemsPerPage)) return;
+    currentEspeciesPage = page;
+    displayEspecies();
+}
+
+// Cambiar página de razas
+function changeRazasPage(page) {
+    if (page < 1 || page > Math.ceil(razasData.length / itemsPerPage)) return;
+    currentRazasPage = page;
+    displayRazas();
+}
+
 // Exponer funciones globales
 window.showModalRegistrarEspecie = showModalRegistrarEspecie;
 window.showModalRegistrarRaza = showModalRegistrarRaza;
@@ -605,3 +735,5 @@ window.updateEspecie = updateEspecie;
 window.updateRaza = updateRaza;
 window.registrarEspecie = registrarEspecie;
 window.registrarRaza = registrarRaza;
+window.changeEspeciesPage = changeEspeciesPage;
+window.changeRazasPage = changeRazasPage;
