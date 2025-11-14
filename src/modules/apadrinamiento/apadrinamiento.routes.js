@@ -28,7 +28,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
         if (nombre) {
             paramCount++;
-            whereConditions.push(`(p.nombrepersona ILIKE $${paramCount} OR e.nombreempresa ILIKE $${paramCount})`);
+            whereConditions.push(`(p.nombres ILIKE $${paramCount} OR e.nombreempresa ILIKE $${paramCount})`);
             params.push(`%${nombre}%`);
         }
 
@@ -42,24 +42,19 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
         const sql = `
             SELECT
-                ap.idapadrinamiento,
-                ap.f_inicio,
-                ap.frecuencia,
-                ap.f_fin,
-                a.idanimal,
+                ap.idapadrinamiento, ap.f_inicio, ap.frecuencia,
+                d.iddonacion,
+            	a.idanimal,
                 a.nombreanimal,
                 u.idusuario,
                 u.aliasusuario,
-                COALESCE(p.nombrepersona, e.nombreempresa) as nombre_completo,
-                d.iddonacion,
-                dd.cantidaddonacion as monto
+                COALESCE(p.nombres, e.nombreempresa) as nombre_completo
             FROM apadrinamiento ap
             JOIN animal a ON ap.idanimal = a.idanimal
             JOIN donacion d ON ap.iddonacion = d.iddonacion
             JOIN usuario u ON d.idusuario = u.idusuario
             LEFT JOIN persona p ON u.idusuario = p.idusuario
             LEFT JOIN empresa e ON u.idusuario = e.idusuario
-            JOIN detalle_donacion dd ON d.iddonacion = dd.iddonacion
             ${whereClause}
             ORDER BY ap.f_inicio DESC
         `;
@@ -264,7 +259,7 @@ router.get('/usuarios', authenticateToken, requireAdmin, async (req, res) => {
         let params = [];
 
         if (search) {
-            whereClause = 'WHERE u.aliasusuario ILIKE $1 OR p.nombrepersona ILIKE $1 OR e.nombreempresa ILIKE $1';
+            whereClause = 'WHERE u.aliasusuario ILIKE $1 OR p.nombres ILIKE $1 OR e.nombreempresa ILIKE $1';
             params.push(`%${search}%`);
         }
 
@@ -272,7 +267,7 @@ router.get('/usuarios', authenticateToken, requireAdmin, async (req, res) => {
             SELECT
                 u.idusuario,
                 u.aliasusuario,
-                COALESCE(p.nombrepersona, e.nombreempresa) as nombre_completo
+                COALESCE(p.nombres, e.nombreempresa) as nombre_completo
             FROM usuario u
             LEFT JOIN persona p ON u.idusuario = p.idusuario
             LEFT JOIN empresa e ON u.idusuario = e.idusuario
