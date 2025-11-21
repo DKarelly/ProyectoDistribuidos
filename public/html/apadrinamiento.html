@@ -125,6 +125,22 @@
                     <span class="badge bg-light text-dark" id="badgeSolicitudes" style="display:none"></span>
                 </div>
                 <div class="card-body" id="solicitudesBody" style="display:none">
+                    <!-- Filtros de estado -->
+                    <div class="d-flex gap-2 mb-3 justify-content-center flex-wrap">
+                        <button class="btn btn-outline-primary btn-filtro-solicitud active" data-estado="todos" id="btnTodos">
+                            Todas <span class="badge bg-primary ms-1" id="contadorTodos">0</span>
+                        </button>
+                        <button class="btn btn-outline-warning btn-filtro-solicitud" data-estado="Pendiente" id="btnPendiente">
+                            Pendiente <span class="badge bg-warning ms-1" id="contadorPendiente">0</span>
+                        </button>
+                        <button class="btn btn-outline-success btn-filtro-solicitud" data-estado="Aceptada" id="btnAceptada">
+                            Aceptada <span class="badge bg-success ms-1" id="contadorAceptada">0</span>
+                        </button>
+                        <button class="btn btn-outline-danger btn-filtro-solicitud" data-estado="Rechazada" id="btnRechazada">
+                            Rechazada <span class="badge bg-danger ms-1" id="contadorRechazada">0</span>
+                        </button>
+                    </div>
+                    
                     <div class="table-responsive">
                         <table id="tablaSolicitudes" class="table align-middle">
                             <thead class="table-light">
@@ -355,6 +371,9 @@
                 </div>
                 <div class="modal-body">
                     <form id="formRegistrarApadrinamiento" class="row g-3">
+                        <!-- Campo oculto para ID de solicitud (si aplica) -->
+                        <input type="hidden" id="idSolicitudApadrinamiento" name="idSolicitudApadrinamiento" value="">
+                        
                         <div class="col-md-6">
                             <label class="form-label">ID Animal</label>
                             <input type="text" class="form-control" id="idAnimal" name="idAnimal" readonly>
