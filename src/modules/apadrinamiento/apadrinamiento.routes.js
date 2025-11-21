@@ -60,13 +60,15 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
         // Obtener registros paginados
         const sql = `
             SELECT
-                ap.idapadrinamiento, ap.f_inicio, ap.frecuencia,
-                d.iddonacion,
-            	a.idanimal,
-                a.nombreanimal,
-                u.idusuario,
-                u.aliasusuario,
-                COALESCE(p.nombres, e.nombreempresa) as nombre_completo
+                    ap.idapadrinamiento, ap.f_inicio, ap.frecuencia,
+                    d.iddonacion,
+                a.idanimal,
+                    a.nombreanimal,
+                    u.idusuario,
+                    u.aliasusuario,
+                    COALESCE(p.nombres, e.nombreempresa) as nombre_completo,
+                    ap.idsolicitudapadrinamiento,
+                    ap.estado
             FROM apadrinamiento ap
             JOIN animal a ON ap.idanimal = a.idanimal
             JOIN donacion d ON ap.iddonacion = d.iddonacion
@@ -95,6 +97,31 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo apadrinamientos:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// POST /api/apadrinamiento/:id/anular - Cambiar estado a Inactivo (solo admin)
+router.post('/:id/anular', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log('POST /api/apadrinamiento/:id/anular called - id=', id);
+
+        // Verificar que el apadrinamiento existe
+        const apadrinamientoResult = await query('SELECT * FROM apadrinamiento WHERE idapadrinamiento = $1', [id]);
+        if (!apadrinamientoResult.rows.length) {
+            return res.status(404).json({ message: 'Apadrinamiento no encontrado' });
+        }
+
+        // Actualizar solo el estado a Inactivo
+        const sql = `UPDATE apadrinamiento SET estado = 'Inactivo' WHERE idapadrinamiento = $1`;
+        await query(sql, [id]);
+
+        const updatedRow = await query('SELECT * FROM apadrinamiento WHERE idapadrinamiento = $1', [id]);
+        return res.json({ message: 'Apadrinamiento anulado', data: updatedRow.rows[0] });
+    } catch (error) {
+        console.error('Error anulando apadrinamiento:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
@@ -130,20 +157,6 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
             return res.status(400).json({ message: 'Usuario no encontrado' });
         }
 
-        // Buscar o crear categoría "Apadrinamiento"
-        let categoriaResult = await query(
-            "SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = 'Apadrinamiento'"
-        );
-
-        let idCategoria;
-        if (categoriaResult.rows.length === 0) {
-            const newCategoriaResult = await query(
-                "INSERT INTO categoria_donacion (nombcategoria) VALUES ('Apadrinamiento') RETURNING idcategoria"
-            );
-            idCategoria = newCategoriaResult.rows[0].idcategoria;
-        } else {
-            idCategoria = categoriaResult.rows[0].idcategoria;
-        }
 
         // Crear donación
         const donacionResult = await query(`
@@ -154,16 +167,12 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 
         const idDonacion = donacionResult.rows[0].iddonacion;
 
-        // Crear detalle donación (cantidad 0 para apadrinamiento simbólico)
-        await query(`
-            INSERT INTO detalle_donacion (cantidaddonacion, iddonacion, idcategoria)
-            VALUES (0, $1, $2)
-        `, [idDonacion, idCategoria]);
-
         // Crear apadrinamiento
+        // Algunos esquemas esperan campos adicionales como idsolicitudapadrinamiento y estado.
+        // Insertamos idsolicitudapadrinamiento como NULL y asignamos estado 'Activo' por defecto.
         const apadrinamientoResult = await query(`
-            INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal)
-            VALUES (CURRENT_DATE, $1, $2, $3)
+            INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal, idsolicitudapadrinamiento, estado)
+            VALUES (CURRENT_DATE, $1, $2, $3, NULL, 'Activo')
             RETURNING idapadrinamiento
         `, [frecuencia, idDonacion, idAnimal]);
 
@@ -188,17 +197,21 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { idAnimal, nombreAnimal, idUsuario, aliasUsuario, frecuencia } = req.body;
+        console.log('PUT /api/apadrinamiento/:id called - id=', id, 'method=', req.method);
+        console.log('Request body:', req.body);
+        const body = req.body || {};
+        // Aceptar varias formas de nombrar campos (camelCase / lowercase)
+        const idAnimalFromBody = body.idAnimal ?? body.idanimal ?? body.id_animal;
+        // Compatibilidad: algunas rutas/llamadas antiguas pueden usar `idAnimal`
+        const idAnimal = idAnimalFromBody;
+        const frecuenciaFromBody = body.frecuencia ?? body.Frecuencia ?? body.freq;
+        const idDonacionFromBody = body.iddonacion ?? body.idDonacion ?? body.id_donacion;
+        const idSolicitudFromBody = body.idsolicitudapadrinamiento ?? body.idSolicitud ?? body.id_solicitudapadrinamiento;
+        const estadoFromBody = body.estado ?? body.Estado;
 
-        if (!idAnimal || !idUsuario || !frecuencia) {
-            return res.status(400).json({
-                message: 'Los campos idAnimal, idUsuario y frecuencia son requeridos'
-            });
-        }
-
-        // Verificar que el apadrinamiento existe
+        // Verificar que el apadrinamiento existe y obtener valores actuales
         const apadrinamientoResult = await query(
-            'SELECT idapadrinamiento FROM apadrinamiento WHERE idapadrinamiento = $1',
+            'SELECT * FROM apadrinamiento WHERE idapadrinamiento = $1',
             [id]
         );
 
@@ -206,37 +219,57 @@ router.put('/:id', authenticateToken, requireAdmin, async (req, res) => {
             return res.status(404).json({ message: 'Apadrinamiento no encontrado' });
         }
 
-        // Verificar que el animal existe
-        const animalResult = await query(
-            'SELECT idanimal FROM animal WHERE idanimal = $1',
-            [idAnimal]
-        );
+        const current = apadrinamientoResult.rows[0];
 
+        // Verificar que el animal existe si se pide actualizar (usar la variante capturada)
+        if (idAnimalFromBody) {
+            const animalCheck = await query(
+                'SELECT idanimal FROM animal WHERE idanimal = $1',
+                [idAnimalFromBody]
+            );
+
+            if (!animalCheck.rows.length) {
+                return res.status(400).json({ message: 'Animal no encontrado' });
+            }
+        }
+
+        // Preparar valores: usar los del body (en cualquiera de las variantes) o los actuales si no se proporcionan
+        const newFInicio = body.f_inicio ?? body.fInicio ?? current.f_inicio;
+        const newFrecuencia = frecuenciaFromBody ?? current.frecuencia;
+        const newIdDonacion = idDonacionFromBody ?? current.iddonacion;
+        const newIdAnimal = idAnimalFromBody ?? current.idanimal;
+        const newIdSolicitud = idSolicitudFromBody ?? current.idsolicitudapadrinamiento;
+        const newEstado = estadoFromBody ?? current.estado;
+
+        // Validar que el animal exista (si se cambiará)
+        const animalResult = await query('SELECT idanimal FROM animal WHERE idanimal = $1', [newIdAnimal]);
         if (!animalResult.rows.length) {
             return res.status(400).json({ message: 'Animal no encontrado' });
         }
 
-        // Verificar que el usuario existe
-        const usuarioResult = await query(
-            'SELECT idusuario FROM usuario WHERE idusuario = $1',
-            [idUsuario]
-        );
-
-        if (!usuarioResult.rows.length) {
-            return res.status(400).json({ message: 'Usuario no encontrado' });
-        }
-
-        // Actualizar apadrinamiento
-        await query(`
+        // Ejecutar UPDATE con los seis campos
+        const sqlUpdate = `
             UPDATE apadrinamiento
-            SET frecuencia = $1
-            WHERE idapadrinamiento = $2
-        `, [frecuencia, id]);
+            SET f_inicio = $1,
+                frecuencia = $2,
+                iddonacion = $3,
+                idanimal = $4,
+                idsolicitudapadrinamiento = $5,
+                estado = $6
+            WHERE idapadrinamiento = $7
+        `;
 
-        res.json({
-            message: 'Apadrinamiento actualizado exitosamente',
-            data: { idApadrinamiento: id }
-        });
+        const params = [newFInicio, newFrecuencia, newIdDonacion, newIdAnimal, newIdSolicitud, newEstado, id];
+
+        console.log('Executing SQL (full update):', sqlUpdate);
+        console.log('With params:', params);
+
+        await query(sqlUpdate, params);
+
+        // Devolver fila actualizada
+        const updatedRow = await query('SELECT * FROM apadrinamiento WHERE idapadrinamiento = $1', [id]);
+
+        return res.json({ message: 'Apadrinamiento actualizado', data: updatedRow.rows[0] });
 
     } catch (error) {
         console.error('Error actualizando apadrinamiento:', error);

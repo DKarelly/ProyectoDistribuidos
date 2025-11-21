@@ -82,16 +82,6 @@ router.post('/:id/aprobar', authenticateToken, requireAdmin, async (req, res) =>
 
         const solicitud = solicitudResult.rows[0];
 
-        // Obtener o crear categoría para apadrinamiento
-        let categoriaResult = await query("SELECT idcategoria FROM categoria_donacion WHERE nombcategoria = 'Apadrinamiento'");
-        let idCategoria;
-        if (categoriaResult.rows.length) {
-            idCategoria = categoriaResult.rows[0].idcategoria;
-        } else {
-            const insertCategoria = await query("INSERT INTO categoria_donacion (nombcategoria) VALUES ('Apadrinamiento') RETURNING idcategoria");
-            idCategoria = insertCategoria.rows[0].idcategoria;
-        }
-
         // Crear donación
         const donacionResult = await query(`
             INSERT INTO donacion (f_donacion, h_donacion, idusuario)
@@ -101,18 +91,13 @@ router.post('/:id/aprobar', authenticateToken, requireAdmin, async (req, res) =>
 
         const idDonacion = donacionResult.rows[0].iddonacion;
 
-        // Crear detalle donación (cantidad 0 para apadrinamiento simbólico)
-        await query(`
-            INSERT INTO detalle_donacion (cantidaddonacion, iddonacion, idcategoria)
-            VALUES (0, $1, $2)
-        `, [idDonacion, idCategoria]);
-
-        // Crear apadrinamiento
+        // NOTA: Para el flujo de apadrinamiento, solo insertamos en `donacion` y `apadrinamiento`.
+        // Crear apadrinamiento vinculando la solicitud aprobada.
         const apadrinamientoResult = await query(`
-            INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal)
-            VALUES (CURRENT_DATE, 'Mensual', $1, $2)
+            INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal, idsolicitudapadrinamiento, estado)
+            VALUES (CURRENT_DATE, 'Mensual', $1, $2, $3, 'Activo')
             RETURNING idapadrinamiento
-        `, [idDonacion, solicitud.idanimal]);
+        `, [idDonacion, solicitud.idanimal, id]);
 
         // Actualizar estado de la solicitud
         await query(

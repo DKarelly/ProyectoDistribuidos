@@ -92,6 +92,7 @@
                                     <th>Nombre Animal</th>
                                     <th>Fecha Inicio</th>
                                     <th>Frecuencia</th>
+                                    <th>Estado</th>
                                     <th>ID Donación</th>
                                     <th>ID Solicitud</th>
                                     <th>Editar</th>
@@ -356,33 +357,33 @@
                     <form id="formRegistrarApadrinamiento" class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">ID Animal</label>
-                            <input type="text" class="form-control" id="idAnimal" readonly>
+                            <input type="text" class="form-control" id="idAnimal" name="idAnimal" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nombre del Animal</label>
-                            <input type="text" class="form-control" id="nombreAnimal"
+                            <input type="text" class="form-control" id="nombreAnimal" name="nombreAnimal"
                                 placeholder="Escribe el nombre del animal">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Fecha Donación</label>
-                            <input type="date" class="form-control" id="fechaDonacion" readonly>
+                            <input type="date" class="form-control" id="fechaDonacion" name="fechaDonacion" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Hora Donación</label>
-                            <input type="time" class="form-control" id="horaDonacion" readonly>
+                            <input type="time" class="form-control" id="horaDonacion" name="horaDonacion" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">ID Usuario</label>
-                            <input type="text" class="form-control" id="idUsuario" readonly>
+                            <input type="text" class="form-control" id="idUsuario" name="idUsuario" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Alias del Usuario</label>
-                            <input type="text" class="form-control" id="aliasUsuario"
+                            <input type="text" class="form-control" id="aliasUsuario" name="aliasUsuario"
                                 placeholder="Escribe el alias del usuario">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Frecuencia</label>
-                            <select class="form-select" id="frecuencia">
+                            <select class="form-select" id="frecuencia" name="frecuencia">
                                 <option value="">Seleccionar</option>
                                 <option>Semanal</option>
                                 <option>Mensual</option>
@@ -412,40 +413,128 @@
                     <form id="formModificarApadrinamiento" class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">ID Animal</label>
-                            <input type="text" class="form-control" id="modIdAnimal" readonly>
+                            <input type="text" class="form-control" id="modIdAnimal" name="idAnimal" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Nombre del Animal</label>
-                            <input type="text" class="form-control" id="modNombreAnimal">
+                            <input type="text" class="form-control" id="modNombreAnimal" name="nombreAnimal">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Fecha Donación</label>
-                            <input type="date" class="form-control" id="modFechaDonacion" readonly>
+                            <input type="date" class="form-control" id="modFechaDonacion" name="fechaDonacion" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Hora Donación</label>
-                            <input type="time" class="form-control" id="modHoraDonacion" readonly>
+                            <input type="time" class="form-control" id="modHoraDonacion" name="horaDonacion" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">ID Usuario</label>
-                            <input type="text" class="form-control" id="modIdUsuario" readonly>
+                            <input type="text" class="form-control" id="modIdUsuario" name="idUsuario" readonly>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Alias del Usuario</label>
-                            <input type="text" class="form-control" id="modAliasUsuario">
+                            <input type="text" class="form-control" id="modAliasUsuario" name="aliasUsuario">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Frecuencia</label>
-                            <select class="form-select" id="modFrecuencia">
+                            <select class="form-select" id="modFrecuencia" name="frecuencia">
                                 <option>Semanal</option>
                                 <option>Mensual</option>
                                 <option>Trimestral</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" id="modEstado" name="estado">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
                             </select>
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-pink">Guardar Cambios</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER DETALLES -->
+    <div class="modal fade" id="modalVerApadrinamiento" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-pink text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-eye-fill me-2"></i>Detalles del Apadrinamiento
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">ID Apadrinamiento</label>
+                            <input type="text" class="form-control" id="verIdApadrinamiento" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Alias Usuario</label>
+                            <input type="text" class="form-control" id="verAliasUsuario" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre Usuario</label>
+                            <input type="text" class="form-control" id="verNombreUsuario" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ID Animal</label>
+                            <input type="text" class="form-control" id="verIdAnimal" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Nombre Animal</label>
+                            <input type="text" class="form-control" id="verNombreAnimal" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha Inicio</label>
+                            <input type="text" class="form-control" id="verFechaInicio" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Frecuencia</label>
+                            <input type="text" class="form-control" id="verFrecuencia" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ID Donación</label>
+                            <input type="text" class="form-control" id="verIdDonacion" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">ID Solicitud</label>
+                            <input type="text" class="form-control" id="verIdSolicitud" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Estado</label>
+                            <input type="text" class="form-control" id="verEstado" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ANULAR APADRINAMIENTO -->
+    <div class="modal fade" id="modalAnularApadrinamiento" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Anular Apadrinamiento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea anular este apadrinamiento? Esto cambiará su estado a <strong>Inactivo</strong>.</p>
+                    <input type="hidden" id="anularIdApadrinamiento">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="confirmarAnularBtn" class="btn btn-danger">Anular</button>
                 </div>
             </div>
         </div>
