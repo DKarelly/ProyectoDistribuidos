@@ -129,7 +129,7 @@ router.post('/:id/anular', authenticateToken, requireAdmin, async (req, res) => 
 // POST /api/apadrinamiento - Crear nuevo apadrinamiento (solo admin)
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { idAnimal, nombreAnimal, idUsuario, aliasUsuario, frecuencia } = req.body;
+        const { idAnimal, nombreAnimal, idUsuario, aliasUsuario, frecuencia, idSolicitudApadrinamiento } = req.body;
 
         if (!idAnimal || !idUsuario || !frecuencia) {
             return res.status(400).json({
@@ -157,7 +157,6 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
             return res.status(400).json({ message: 'Usuario no encontrado' });
         }
 
-
         // Crear donación
         const donacionResult = await query(`
             INSERT INTO donacion (f_donacion, h_donacion, idusuario)
@@ -167,14 +166,21 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 
         const idDonacion = donacionResult.rows[0].iddonacion;
 
-        // Crear apadrinamiento
-        // Algunos esquemas esperan campos adicionales como idsolicitudapadrinamiento y estado.
-        // Insertamos idsolicitudapadrinamiento como NULL y asignamos estado 'Activo' por defecto.
+        // Crear apadrinamiento con o sin idsolicitudapadrinamiento
+        const idSolicitud = idSolicitudApadrinamiento || null;
         const apadrinamientoResult = await query(`
             INSERT INTO apadrinamiento (f_inicio, frecuencia, iddonacion, idanimal, idsolicitudapadrinamiento, estado)
-            VALUES (CURRENT_DATE, $1, $2, $3, NULL, 'Activo')
+            VALUES (CURRENT_DATE, $1, $2, $3, $4, 'Activo')
             RETURNING idapadrinamiento
-        `, [frecuencia, idDonacion, idAnimal]);
+        `, [frecuencia, idDonacion, idAnimal, idSolicitud]);
+
+        // Si viene de una solicitud, actualizar su estado a 'Aceptada'
+        if (idSolicitud) {
+            await query(
+                'UPDATE solicitud_apadrinamiento SET estado = $1 WHERE idsolicitudapadrinamiento = $2',
+                ['Aceptada', idSolicitud]
+            );
+        }
 
         res.status(201).json({
             message: 'Apadrinamiento creado exitosamente',
@@ -183,7 +189,8 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
                 idDonacion,
                 animal: animalResult.rows[0].nombreanimal,
                 usuario: usuarioResult.rows[0].aliasusuario,
-                frecuencia
+                frecuencia,
+                idSolicitud
             }
         });
 
