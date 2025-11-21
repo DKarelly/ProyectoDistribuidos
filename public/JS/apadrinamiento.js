@@ -80,10 +80,14 @@ function mostrarApadrinamientos(apadrinamientos) {
             <td>${apadrinamiento.nombreanimal}</td>
             <td>${new Date(apadrinamiento.f_inicio).toLocaleDateString()}</td>
             <td>${apadrinamiento.frecuencia}</td>
+            <td>${apadrinamiento.estado || 'Activo'}</td>
             <td>${apadrinamiento.iddonacion}</td>
-            <td>${apadrinamiento.idsolicitudapadrinamiento || 'Registrado por el admin'}</td>
+            <td>${apadrinamiento.idsolicitudapadrinamiento ? apadrinamiento.idsolicitudapadrinamiento : 'Registrado por el admin'}</td>
             <td>
-                <button class="btn btn-success btn-sm rounded-circle btn-editar" data-id="${apadrinamiento.idapadrinamiento}">
+                <button class="btn btn-info btn-sm rounded-circle btn-ver me-1" data-id="${apadrinamiento.idapadrinamiento}" title="Ver">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
+                <button class="btn btn-success btn-sm rounded-circle btn-editar" data-id="${apadrinamiento.idapadrinamiento}" title="Editar">
                     <i class="bi bi-pencil-square"></i>
                 </button>
             </td>
@@ -100,6 +104,11 @@ function mostrarApadrinamientos(apadrinamientos) {
     // Agregar eventos a los botones
     document.querySelectorAll('.btn-editar').forEach(btn => {
         btn.addEventListener('click', () => editarApadrinamiento(btn.dataset.id));
+    });
+
+    // Botones ver detalles
+    document.querySelectorAll('.btn-ver').forEach(btn => {
+        btn.addEventListener('click', () => verApadrinamiento(btn.dataset.id));
     });
 
     document.querySelectorAll('.btn-eliminar').forEach(btn => {
@@ -270,6 +279,10 @@ function editarApadrinamiento(id) {
     document.getElementById('modIdUsuario').value = apadrinamiento.idusuario;
     document.getElementById('modAliasUsuario').value = apadrinamiento.aliasusuario;
     document.getElementById('modFrecuencia').value = apadrinamiento.frecuencia;
+    // Rellenar estado en el modal de edición
+    if (document.getElementById('modEstado')) {
+        document.getElementById('modEstado').value = apadrinamiento.estado || 'Activo';
+    }
 
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalModificarApadrinamiento'));
@@ -277,6 +290,27 @@ function editarApadrinamiento(id) {
 
     // Guardar ID para modificación
     document.getElementById('formModificarApadrinamiento').dataset.id = id;
+}
+
+// Ver detalles de apadrinamiento
+function verApadrinamiento(id) {
+    const apadrinamiento = apadrinamientosData.find(a => a.idapadrinamiento == id);
+    if (!apadrinamiento) return;
+
+    // Rellenar modal con los datos disponibles (usar fallback si no existen propiedades)
+    document.getElementById('verIdApadrinamiento').value = apadrinamiento.idapadrinamiento || '';
+    document.getElementById('verAliasUsuario').value = apadrinamiento.aliasusuario || '';
+    document.getElementById('verNombreUsuario').value = apadrinamiento.nombre_completo || '';
+    document.getElementById('verIdAnimal').value = apadrinamiento.idanimal || '';
+    document.getElementById('verNombreAnimal').value = apadrinamiento.nombreanimal || '';
+    document.getElementById('verFechaInicio').value = apadrinamiento.f_inicio ? new Date(apadrinamiento.f_inicio).toLocaleDateString() : '';
+    document.getElementById('verFrecuencia').value = apadrinamiento.frecuencia || '';
+    document.getElementById('verIdDonacion').value = apadrinamiento.iddonacion || '';
+    document.getElementById('verIdSolicitud').value = apadrinamiento.idsolicitudapadrinamiento ? apadrinamiento.idsolicitudapadrinamiento : 'Registrado por el admin';
+    document.getElementById('verEstado').value = apadrinamiento.estado || '';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalVerApadrinamiento'));
+    modal.show();
 }
 
 // Modificar apadrinamiento
@@ -312,31 +346,91 @@ async function modificarApadrinamiento(event) {
     }
 }
 
-// Eliminar apadrinamiento
-async function eliminarApadrinamiento(id) {
-    if (!confirm('¿Está seguro de que desea eliminar este apadrinamiento?')) return;
-
-    try {
-        const response = await fetch(`${window.location.origin}/api/apadrinamiento/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+// Eliminar (anular) apadrinamiento — abre modal de confirmación y guarda el id
+function eliminarApadrinamiento(id) {
+    // Guardar id en el input hidden del modal y mostrar el modal de confirmación
+    const input = document.getElementById('anularIdApadrinamiento');
+    if (input) input.value = id;
+    const modalEl = document.getElementById('modalAnularApadrinamiento');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    } else {
+        // Fallback: si el modal no existe, pedir confirmación nativa y realizar PUT
+        if (!confirm('¿Está seguro que desea anular este apadrinamiento? Esto cambiará su estado a Inactivo.')) return;
+        (async () => {
+            try {
+                const response = await fetch(`${window.location.origin}/api/apadrinamiento/${encodeURIComponent(id)}/anular`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Apadrinamiento anulado correctamente');
+                    cargarApadrinamientos();
+                } else {
+                    alert('Error al anular apadrinamiento: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error anular apadrinamiento (fallback):', error);
+                alert('Error al conectar con el servidor');
             }
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Apadrinamiento eliminado exitosamente');
-            cargarApadrinamientos();
-        } else {
-            alert('Error al eliminar apadrinamiento: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al conectar con el servidor');
+        })();
     }
 }
+
+// Acción confirmada de anular: cambia estado a 'Inactivo' usando PUT
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('confirmarAnularBtn');
+    if (btn) {
+        btn.addEventListener('click', async (event) => {
+            // Evitar cualquier submit accidental o propagación
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+
+            const id = document.getElementById('anularIdApadrinamiento').value;
+            const payload = { estado: 'Inactivo' };
+
+            console.log('Anular apadrinamiento - enviar POST /anular', id);
+
+            try {
+                const response = await fetch(`${window.location.origin}/api/apadrinamiento/${encodeURIComponent(id)}/anular`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+
+                // Debug info
+                console.log('Response status:', response.status, 'for anular PUT');
+
+                // Leer el cuerpo como texto (evita leer el stream dos veces)
+                let result;
+                const text = await response.text();
+                try {
+                    result = JSON.parse(text);
+                    console.log('Response JSON (anular):', result);
+                } catch (err) {
+                    console.log('Response text (anular) - not JSON:', text);
+                    result = { message: text };
+                }
+
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalAnularApadrinamiento')).hide();
+                    alert('Apadrinamiento anulado correctamente');
+                    cargarApadrinamientos();
+                } else {
+                    alert('Error al anular apadrinamiento: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor');
+            }
+        });
+    }
+});
 
 // Cargar solicitudes de apadrinamiento con paginación
 async function cargarSolicitudes(page = 1) {
