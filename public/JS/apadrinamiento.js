@@ -1,11 +1,15 @@
 // Variables globales
 let apadrinamientosData = [];
 let solicitudesData = [];
+let solicitudesDataCompleta = []; // Guardar todas las solicitudes sin filtrar
 
 // Variables para paginación
 let currentApadrinamientosPage = 1;
 let currentSolicitudesPage = 1;
 const itemsPerPage = 10;
+
+// Variable para el filtro de estado de solicitudes
+let filtroEstadoSolicitud = 'todos';
 
 // Inicializar cuando se carga la página
 document.addEventListener('DOMContentLoaded', function () {
@@ -39,6 +43,19 @@ function configurarEventos() {
     // Autocompletado para nombre de animal
     document.getElementById('nombreAnimal').addEventListener('input', buscarAnimales);
     document.getElementById('modNombreAnimal').addEventListener('input', buscarAnimales);
+
+    // Filtros de estado de solicitudes
+    document.querySelectorAll('.btn-filtro-solicitud').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover active de todos los botones
+            document.querySelectorAll('.btn-filtro-solicitud').forEach(b => b.classList.remove('active'));
+            // Agregar active al botón clickeado
+            this.classList.add('active');
+            // Aplicar filtro
+            filtroEstadoSolicitud = this.dataset.estado;
+            aplicarFiltroSolicitudes();
+        });
+    });
 }
 
 // Cargar apadrinamientos con paginación
@@ -242,6 +259,12 @@ async function registrarApadrinamiento(event) {
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
 
+    // Si hay un idSolicitudApadrinamiento, agregarlo al objeto
+    const idSolicitud = document.getElementById('idSolicitudApadrinamiento').value;
+    if (idSolicitud) {
+        data.idSolicitudApadrinamiento = idSolicitud;
+    }
+
     try {
         const response = await fetch(window.location.origin + '/api/apadrinamiento', {
             method: 'POST',
@@ -258,7 +281,12 @@ async function registrarApadrinamiento(event) {
             alert('Apadrinamiento registrado exitosamente');
             bootstrap.Modal.getInstance(document.getElementById('modalRegistrarApadrinamiento')).hide();
             event.target.reset();
+            
+            // Limpiar el campo oculto de solicitud
+            document.getElementById('idSolicitudApadrinamiento').value = '';
+            
             cargarApadrinamientos();
+            cargarSolicitudes(); // Recargar solicitudes para actualizar el estado
         } else {
             alert('Error al registrar apadrinamiento: ' + result.message);
         }
@@ -435,6 +463,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // Cargar solicitudes de apadrinamiento con paginación
 async function cargarSolicitudes(page = 1) {
     try {
+        // Cargar todas las solicitudes para contadores (sin límite)
+        const responseAll = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento?page=1&limit=1000`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        const dataAll = await responseAll.json();
+
+        if (responseAll.ok) {
+            solicitudesDataCompleta = dataAll.data;
+            actualizarContadoresSolicitudes();
+        }
+
         const response = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento?page=${page}&limit=${itemsPerPage}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -444,7 +485,7 @@ async function cargarSolicitudes(page = 1) {
 
         if (response.ok) {
             solicitudesData = data.data;
-            mostrarSolicitudes(solicitudesData);
+            aplicarFiltroSolicitudes();
             renderSolicitudesPagination(data.pagination);
             actualizarBadgeSolicitudes();
         } else {
@@ -463,12 +504,9 @@ function mostrarSolicitudes(solicitudes) {
     solicitudes.forEach(solicitud => {
         const row = document.createElement('tr');
 
-        row.innerHTML = `
-            <td>${solicitud.idsolicitudapadrinamiento}</td>
-            <td>${solicitud.nombreusuario}</td>
-            <td>${solicitud.idanimal}</td>
-            <td>${solicitud.nombreanimal}</td>
-            <td>${solicitud.estado}</td>
+        // Determinar si mostrar botones según el estado
+        const esPendiente = solicitud.estado === 'Pendiente';
+        const botonesHTML = esPendiente ? `
             <td>
                 <button class="btn btn-success btn-sm rounded-circle btn-aprobar" style="background-color: #90EE90; border-color: #90EE90;" data-id="${solicitud.idsolicitudapadrinamiento}" data-animal="${solicitud.idanimal}" data-usuario="${solicitud.idusuario}" data-nombre="${solicitud.nombreanimal}">
                     <i class="bi bi-check-circle"></i>
@@ -479,6 +517,18 @@ function mostrarSolicitudes(solicitudes) {
                     <i class="bi bi-x-circle"></i>
                 </button>
             </td>
+        ` : `
+            <td>-</td>
+            <td>-</td>
+        `;
+
+        row.innerHTML = `
+            <td>${solicitud.idsolicitudapadrinamiento}</td>
+            <td>${solicitud.nombreusuario}</td>
+            <td>${solicitud.idanimal}</td>
+            <td>${solicitud.nombreanimal}</td>
+            <td>${solicitud.estado}</td>
+            ${botonesHTML}
         `;
 
         tbody.appendChild(row);
@@ -497,7 +547,7 @@ function mostrarSolicitudes(solicitudes) {
 // Actualizar badge de solicitudes
 function actualizarBadgeSolicitudes() {
     const badge = document.getElementById('badgeSolicitudes');
-    const count = solicitudesData.length;
+    const count = solicitudesDataCompleta.filter(s => s.estado === 'Pendiente').length;
 
     if (count > 0) {
         badge.textContent = count;
@@ -507,36 +557,63 @@ function actualizarBadgeSolicitudes() {
     }
 }
 
-// Aprobar solicitud de apadrinamiento
-async function aprobarSolicitud(idSolicitud, idAnimal, idUsuario, nombreAnimal) {
-    if (!confirm(`¿Está seguro de que desea aprobar la solicitud de apadrinamiento para ${nombreAnimal}?`)) return;
+// Actualizar contadores de solicitudes por estado
+function actualizarContadoresSolicitudes() {
+    const contadores = {
+        todos: solicitudesDataCompleta.length,
+        Pendiente: solicitudesDataCompleta.filter(s => s.estado === 'Pendiente').length,
+        Aceptada: solicitudesDataCompleta.filter(s => s.estado === 'Aceptada').length,
+        Rechazada: solicitudesDataCompleta.filter(s => s.estado === 'Rechazada').length
+    };
 
-    try {
-        const response = await fetch(`${window.location.origin}/api/solicitudes-apadrinamiento/${idSolicitud}/aprobar`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
-            body: JSON.stringify({
-                idanimal: idAnimal,
-                idusuario: idUsuario
-            })
-        });
+    document.getElementById('contadorTodos').textContent = contadores.todos;
+    document.getElementById('contadorPendiente').textContent = contadores.Pendiente;
+    document.getElementById('contadorAceptada').textContent = contadores.Aceptada;
+    document.getElementById('contadorRechazada').textContent = contadores.Rechazada;
+}
 
-        const result = await response.json();
-
-        if (response.ok) {
-            alert('Solicitud aprobada exitosamente. El apadrinamiento ha sido registrado.');
-            cargarSolicitudes();
-            cargarApadrinamientos();
-        } else {
-            alert('Error al aprobar solicitud: ' + result.message);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error al conectar con el servidor');
+// Aplicar filtro de estado a las solicitudes
+function aplicarFiltroSolicitudes() {
+    let solicitudesFiltradas = solicitudesData;
+    
+    if (filtroEstadoSolicitud !== 'todos') {
+        solicitudesFiltradas = solicitudesData.filter(s => s.estado === filtroEstadoSolicitud);
     }
+    
+    mostrarSolicitudes(solicitudesFiltradas);
+}
+
+// Aprobar solicitud de apadrinamiento - Abre modal con datos precargados
+async function aprobarSolicitud(idSolicitud, idAnimal, idUsuario, nombreAnimal) {
+    // Buscar la solicitud completa en los datos
+    const solicitud = solicitudesData.find(s => s.idsolicitudapadrinamiento == idSolicitud);
+    
+    if (!solicitud) {
+        alert('No se encontró la solicitud');
+        return;
+    }
+
+    // Limpiar el formulario primero
+    document.getElementById('formRegistrarApadrinamiento').reset();
+
+    // Cargar los datos en el modal de registro
+    document.getElementById('idSolicitudApadrinamiento').value = idSolicitud;
+    document.getElementById('idAnimal').value = idAnimal;
+    document.getElementById('nombreAnimal').value = nombreAnimal;
+    document.getElementById('idUsuario').value = idUsuario;
+    document.getElementById('aliasUsuario').value = solicitud.nombreusuario || '';
+    
+    // Establecer fecha y hora actuales
+    const now = new Date();
+    document.getElementById('fechaDonacion').value = now.toISOString().split('T')[0];
+    document.getElementById('horaDonacion').value = now.toTimeString().slice(0, 5);
+    
+    // Establecer frecuencia por defecto
+    document.getElementById('frecuencia').value = 'Mensual';
+
+    // Abrir el modal de registro
+    const modal = new bootstrap.Modal(document.getElementById('modalRegistrarApadrinamiento'));
+    modal.show();
 }
 
 // Rechazar solicitud de apadrinamiento
