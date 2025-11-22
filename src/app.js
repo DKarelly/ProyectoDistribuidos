@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', 'config.env') });
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -95,4 +96,7 @@ app.use('/api/roles', require('./modules/roles/roles.routes'));
 app.use('/api/stats', require('./modules/stats/stats.routes'));
 app.use('/api/especieRaza', require('./modules/especieRaza/especieRaza.routes'));
 app.use('/api/enfermedades', require('./modules/enfermedades/enfermedades.routes'));
+// Ruta de chat: expone POST /api/chat
+app.use('/api/chat', require('./modules/chat/chat.routes'));
+
 module.exports = app;
