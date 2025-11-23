@@ -82,6 +82,10 @@ app.get('/enfermedades.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'html', 'enfermedades.html'));
 });
 
+app.get('/CRUD_donaciones.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'html', 'CRUD_donaciones.html'));
+});
+
 // Rutas base
 app.use('/api/auth', require('./modules/auth/auth.routes').router);
 app.use('/api/animals', require('./modules/animals/animals.routes'));

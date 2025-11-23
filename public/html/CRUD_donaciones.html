@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Donaciones</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="files/donacionesicono.png">
+    <link rel="shortcut icon" type="image/png" href="files/donacionesicono.png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="CSS/estilos.css">
+    <link rel="stylesheet" href="CSS/EstilosUsuarios.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+</head>
+
+<body style="background-color:#FFE6EE;">
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
+                <img src="files/donacionesicono.png" alt="Donaciones" width="32" height="32" class="me-2 d-inline-block">
+                DONACIONES
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="adopciones.html">Adopciones</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="donaciones.html">Donaciones</a></li>
+                    <li class="nav-item"><a class="nav-link" href="blog.html">Blog</a></li>
+                    <li class="nav-item"><a class="nav-link" href="reportar.html">Reportar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="acercaDe.html">Acerca de</a></li>
+                    <li class="nav-item"><a class="nav-link bi bi-speedometer2" id="boton" href="dashboard.html"></a></li>
+                    <li class="nav-item"><a class="nav-link" id="iniciarSesion" href="iniciarSesion.html">Iniciar Sesion</a></li>
+                    <li class="nav-item"><a class="nav-link btn-pink-custom ms-2" href="adopciones.html">Adopta aqui</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="modulo-donaciones text-center py-5 mt-5">
+        <div class="container">
+            <!-- TÍTULO -->
+            <i class="bi bi-gift-fill display-4 text-pink"></i>
+            <h2 class="fw-bold mt-2">Módulo de Donaciones</h2>
+            <hr class="mx-auto mb-4" style="width:60px; height:3px; background-color:#ff4d88; border:none;">
+            <!-- BOTÓN REGISTRAR -->
+            <button class="btn btn-pink mb-4" data-bs-toggle="modal" data-bs-target="#modalRegistrarDonacion">
+                <i class="bi bi-plus-lg me-2 text-pink"></i>Registrar nueva donación
+            </button>
+
+            <!-- FILTROS -->
+            <div class="row justify-content-center mb-4 g-2">
+                <div class="col-md-3">
+                    <input type="text" id="filtroIdDonacion" class="form-control" placeholder="Buscar por ID Donación">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" id="filtroFecha" class="form-control" placeholder="Buscar por Fecha">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="filtroAliasNombre" class="form-control" placeholder="Buscar por Alias o Nombre de Usuario">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="filtroCategoria" class="form-control" placeholder="Filtrar por Nombre de Categoría">
+                </div>
+            </div>
+
+            <!-- TABLA GENERAL -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h4 class="fw-bold mb-3 text-dark">
+                        <i class="bi bi-list-check me-2 text-pink"></i>Lista de Donaciones
+                    </h4>
+                    <div class="table-responsive">
+                        <table id="tablaDonaciones" class="table align-middle table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID Donación</th>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>ID Usuario</th>
+                                    <th>Alias</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Cantidad</th>
+                                    <th>Detalle</th>
+                                    <th>Editar</th>
+                                    <th>Ver Detalles</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donacionesBody">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Paginación -->
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div id="donacionesInfo" class="text-muted small"></div>
+                        <nav aria-label="Paginación de donaciones">
+                            <ul class="pagination pagination-sm mb-0" id="donacionesPaginationControls"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL REGISTRAR DONACION -->
+    <div class="modal fade" id="modalRegistrarDonacion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-plus-circle-fill me-2 text-pink"></i>Registrar nueva donación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formRegistrarDonacion" class="row g-3">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label">Alias del Usuario</label>
+                            <input type="text" class="form-control" id="aliasUsuario" name="aliasUsuario" placeholder="Escribe el alias del usuario" autocomplete="off" required>
+                            <input type="hidden" id="idUsuario" name="idUsuario">
+                            <ul class="sugerencias-list list-group position-absolute w-100" style="z-index:1000; display:none;"></ul>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de Persona o Empresa</label>
+                            <input type="text" class="form-control" id="nombreUsuario" name="nombreUsuario" placeholder="Escribe el nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de Donación</label>
+                            <input type="date" class="form-control" id="fechaDonacion" name="fechaDonacion" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hora de Donación</label>
+                            <input type="time" class="form-control" id="horaDonacion" name="horaDonacion" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría de Donación</label>
+                            <select class="form-select" id="categoriaDonacion" name="categoriaDonacion" required>
+                                <option value="">Selecciona una categoría</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="cantidadDonacion" name="cantidadDonacion" min="1" step="any" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detalle de Donación</label>
+                            <textarea class="form-control" id="detalleDonacion" name="detalleDonacion" rows="3" placeholder="Describe la donación" required></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-pink">Registrar Donación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL MODIFICAR DONACION -->
+    <div class="modal fade" id="modalModificarDonacion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-pencil-square me-2 text-pink"></i>Modificar donación
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formModificarDonacion" class="row g-3">
+                        <input type="hidden" id="modIdDonacion" name="idDonacion">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label">Alias del Usuario</label>
+                            <input type="text" class="form-control" id="modAliasUsuario" name="aliasUsuario" placeholder="Escribe el alias del usuario" autocomplete="off" required>
+                            <input type="hidden" id="modIdUsuario" name="idUsuario">
+                            <ul class="sugerencias-list list-group position-absolute w-100" style="z-index:1000; display:none;"></ul>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre de Persona o Empresa</label>
+                            <input type="text" class="form-control" id="modNombreUsuario" name="nombreUsuario" placeholder="Escribe el nombre" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Fecha de Donación</label>
+                            <input type="date" class="form-control" id="modFechaDonacion" name="fechaDonacion" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Hora de Donación</label>
+                            <input type="time" class="form-control" id="modHoraDonacion" name="horaDonacion" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría de Donación</label>
+                            <select class="form-select" id="modCategoriaDonacion" name="categoriaDonacion" required>
+                                <option value="">Selecciona una categoría</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Cantidad</label>
+                            <input type="number" class="form-control" id="modCantidadDonacion" name="cantidadDonacion" min="1" step="any" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Detalle de Donación</label>
+                            <textarea class="form-control" id="modDetalleDonacion" name="detalleDonacion" rows="3" placeholder="Describe la donación" required></textarea>
+                        </div>
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-pink">Guardar Cambios</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER DETALLES DONACION -->
+    <div class="modal fade" id="modalVerDonacion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-pink text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-eye-fill me-2"></i>Detalles de la Donación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">ID Donación</label>
+                        <input type="text" class="form-control" id="verIdDonacion" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha</label>
+                        <input type="text" class="form-control" id="verFechaDonacion" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Hora</label>
+                        <input type="text" class="form-control" id="verHoraDonacion" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">ID Usuario</label>
+                        <input type="text" class="form-control" id="verIdUsuario" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Alias Usuario</label>
+                        <input type="text" class="form-control" id="verAliasUsuario" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nombre Usuario</label>
+                        <input type="text" class="form-control" id="verNombreUsuario" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Categoría</label>
+                        <input type="text" class="form-control" id="verCategoriaDonacion" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cantidad</label>
+                        <input type="text" class="form-control" id="verCantidadDonacion" readonly>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Detalle</label>
+                        <textarea class="form-control" id="verDetalleDonacion" rows="3" readonly></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="JS/CRUD_donaciones.js"></script>
+
+</body>
+
+</html>

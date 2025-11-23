@@ -40,7 +40,9 @@ router.get('/historial', async (req, res) => {
                 cd.nombcategoria,
                 d.f_donacion,
                 d.h_donacion,
-                COALESCE(u.aliasusuario, 'Donante anónimo') as aliasusuario
+                d.idusuario as idusuario,
+                COALESCE(u.aliasusuario, 'Donante anónimo') as aliasusuario,
+                u.nombre_completo
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
