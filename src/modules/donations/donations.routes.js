@@ -14,19 +14,19 @@ router.get('/historial', async (req, res) => {
 
         if (categoria) {
             paramCount++;
-            whereConditions.push(`cd.nombcategoria ILIKE $${paramCount}`);
-            params.push(`%${categoria}%`);
+            whereConditions.push(`cd.nombcategoria = $${paramCount}`);
+            params.push(categoria);
         }
 
         if (fecha) {
             paramCount++;
-            whereConditions.push(`d.f_donacion = $${paramCount}::date`);
+            whereConditions.push(`d.f_donacion = $${paramCount}`);
             params.push(fecha);
         }
 
         if (usuario) {
             paramCount++;
-            whereConditions.push(`u.aliasusuario ILIKE $${paramCount}`);
+            whereConditions.push(`(u.aliasusuario ILIKE $${paramCount} OR p.nombres ILIKE $${paramCount} OR e.nombreempresa ILIKE $${paramCount})`);
             params.push(`%${usuario}%`);
         }
 
@@ -37,16 +37,19 @@ router.get('/historial', async (req, res) => {
                 dd.iddetalledonacion,
                 dd.cantidaddonacion,
                 dd.detalledonacion,
+                dd.idcategoria,
                 cd.nombcategoria,
                 d.f_donacion,
                 d.h_donacion,
-                d.idusuario as idusuario,
+                d.idusuario,
                 COALESCE(u.aliasusuario, 'Donante anónimo') as aliasusuario,
-                u.nombre_completo
+                COALESCE(p.nombres || ' ' || p.apellidos, e.nombreempresa, '') as nombre_completo
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
             LEFT JOIN usuario u ON d.idusuario = u.idusuario
+            LEFT JOIN persona p ON u.idusuario = p.idusuario
+            LEFT JOIN empresa e ON u.idusuario = e.idusuario
             ${whereClause}
             ORDER BY d.f_donacion DESC, d.h_donacion DESC
         `;
@@ -60,7 +63,11 @@ router.get('/historial', async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo historial de donaciones:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        console.error('Stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
@@ -202,14 +209,15 @@ router.get('/metodos-pago', async (req, res) => {
     try {
         const result = await query(`
             SELECT 
-                idMetodoPago,
-                nombreMetodo,
-                numeroCuenta,
-                imagenQR,
-                ordenVisual
+                "idMetodoPago" as idmetodopago,
+                "nombreMetodo" as nombremetodo,
+                "numeroCuenta" as numerocuenta,
+                "imagenQR" as imagenqr,
+                "ordenVisual" as ordenvisual,
+                activo
             FROM metodo_pago 
             WHERE activo = true
-            ORDER BY ordenVisual
+            ORDER BY "ordenVisual"
         `);
 
         res.json({
@@ -219,7 +227,11 @@ router.get('/metodos-pago', async (req, res) => {
 
     } catch (error) {
         console.error('Error obteniendo métodos de pago:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        console.error('Stack:', error.stack);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 });
 
