@@ -228,30 +228,41 @@ async function cargarMetodosPago() {
         const response = await fetch('/api/donations/metodos-pago');
         const data = await response.json();
 
-        if (data.message === 'Métodos de pago obtenidos exitosamente' && data.data.length > 0) {
+        if (data.message === 'Métodos de pago obtenidos exitosamente' && data.data && data.data.length > 0) {
             const contenedorMetodos = document.getElementById('metodos-pago-container');
             if (!contenedorMetodos) return;
 
             contenedorMetodos.innerHTML = '';
 
             data.data.forEach(metodo => {
+                if (!metodo || !metodo.nombremetodo) return; // Skip invalid entries
+                
                 const col = document.createElement('div');
                 col.className = 'col-6 col-sm-4 col-md-3';
 
-                const texto = metodo.numeroCuenta 
-                    ? `${metodo.nombreMetodo}: ${metodo.numeroCuenta}`
-                    : metodo.nombreMetodo;
+                const nombreMetodo = metodo.nombremetodo || '';
+                const numeroCuenta = metodo.numerocuenta || '';
+                
+                const texto = numeroCuenta 
+                    ? `${nombreMetodo}: ${numeroCuenta}`
+                    : nombreMetodo;
 
-                const idTexto = metodo.nombreMetodo.toLowerCase()
+                const idTexto = nombreMetodo.toLowerCase()
                     .replace(/\s+/g, '-')
-                    .replace('ñ', 'n');
+                    .replace(/ñ/g, 'n')
+                    .replace(/[áàäâ]/g, 'a')
+                    .replace(/[éèëê]/g, 'e')
+                    .replace(/[íìïî]/g, 'i')
+                    .replace(/[óòöô]/g, 'o')
+                    .replace(/[úùüû]/g, 'u');
 
                 col.innerHTML = `
                     <div class="logo-card p-3 text-center">
-                        <img src="${metodo.imagenQR}" alt="${metodo.nombreMetodo}" 
+                        <img src="${metodo.imagenqr || ''}" alt="${nombreMetodo}" 
                              class="img-fluid mb-3" 
                              style="max-height: 250px; width: auto; object-fit: contain;" 
-                             id="img-${idTexto}">
+                             id="img-${idTexto}"
+                             onerror="this.style.display='none'">
                         <div class="small text-muted" id="texto-${idTexto}">${texto}</div>
                     </div>
                 `;

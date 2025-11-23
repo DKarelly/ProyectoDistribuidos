@@ -15,10 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
 // Configurar eventos
 function configurarEventos() {
     // Filtros
-    document.getElementById('filtroIdDonacion').addEventListener('input', filtrarDonaciones);
-    document.getElementById('filtroFecha').addEventListener('change', filtrarDonaciones);
-    document.getElementById('filtroAliasNombre').addEventListener('input', filtrarDonaciones);
-    document.getElementById('filtroCategoria').addEventListener('input', filtrarDonaciones);
+    document.getElementById('categoriaSelect').addEventListener('change', filtrarDonaciones);
+    document.getElementById('fechaInput').addEventListener('change', filtrarDonaciones);
+    document.getElementById('usuarioInput').addEventListener('input', filtrarDonaciones);
 
     // Formulario registrar
     document.getElementById('formRegistrarDonacion').addEventListener('submit', registrarDonacion);
@@ -75,7 +74,16 @@ function llenarComboCategorias(selectId, categorias) {
 // Cargar donaciones con paginación
 async function cargarDonaciones(page = 1) {
     try {
-        const response = await fetch(`${window.location.origin}/api/donations/historial`);
+        const categoria = document.getElementById('categoriaSelect').value;
+        const fecha = document.getElementById('fechaInput').value;
+        const usuario = document.getElementById('usuarioInput').value;
+
+        const queryParams = new URLSearchParams();
+        if (categoria) queryParams.append('categoria', categoria);
+        if (fecha) queryParams.append('fecha', fecha);
+        if (usuario) queryParams.append('usuario', usuario);
+
+        const response = await fetch(`${window.location.origin}/api/donations/historial?${queryParams.toString()}`);
         const data = await response.json();
 
         if (response.ok) {
