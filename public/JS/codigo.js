@@ -204,6 +204,10 @@ function updateAuthUI() {
                                 <i class="bi bi-gift"></i>
                                 Mis Donaciones
                             </a>
+                            <a href="#" class="user-menu-item" onclick="showMyGodchildren()">
+                                <i class="bi bi-stars"></i>
+                                Mis Ahijados
+                            </a>
                             <a href="agregarMascota.html" class="user-menu-item">
                                 <i class="bi bi-plus-circle"></i>
                                 Agregar Mascota
@@ -288,6 +292,41 @@ function getRoleName(roleId) {
         3: 'Donante'
     };
     return roles[roleId] || 'Usuario';
+}
+
+function formatDisplayDate(dateStr) {
+    if (!dateStr) return 'Sin fecha';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function openUserDataModal(modalId, title, bodyHtml) {
+    const existing = document.getElementById(modalId);
+    if (existing) {
+        existing.remove();
+    }
+    const modalTemplate = `
+        <div class="modal fade" id="${modalId}" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+                        ${bodyHtml}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalTemplate);
+    const modalInstance = new bootstrap.Modal(document.getElementById(modalId));
+    modalInstance.show();
 }
 
 // Mostrar modal de edición de perfil
@@ -468,17 +507,113 @@ function applyEditProfileValidations() {
 }
 
 // Mostrar mis adopciones
-function showMyAdoptions() {
+async function showMyAdoptions() {
     closeUserMenu();
-    // Aquí podrías implementar la lógica para mostrar las adopciones del usuario
-    showMessage('Funcionalidad de "Mis Adopciones" próximamente', 'info');
+    if (!isAuthenticated()) {
+        showMessage('Debes iniciar sesión para ver tus adopciones', 'warning');
+        return;
+    }
+    try {
+        const response = await apiRequest('/users/adopciones');
+        const adopciones = response.data || [];
+        const content = adopciones.length
+            ? adopciones.map(adop => {
+                const estado = (adop.estadoadopcion || 'Pendiente').toLowerCase();
+                const badgeClass = estado.includes('complet') ? 'success' :
+                    estado.includes('proceso') ? 'info' :
+                    estado.includes('rechaz') ? 'danger' : 'warning';
+                return `
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${adop.nombreanimal}</h6>
+                                <small class="text-muted">${adop.especieanimal} · ${adop.razaanimal || 'Sin raza'}</small>
+                            </div>
+                            <span class="badge bg-${badgeClass} text-uppercase">${adop.estadoadopcion || 'Pendiente'}</span>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Solicitud: ${formatDisplayDate(adop.f_adopcion)} · Edad: ${adop.edadmesesanimal || 0} meses · Género: ${adop.generoanimal === 'H' ? 'Hembra' : 'Macho'}
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }).join('')
+            : '<p class="text-center text-muted mb-0">Aún no registras adopciones.</p>';
+        openUserDataModal('modalMisAdopciones', 'Mis adopciones', content);
+    } catch (error) {
+        console.error('Error obteniendo adopciones:', error);
+        showMessage('No se pudieron cargar tus adopciones', 'danger');
+    }
 }
 
 // Mostrar mis donaciones
-function showMyDonations() {
+async function showMyDonations() {
     closeUserMenu();
-    // Aquí podrías implementar la lógica para mostrar las donaciones del usuario
-    showMessage('Funcionalidad de "Mis Donaciones" próximamente', 'info');
+    if (!isAuthenticated()) {
+        showMessage('Debes iniciar sesión para ver tus donaciones', 'warning');
+        return;
+    }
+    try {
+        const response = await apiRequest('/users/donaciones');
+        const donaciones = response.data || [];
+        const content = donaciones.length
+            ? donaciones.map(don => {
+                const fecha = formatDisplayDate(don.f_donacion);
+                const hora = don.h_donacion ? don.h_donacion.slice(0, 5) : '—';
+                return `
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-0">${don.nombcategoria}</h6>
+                                <small class="text-muted">${fecha} · ${hora}</small>
+                            </div>
+                            <strong>S/ ${Number(don.cantidaddonacion || 0).toFixed(2)}</strong>
+                        </div>
+                        ${don.detalledonacion ? `<p class="mb-0 mt-2 small text-muted">${don.detalledonacion}</p>` : ''}
+                    </div>
+                `;
+            }).join('')
+            : '<p class="text-center text-muted mb-0">No registramos donaciones con tu cuenta.</p>';
+        openUserDataModal('modalMisDonaciones', 'Mis donaciones', content);
+    } catch (error) {
+        console.error('Error obteniendo donaciones:', error);
+        showMessage('No se pudieron cargar tus donaciones', 'danger');
+    }
+}
+
+async function showMyGodchildren() {
+    closeUserMenu();
+    if (!isAuthenticated()) {
+        showMessage('Debes iniciar sesión para ver tus ahijados', 'warning');
+        return;
+    }
+    try {
+        const response = await apiRequest('/donations/apadrinamientos');
+        const apadrinamientos = response.data || [];
+        const content = apadrinamientos.length
+            ? apadrinamientos.map(item => `
+                <div class="border rounded-3 p-3 mb-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-0">${item.nombreanimal}</h6>
+                            <small class="text-muted">${item.especieanimal || ''} · ${item.razaanimal || ''}</small>
+                        </div>
+                        <span class="badge bg-info text-dark">${item.frecuencia || 'Mensual'}</span>
+                    </div>
+                    <div class="mt-2 small text-muted">
+                        Inicio: ${formatDisplayDate(item.f_inicio)}${item.f_fin ? ` · Fin: ${formatDisplayDate(item.f_fin)}` : ''}<br>
+                        Aporte: S/ ${Number(item.monto || 0).toFixed(2)}
+                    </div>
+                    ${item.detalledonacion ? `<p class="mb-0 mt-2 small">${item.detalledonacion}</p>` : ''}
+                </div>
+            `).join('')
+            : '<p class="text-center text-muted mb-0">Aún no tienes ahijados registrados.</p>';
+        openUserDataModal('modalMisAhijados', 'Mis ahijados', content);
+    } catch (error) {
+        console.error('Error obteniendo ahijados:', error);
+        showMessage('No se pudieron cargar tus ahijados', 'danger');
+    }
 }
 
 // Cerrar sesión

@@ -11,69 +11,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.log('Primer animal:', animales[0]);
 
     // === 2. Generar tarjetas dinámicamente ===
-    animales.forEach(async (animal, index) => {
+    animales.forEach(async (animal) => {
       const card = document.createElement("div");
       card.classList.add("col-12", "col-sm-6", "col-lg-4");
+      const carouselId = `carouselAnimal${animal.idanimal}`;
 
-      // Crear carousel con múltiples imágenes/videos
-      let carouselItems = '';
-      console.log(`Animal ${animal.nombreanimal} - imagenAnimal:`, animal.imagenAnimal);
-
-      if (animal.imagenAnimal) {
-        const imageUrl = `/files/${animal.imagenAnimal}`;
-        console.log(`URL de imagen para ${animal.nombreanimal}:`, imageUrl);
-        carouselItems = `
-          <div class="carousel-item active">
-            <img src="${imageUrl}" class="d-block w-100 rounded-top" alt="${animal.nombreanimal}" 
-                 onerror="console.error('Error cargando imagen:', this.src); this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 300px; display: none;">
-              <h4 class="text-muted">${animal.nombreanimal}</h4>
-            </div>
-          </div>
-        `;
-      } else {
-        console.log(`No hay imagen para ${animal.nombreanimal}`);
-        carouselItems = `
-          <div class="carousel-item active">
-            <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
-              <h4 class="text-muted">${animal.nombreanimal}</h4>
-            </div>
-          </div>
-        `;
-      }
-
-      const imageUrl = animal.imagenAnimal ? `/files/${animal.imagenAnimal}` : '';
-      const photoStyle = imageUrl ? `style=\"background-image:url('${imageUrl}')\"` : '';
       card.innerHTML = `
         <div class="card card-historia shadow-sm mx-auto">
-          <div class="card-hero-full">
-            <div class="card-photo" ${photoStyle}></div>
-            <div class="card-shade"></div>
-            <div class="card-content">
-              <h5 class="card-title">${animal.nombreanimal}</h5>
-              <a href="#" class="btn btn-pink btn-ver-historia" data-id="${animal.idanimal}">Ver historia</a>
+          <div id="${carouselId}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3500">
+            <div class="carousel-inner">
+              ${crearSlidePlaceholder(animal)}
             </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Siguiente</span>
+            </button>
+          </div>
+          <div class="card-body text-center">
+            <h5 class="card-title mb-1">${animal.nombreanimal}</h5>
+            <p class="text-muted small mb-3">${(animal.especieanimal || '').trim()} · ${(animal.razaanimal || '').trim()}</p>
+            <a href="#" class="btn btn-pink btn-ver-historia" data-id="${animal.idanimal}">Ver historia</a>
           </div>
         </div>
       `;
       contenedorAnimales.appendChild(card);
-
-      // Si no vino imagen en /disponibles, cargar primera de la galería
-      if (!imageUrl) {
-        try {
-          const resDetalle = await fetch(`${window.location.origin}/api/animals/${animal.idanimal}`);
-          if (resDetalle.ok) {
-            const detalle = await resDetalle.json();
-            const primera = detalle.data?.galeria?.find(m => m.imagen)?.imagen;
-            if (primera) {
-              const photoDiv = card.querySelector('.card-photo');
-              if (photoDiv) photoDiv.style.backgroundImage = `url('/files/${primera}')`;
-            }
-          }
-        } catch (e) {
-          console.warn('No se pudo cargar imagen de galería para', animal.idanimal, e);
-        }
-      }
+      await actualizarCarruselConGaleria(carouselId, animal);
     });
 
     // === 3. Reusar tu lógica de modales (ajustado al fetch) ===
@@ -84,6 +50,70 @@ document.addEventListener("DOMContentLoaded", async () => {
     contenedorAnimales.innerHTML = `<p class="text-danger">Error al cargar los animales.</p>`;
   }
 });
+
+function crearSlidePlaceholder(animal) {
+  if (animal.imagenAnimal) {
+    const imageUrl = `/files/${animal.imagenAnimal}`;
+    return `
+      <div class="carousel-item active">
+        <img src="${imageUrl}" class="d-block w-100 rounded-top" alt="${animal.nombreanimal}"
+             style="height:300px;object-fit:cover;"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center"
+             style="height: 300px; display: none;">
+          <h4 class="text-muted">${animal.nombreanimal}</h4>
+        </div>
+      </div>
+    `;
+  }
+  return `
+    <div class="carousel-item active">
+      <div class="d-block w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+        <h4 class="text-muted">${animal.nombreanimal}</h4>
+      </div>
+    </div>
+  `;
+}
+
+async function actualizarCarruselConGaleria(carouselId, animal) {
+  const carouselInner = document.querySelector(`#${carouselId} .carousel-inner`);
+  if (!carouselInner) return;
+
+  const imagenes = [];
+  if (animal.imagenAnimal) {
+    imagenes.push(`/files/${animal.imagenAnimal}`);
+  }
+
+  try {
+    const detalleRes = await fetch(`${window.location.origin}/api/animals/${animal.idanimal}`);
+    if (detalleRes.ok) {
+      const detalle = await detalleRes.json();
+      const galeria = detalle.data?.galeria || [];
+      galeria.forEach(media => {
+        if (media.imagen) imagenes.push(`/files/${media.imagen}`);
+      });
+    }
+  } catch (error) {
+    console.warn('No se pudo ampliar la galería para', animal.nombreanimal, error);
+  }
+
+  const únicas = [...new Set(imagenes)];
+  if (únicas.length === 0) {
+    carouselInner.innerHTML = crearSlidePlaceholder(animal);
+    document.querySelectorAll(`#${carouselId} .carousel-control-prev, #${carouselId} .carousel-control-next`).forEach(btn => btn.style.display = 'none');
+    return;
+  }
+
+  carouselInner.innerHTML = únicas.map((src, index) => `
+    <div class="carousel-item ${index === 0 ? 'active' : ''}">
+      <img src="${src}" class="d-block w-100 rounded-top" alt="${animal.nombreanimal}"
+           style="height:300px;object-fit:cover;">
+    </div>
+  `).join('');
+
+  document.querySelectorAll(`#${carouselId} .carousel-control-prev, #${carouselId} .carousel-control-next`)
+    .forEach(btn => btn.style.display = únicas.length > 1 ? '' : 'none');
+}
 
 // ==========================
 // FUNCIONES DE LOS MODALES

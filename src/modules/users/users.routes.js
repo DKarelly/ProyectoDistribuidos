@@ -92,17 +92,49 @@ router.get('/donaciones', authenticateToken, async (req, res) => {
         const idUsuario = req.user.idusuario;
         const result = await query(`
             SELECT dd.iddetalledonacion, dd.cantidaddonacion, dd.detalledonacion,
-                   cd.categoria, d.fechadonacion, d.horadonacion
+                   cd.nombcategoria, d.f_donacion, d.h_donacion
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
             WHERE d.idusuario = $1
-            ORDER BY d.fechadonacion DESC, d.horadonacion DESC
+            ORDER BY d.f_donacion DESC, d.h_donacion DESC
         `, [idUsuario]);
 
         res.json({ message: 'Donaciones obtenidas exitosamente', data: result.rows });
     } catch (error) {
         console.error('Error obteniendo donaciones:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+router.get('/search', authenticateToken, isAdmin, async (req, res) => {
+    try {
+        const { query: term = '' } = req.query;
+        if (!term || term.trim().length < 2) {
+            return res.json({ message: 'Búsqueda vacía', data: [] });
+        }
+
+        const result = await query(`
+            SELECT u.idusuario,
+                   u.aliasusuario,
+                   COALESCE(
+                       p.nombres || ' ' || p.apepaterno || ' ' || p.apematerno,
+                       e.nombreempresa,
+                       ''
+                   ) AS nombre_completo
+            FROM usuario u
+            LEFT JOIN persona p ON u.idusuario = p.idusuario
+            LEFT JOIN empresa e ON u.idusuario = e.idusuario
+            WHERE u.aliasusuario ILIKE $1
+               OR (p.nombres || ' ' || p.apepaterno || ' ' || p.apematerno) ILIKE $1
+               OR e.nombreempresa ILIKE $1
+            ORDER BY u.aliasusuario ASC
+            LIMIT 10
+        `, [`%${term}%`]);
+
+        res.json({ message: 'Usuarios encontrados', data: result.rows });
+    } catch (error) {
+        console.error('Error buscando usuarios:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });

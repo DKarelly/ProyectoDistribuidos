@@ -2,6 +2,7 @@
 let donacionesData = [];
 let currentDonacionesPage = 1;
 const itemsPerPage = 10;
+const authToken = localStorage.getItem('authToken');
 
 // Inicializar cuando se carga la página
 document.addEventListener('DOMContentLoaded', function () {
@@ -14,10 +15,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Configurar eventos
 function configurarEventos() {
-    // Filtros
-    document.getElementById('categoriaSelect').addEventListener('change', filtrarDonaciones);
-    document.getElementById('fechaInput').addEventListener('change', filtrarDonaciones);
-    document.getElementById('usuarioInput').addEventListener('input', filtrarDonaciones);
+    // Filtros visibles en la UI
+    ['filtroIdDonacion', 'filtroFecha', 'filtroAliasNombre', 'filtroCategoria'].forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        const eventName = input.tagName === 'SELECT' || input.type === 'date' ? 'change' : 'input';
+        input.addEventListener(eventName, filtrarDonaciones);
+    });
 
     // Formulario registrar
     document.getElementById('formRegistrarDonacion').addEventListener('submit', registrarDonacion);
@@ -74,16 +78,7 @@ function llenarComboCategorias(selectId, categorias) {
 // Cargar donaciones con paginación
 async function cargarDonaciones(page = 1) {
     try {
-        const categoria = document.getElementById('categoriaSelect').value;
-        const fecha = document.getElementById('fechaInput').value;
-        const usuario = document.getElementById('usuarioInput').value;
-
-        const queryParams = new URLSearchParams();
-        if (categoria) queryParams.append('categoria', categoria);
-        if (fecha) queryParams.append('fecha', fecha);
-        if (usuario) queryParams.append('usuario', usuario);
-
-        const response = await fetch(`${window.location.origin}/api/donations/historial?${queryParams.toString()}`);
+        const response = await fetch(`${window.location.origin}/api/donations/historial`);
         const data = await response.json();
 
         if (response.ok) {
@@ -113,13 +108,14 @@ function mostrarDonacionesPaginadas(page) {
 
     pageItems.forEach(donacion => {
         const row = document.createElement('tr');
+        const idUsuario = donacion.idusuario ?? 'Sin registro';
+        const alias = donacion.aliasusuario || 'Donante anónimo';
         row.innerHTML = `
             <td>${donacion.iddetalledonacion || ''}</td>
             <td>${formatDate(donacion.f_donacion)}</td>
             <td>${formatTime(donacion.h_donacion)}</td>
-            <td>${donacion.idusuario || ''}</td>
-            <td>${donacion.aliasusuario || 'Donante anónimo'}</td>
-            <td>${donacion.nombre_completo || ''}</td>
+            <td>${idUsuario}</td>
+            <td>${alias}</td>
             <td>${donacion.nombcategoria || ''}</td>
             <td>${donacion.cantidaddonacion}</td>
             <td>${donacion.detalledonacion}</td>
@@ -267,9 +263,9 @@ function verDonacion(id) {
     document.getElementById('verIdDonacion').value = donacion.iddetalledonacion || '';
     document.getElementById('verFechaDonacion').value = formatDate(donacion.f_donacion);
     document.getElementById('verHoraDonacion').value = formatTime(donacion.h_donacion);
-    document.getElementById('verIdUsuario').value = donacion.idusuario || '';
-    document.getElementById('verAliasUsuario').value = donacion.aliasusuario || '';
-    document.getElementById('verNombreUsuario').value = donacion.nombre_completo || '';
+    document.getElementById('verIdUsuario').value = donacion.idusuario ?? 'Sin registro';
+    document.getElementById('verAliasUsuario').value = donacion.aliasusuario || 'Donante anónimo';
+    document.getElementById('verNombreUsuario').value = donacion.nombre_completo || 'No disponible';
     document.getElementById('verCategoriaDonacion').value = donacion.nombcategoria || '';
     document.getElementById('verCantidadDonacion').value = donacion.cantidaddonacion || '';
     document.getElementById('verDetalleDonacion').value = donacion.detalledonacion || '';
@@ -295,6 +291,11 @@ async function registrarDonacion(event) {
         return;
     }
 
+    if(!authToken) {
+        alert('Necesitas iniciar sesión nuevamente para registrar donaciones.');
+        return;
+    }
+
     // Crear payload para backend: Donations array with one object as per backend expectation
     const donacion = {
         idcategoria: parseInt(categoria),
@@ -307,7 +308,7 @@ async function registrarDonacion(event) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // Authorization header can be added here if needed
+                'Authorization': `Bearer ${authToken}`
             },
             body: JSON.stringify({ donaciones: [donacion] })
         });
@@ -366,7 +367,9 @@ function setupAutocomplete(inputId, hiddenId) {
             return;
         }
         try {
-            const response = await fetch(`/api/users/search?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`/api/users/search?query=${encodeURIComponent(query)}`, {
+                headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+            });
             const data = await response.json();
             if(response.ok && data.data.length > 0) {
                 showSuggestions(input, hiddenInput, data.data);
