@@ -6,6 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+// Servir también las imágenes y videos subidos (galería) que se guardan en src/modules/files
+// Esto permite que las rutas como /files/animal-123.jpg funcionen aunque el archivo no esté en public/files
+app.use('/files', express.static(path.join(__dirname, 'modules', 'files')));
 
 // Ruta raíz para servir la página principal
 app.get('/', (req, res) => {
