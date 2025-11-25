@@ -1,3 +1,4 @@
+// (Lógica de Historial_Persona ahora está en public/JS/historial_persona.js para evitar duplicaciones)
 // ===================================================
 // CONFIGURACIÓN Y UTILIDADES GENERALES
 // ===================================================
@@ -35,7 +36,15 @@ async function apiRequest(endpoint, options = {}) {
         const response = await fetch(url, finalOptions);
         console.log('Response status:', response.status);
         console.log('Response ok:', response.ok);
-        const data = await response.json();
+        const contentType = response.headers.get('content-type') || '';
+        let data;
+        if (contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            console.warn('Respuesta no-JSON recibida:', text.slice(0, 200) + '...');
+            data = { message: text };
+        }
         console.log('Response data:', data);
 
         if (!response.ok) {
@@ -58,7 +67,7 @@ async function apiRequest(endpoint, options = {}) {
             }
 
             // Manejar errores de validación específicos
-            if (data.errors && Array.isArray(data.errors)) {
+            if (data && data.errors && Array.isArray(data.errors)) {
                 const errorMessages = data.errors.map(error => {
                     switch (error.path) {
                         case 'claveusuario':
@@ -82,7 +91,7 @@ async function apiRequest(endpoint, options = {}) {
                 });
                 throw new Error(errorMessages.join(', '));
             }
-            throw new Error(data.message || 'Error en la petición');
+            throw new Error((data && data.message) || `Error en la petición (${response.status})`);
         }
 
         return data;
@@ -196,19 +205,19 @@ function updateAuthUI() {
                                 <i class="bi bi-person-gear"></i>
                                 Editar Perfil
                             </a>
-                            <a href="#" class="user-menu-item" onclick="showMyAdoptions()">
+                            <a class="user-menu-item" onclick="window.location.href='/Historial_Persona.html?submodule=adopciones'">
                                 <i class="bi bi-heart"></i>
                                 Mis Adopciones
                             </a>
-                            <a href="#" class="user-menu-item" onclick="showMyDonations()">
+                            <a class="user-menu-item" onclick="window.location.href='/Historial_Persona.html?submodule=donaciones'">
                                 <i class="bi bi-gift"></i>
                                 Mis Donaciones
                             </a>
-                            <a href="#" class="user-menu-item" onclick="showMyGodchildren()">
+                            <a class="user-menu-item" onclick="window.location.href='/Historial_Persona.html?submodule=ahijados'">
                                 <i class="bi bi-stars"></i>
                                 Mis Ahijados
                             </a>
-                            <a href="agregarMascota.html" class="user-menu-item">
+                            <a href="/agregarMascota.html" class="user-menu-item">
                                 <i class="bi bi-plus-circle"></i>
                                 Agregar Mascota
                             </a>

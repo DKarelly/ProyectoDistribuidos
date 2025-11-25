@@ -3,6 +3,33 @@ const { query } = require('../../config/database');
 const { authenticateToken } = require('../auth/auth.routes');
 const router = express.Router();
 
+// GET /api/donations/mine - historial del usuario autenticado
+router.get('/mine', authenticateToken, async (req, res) => {
+    try {
+        const idUsuario = req.user.idusuario;
+        const sql = `
+            SELECT
+                dd.iddetalledonacion,
+                dd.cantidaddonacion AS cantidad,
+                dd.detalledonacion AS detalle,
+                dd.idcategoria,
+                cd.nombcategoria AS categoria,
+                d.f_donacion AS fecha,
+                d.h_donacion AS hora
+            FROM detalle_donacion dd
+            JOIN donacion d ON dd.iddonacion = d.iddonacion
+            JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
+            WHERE d.idusuario = $1
+            ORDER BY d.f_donacion DESC, d.h_donacion DESC
+        `;
+        const result = await query(sql, [idUsuario]);
+        res.json({ message: 'Mis donaciones', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo mis donaciones:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
 // GET /api/donations/historial
 router.get('/historial', async (req, res) => {
     try {
