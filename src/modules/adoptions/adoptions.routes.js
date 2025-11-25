@@ -4,6 +4,33 @@ const { authenticateToken } = require('../auth/auth.routes');
 const router = express.Router();
 
 // ==========================
+// MIS ADOPCIONES (usuario autenticado)
+// ==========================
+router.get('/mine', authenticateToken, async (req, res) => {
+  try {
+    const idUsuario = req.user.idusuario;
+    const result = await query(`
+      SELECT
+          ad.idadopcion,
+          ad.f_adopcion AS fechaAdopcion,
+          ad.estadoAdopcion AS estado,
+          an.idanimal,
+          an.nombreAnimal AS nombreAnimal
+      FROM adopcion ad
+      INNER JOIN animal an ON an.idAnimal = ad.idAnimal
+      INNER JOIN persona p_adoptante ON p_adoptante.idPersona = ad.idPersona
+      INNER JOIN usuario us_adoptante ON us_adoptante.idUsuario = p_adoptante.idUsuario
+      WHERE us_adoptante.idUsuario = $1
+      ORDER BY ad.f_adopcion DESC NULLS LAST, ad.idAdopcion DESC;
+    `, [idUsuario]);
+    res.json({ message: 'Mis adopciones', data: result.rows });
+  } catch (error) {
+    console.error('Error obteniendo mis adopciones:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// ==========================
 // LISTAR ADOPCIONES
 // ==========================
 router.get('/', authenticateToken, async (req, res) => {

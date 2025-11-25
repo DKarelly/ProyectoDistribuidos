@@ -11,6 +11,33 @@ function requireAdmin(req, res, next) {
 }
 const router = express.Router();
 
+// GET /api/apadrinamiento/mine - Obtener mis ahijados (usuario autenticado)
+router.get('/mine', authenticateToken, async (req, res) => {
+    try {
+        const idUsuario = req.user.idusuario;
+        const sql = `
+            SELECT
+                ap.idapadrinamiento,
+                ap.f_inicio AS fechaInicio,
+                ap.frecuencia,
+                ap.estado,
+                a.idanimal,
+                a.nombreanimal AS nombreAnimal
+            FROM apadrinamiento ap
+            JOIN donacion d ON ap.iddonacion = d.iddonacion
+            JOIN usuario u ON d.idusuario = u.idusuario
+            JOIN animal a ON ap.idanimal = a.idanimal
+            WHERE u.idusuario = $1
+            ORDER BY ap.f_inicio DESC NULLS LAST, ap.idapadrinamiento DESC
+        `;
+        const result = await query(sql, [idUsuario]);
+        res.json({ message: 'Mis ahijados', data: result.rows });
+    } catch (error) {
+        console.error('Error obteniendo mis ahijados:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
 // GET /api/apadrinamiento - Obtener todos los apadrinamientos (solo admin)
 router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     try {

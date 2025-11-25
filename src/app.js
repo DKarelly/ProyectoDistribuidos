@@ -89,6 +89,10 @@ app.get('/CRUD_donaciones.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'html', 'CRUD_donaciones.html'));
 });
 
+app.get('/Historial_Persona.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'html', 'Historial_Persona.html'));
+});
+
 // Rutas base
 app.use('/api/auth', require('./modules/auth/auth.routes').router);
 app.use('/api/animals', require('./modules/animals/animals.routes'));
