@@ -24,7 +24,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block img-fluid ">
                 HUELLA FELIZ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -81,7 +81,7 @@
                     <tbody id="rolesBody">
                         <!-- Roles cargados dinámicamente -->
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     </section>
@@ -148,24 +148,24 @@
 
     <!-- MODAL REGISTRAR ROL -->
     <div class="modal fade" id="modalRegistrarRol" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4">
-                <div class="modal-header border-0">
-                    <h3 class="modal-title w-100 text-center fw-bold">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
                         <i class="bi bi-plus-square fs-1 d-block mb-2"></i>
                         Registrar Nuevo Rol
-                    </h3>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formRegistrarRol" class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Nombre del rol</label>
                             <input type="text" class="form-control" placeholder="Nombre del rol" required>
                         </div>
                         <div class="col-12 text-center mt-4">
-                            <button type="submit" class="btn btn-pink px-4 me-2">Registrar</button>
+                            <button type="submit" class="btn btn-pink-modern px-4 me-2">Registrar</button>
                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </form>
@@ -176,17 +176,17 @@
 
     <!-- MODAL EDITAR ROL -->
     <div class="modal fade" id="modalEditarRol" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4">
-                <div class="modal-header border-0">
-                    <h3 class="modal-title w-100 text-center fw-bold">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
                         <i class="bi bi-pencil-square fs-1 d-block mb-2"></i>
                         Modificar Rol
-                    </h3>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="formEditarRol" class="row g-3">
                         <div class="col-12">
                             <label class="form-label">ID</label>
@@ -198,7 +198,7 @@
                         </div>
 
                         <div class="col-12 text-center mt-4">
-                            <button type="submit" class="btn btn-pink px-4 me-2">Guardar</button>
+                            <button type="submit" class="btn btn-pink-modern px-4 me-2">Guardar</button>
                             <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </form>
@@ -210,15 +210,15 @@
     <!-- MODAL POLÍTICA DE PRIVACIDAD -->
     <div class="modal fade" id="modalPrivacidad" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-pink text-white">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-shield-lock-fill me-2"></i>
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
+                        <i class="bi bi-shield-lock-fill fs-1 d-block mb-2"></i>
                         Política de Privacidad
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
                     <div class="mb-4">
                         <h6 class="text-danger">1. Información que Recopilamos</h6>
                         <p class="small">En Huella Feliz, recopilamos información personal que nos proporcionas
@@ -260,8 +260,8 @@
                         </ul>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -270,15 +270,15 @@
     <!-- MODAL TÉRMINOS Y CONDICIONES -->
     <div class="modal fade" id="modalTerminos" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-pink text-white">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-file-text-fill me-2"></i>
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
+                        <i class="bi bi-file-text-fill fs-1 d-block mb-2"></i>
                         Términos y Condiciones
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
                     <div class="mb-4">
                         <h6 class="text-danger">1. Aceptación de los Términos</h6>
                         <p class="small">Al acceder y utilizar la plataforma de Huella Feliz, aceptas estar sujeto a
@@ -327,8 +327,8 @@
                         </ul>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -354,6 +354,39 @@
     <!-- Chat Widget -->
     <link rel="stylesheet" href="/CSS/chatWidget.css">
     <script src="/JS/chatWidget.js" defer></script>
+
+    <!-- Estilos modernos para modales (consistentes con usuarios/apadrinamiento) -->
+    <style id="usuarios-modal-modern-roles">
+        .modal-modern {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(239, 58, 125, 0.25);
+            overflow: hidden;
+        }
+        .modal-header-gradient {
+            background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);
+            border: none;
+            padding: 1.25rem 1.25rem;
+        }
+        .btn-pink-modern {
+            background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 6px 16px rgba(239, 58, 125, 0.35);
+        }
+        .btn-pink-modern:hover { filter: brightness(1.05); }
+        .modal-body .form-label { font-weight: 600; color: #ef3b7d; }
+        .modal-body .form-control, .modal-body .form-select {
+            border-radius: 10px;
+            border-color: #ffd0de;
+        }
+        .modal-body .form-control:focus, .modal-body .form-select:focus {
+            box-shadow: 0 0 0 .25rem rgba(239, 122, 161, .25);
+            border-color: #ef7aa1;
+        }
+    </style>
 </body>
 
 </html>
+
+

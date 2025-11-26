@@ -19,13 +19,20 @@
         /* HERO con fondo */
         .hero {
             background: url("files/adopciones_1.jpeg") center/cover no-repeat;
-            min-height: 60vh;
+            min-height: 40vh;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             color: white;
             position: relative;
+            padding: 2rem 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .hero {
+                min-height: 60vh;
+            }
         }
 
         .hero::before {
@@ -54,7 +61,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block img-fluid ">
                 HUELLA FELIZ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -80,8 +87,8 @@
 
     <!-- HERO -->
     <header class="hero">
-        <div class="container">
-            <h1 class="fw-bold">AYÚDANOS A AYUDAR <br> ADOPTAR</h1>
+        <div class="container px-3">
+            <h1 class="fw-bold fs-2 fs-md-1">AYÚDAN OS A AYUDAR <br> ADOPTAR</h1>
             <a href="#" class="btn btn-pink mt-3">Ir ahora</a>
         </div>
     </header>
@@ -129,31 +136,31 @@
                 <!-- <!-- Repite estas columnas las veces que necesites 
                 <div class="col">
                     <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
+                        <img src="https://placehold.co/300x300" class="card-img-top img-fluid " alt="Mascota">
                     </div>
                 </div>
 
                 <div class="col">
                     <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
+                        <img src="https://placehold.co/300x300" class="card-img-top img-fluid " alt="Mascota">
                     </div>
                 </div>
 
                 <div class="col">
                     <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
+                        <img src="https://placehold.co/300x300" class="card-img-top img-fluid " alt="Mascota">
                     </div>
                 </div>
 
                 <div class="col">
                     <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
+                        <img src="https://placehold.co/300x300" class="card-img-top img-fluid " alt="Mascota">
                     </div>
                 </div>
 
                 <div class="col">
                     <div class="card shadow-sm card-animal">
-                        <img src="https://placehold.co/300x300" class="card-img-top" alt="Mascota">
+                        <img src="https://placehold.co/300x300" class="card-img-top img-fluid " alt="Mascota">
                     </div>
                 </div> -->
 
@@ -173,11 +180,11 @@
 
                     <!-- Slide 1 -->
                     <div class="carousel-item active">
-                        <div class="row justify-content-center align-items-center">
-                            <div class="col-md-4">
-                                <img src="files/adoptado_1.png" class="d-block w-100 rounded" alt="Panchito">
+                        <div class="row justify-content-center align-items-center g-3">
+                            <div class="col-12 col-md-4">
+                                <img src="files/adoptado_1.png" class="d-block w-100 rounded img-fluid " alt="Panchito">
                             </div>
-                            <div class="col-md-6 text-start">
+                            <div class="col-12 col-md-6 text-start">
                                 <h3 class="animal-name">PANCHITO</h3>
                                 <p class="adopcion-fecha">Adoptado: 12/03/2025</p>
                                 <p>Ahora tiene un hogar lleno de amor y disfruta de sus paseos diarios.</p>
@@ -188,11 +195,11 @@
 
                     <!-- Slide 2 -->
                     <div class="carousel-item">
-                        <div class="row justify-content-center align-items-center">
-                            <div class="col-md-4">
-                                <img src="files/adoptado_2.jpeg" class="d-block w-100 rounded" alt="Luna">
+                        <div class="row justify-content-center align-items-center g-3">
+                            <div class="col-12 col-md-4">
+                                <img src="files/adoptado_2.jpeg" class="d-block w-100 rounded img-fluid " alt="Luna">
                             </div>
-                            <div class="col-md-6 text-start">
+                            <div class="col-12 col-md-6 text-start">
                                 <h3 class="animal-name">LUNA</h3>
                                 <p class="adopcion-fecha">Adoptado: 25/06/2025</p>
                                 <p>Ahora tiene un hogar lleno de amor y disfruta de sus paseos diarios.</p>
