@@ -26,7 +26,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block img-fluid ">
                 HUELLA FELIZ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -83,13 +83,13 @@
                     <div class="card shadow-sm mb-4 mx-auto" style="max-width: 1100px;">
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="text" class="form-control" placeholder="Buscar por nombre de persona">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="text" class="form-control" placeholder="Buscar por nombre del animal">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="date" class="form-control" placeholder="Fecha de solicitud">
                                 </div>
                             </div>
@@ -97,7 +97,7 @@
                     </div>
 
                     <div class="table-responsive shadow-sm mx-auto" style="max-width: 1100px;">
-                        <table class="table table-hover align-middle">
+                        <div class="table-responsive"><table class="table table-hover align-middle">
                             <thead class="table-pink text-center">
                                 <tr>
                                     <th>ID Solicitud</th>
@@ -110,7 +110,7 @@
                             <tbody class="text-center">
                                 <!-- Filas dinámicas -->
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
 
@@ -119,13 +119,13 @@
                     <div class="card shadow-sm mb-4 mx-auto" style="max-width: 1100px;">
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="text" class="form-control" placeholder="Buscar por nombre de persona">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="text" class="form-control" placeholder="Buscar por nombre del animal">
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-12 col-md-4">
                                     <input type="date" class="form-control" placeholder="Fecha de adopción">
                                 </div>
                             </div>
@@ -133,7 +133,7 @@
                     </div>
 
                     <div class="table-responsive shadow-sm mx-auto" style="max-width: 1100px;">
-                        <table class="table table-hover align-middle">
+                        <div class="table-responsive"><table class="table table-hover align-middle">
                             <thead class="table-pink text-center">
                                 <tr>
                                     <th>ID Adopción</th>
@@ -147,15 +147,15 @@
                             <tbody class="text-center">
                                 <!-- Filas dinámicas -->
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
 
                 <!-- MODAL REGISTRAR SOLICITUD -->
                 <div class="modal fade" id="modalRegistrar" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- más ancho -->
-                    <div class="modal-content">
-                    <div class="modal-header bg-pink text-white">
+                    <div class="modal-content modal-modern">
+                    <div class="modal-header modal-header-gradient text-white">
                         <h5 class="modal-title">
                         <i class="bi bi-plus-circle-fill me-2"></i> Registrar Solicitud de Adopción
                         </h5>
@@ -194,7 +194,7 @@
                         </div>
 
                         <!-- Columna derecha: Vista previa -->
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <h6 class="text-pink fw-bold mb-3"><i class="bi bi-person-circle me-2"></i>Datos del Solicitante</h6>
                             <div id="previewPersona" class="border rounded p-3 bg-light mb-4">
                             <p class="text-muted">Buscando persona...</p>
@@ -437,9 +437,25 @@
     <script src="JS/codigo.js"></script>
     <script src="JS/adop.js"></script>
     
+    <!-- Estilo moderno basado en usuarios.html -->
+    <style id="usuarios-modal-modern-crud-adopcion">
+        .modal-modern { border: none; border-radius: 16px; box-shadow: 0 12px 30px rgba(239, 58, 125, 0.25); overflow: hidden; }
+        .modal-header-gradient { background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%) !important; color: #fff; border: none; }
+        .btn-pink-modern { background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%); color: #fff; border: none; box-shadow: 0 6px 16px rgba(239, 58, 125, 0.35); }
+        .btn-pink-modern:hover { filter: brightness(1.05); }
+        .btn-outline-pink { border: 2px solid #ef7aa1; color: #ef7aa1; background: #fff; }
+        .btn-outline-pink:hover { background: #ffe3ed; border-color: #ff6b9d; color: #ff3b7d; }
+        .modal-body .form-label { font-weight: 600; color: #ef3b7d; }
+        .modal-body .form-control, .modal-body .form-select { border-radius: 10px; border-color: #ffd0de; }
+        .modal-body .form-control:focus, .modal-body .form-select:focus { box-shadow: 0 0 0 .25rem rgba(239, 122, 161, .25); border-color: #ef7aa1; }
+    </style>
+    
     <!-- Chat Widget -->
     <link rel="stylesheet" href="/CSS/chatWidget.css">
     <script src="/JS/chatWidget.js" defer></script>
 </body>
 
 </html>
+
+
+

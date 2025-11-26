@@ -26,7 +26,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold text-danger" href="HUELLA FELIZ.html">
-                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block">
+                <img src="files/iconomain.jpg" alt="Huella Feliz" width="32" height="32" class="me-2 d-inline-block img-fluid ">
                 HUELLA FELIZ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -90,7 +90,7 @@
                 </div>
                 <div class="card-body" id="contenedorAnimales">
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <div class="table-responsive"><table class="table table-hover">
                             <thead class="table-danger">
                                 <tr>
                                     <th>ID</th>
@@ -107,7 +107,7 @@
                             <tbody id="animalesBody">
                                 <!-- Los animales se cargarán aquí dinámicamente -->
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="card-body" id="contenedorSolicitudes" style="display:none">
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <div class="table-responsive"><table class="table table-hover">
                             <thead class="table-danger">
                                 <tr>
                                     <th>ID</th>
@@ -136,7 +136,7 @@
                             <tbody id="solicitudesBody">
                                 <tr><td colspan="5" class="text-center">Cargando...</td></tr>
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 </div>
             </div>
@@ -145,13 +145,16 @@
 
     <!-- MODAL ASIGNAR VETERINARIO -->
     <div class="modal fade" id="modalAsignarVet" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">Asignar/Editar veterinario</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
+                        <i class="bi bi-person-heart fs-1 d-block mb-2"></i>
+                        Asignar/Editar veterinario
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label">Animal</label>
                         <select id="selectAnimalVet" class="form-select"></select>
@@ -161,9 +164,9 @@
                         <input id="inputNombreVet" type="text" class="form-control" placeholder="Ej: Dra. Pérez" maxlength="150">
                     </div>
                 </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-pink" id="btnGuardarVet">Guardar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink-modern px-4" id="btnGuardarVet">Guardar</button>
                 </div>
             </div>
         </div>
@@ -232,40 +235,40 @@
     <!-- MODAL REGISTRAR ANIMAL -->
     <div class="modal fade" id="modalRegistrarAnimal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content p-4">
-                <div class="modal-header border-0">
-                    <h3 class="modal-title w-100 text-center fw-bold">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
                         <i class="bi bi-plus-circle fs-1 d-block mb-2"></i>
                         Registrar Nuevo Animal
-                    </h3>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form class="row g-3" id="formRegistrarAnimal">
                         <!-- Información Básica -->
                         <h4 class="mb-3 mt-2" style="color: #ff5c8d; font-weight: bold;">Información Básica</h4>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Nombre del Animal *</label>
                             <input type="text" class="form-control" placeholder="Ingresar nombre" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Especie *</label>
                             <select class="form-select" id="especieRegistrarAnimal" required>
                                 <option value="">Seleccionar especie</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Raza *</label>
                             <select class="form-select" id="razaRegistrarAnimal" required disabled>
                                 <option value="">Primero selecciona una especie</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Edad (meses) *</label>
                             <input type="number" class="form-control" placeholder="Ingresar edad" min="0" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Género *</label>
                             <select class="form-select" required>
                                 <option value="">Seleccionar género</option>
@@ -273,11 +276,11 @@
                                 <option value="F">Hembra</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Peso (kg)</label>
                             <input type="number" class="form-control" placeholder="Ingresar peso" min="0" step="0.1">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Tipo de Pelaje</label>
                             <select class="form-select">
                                 <option value="">Seleccionar pelaje</option>
@@ -286,7 +289,7 @@
                                 <option value="Largo">Largo</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Tamaño</label>
                             <select class="form-select" name="tamano" id="tamanoRegistrarAnimal">
                                 <option value="">Seleccionar tamaño</option>
@@ -326,21 +329,21 @@
 
                         <!-- Información Adicional -->
                         <h4 class="mb-3 mt-4" style="color: #ff5c8d; font-weight: bold;">Información Adicional</h4>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Tipo de Enfermedad</label>
                             <select class="form-select" id="tipoEnfermedadRegistrarAnimal">
                                 <option value="">Seleccionar tipo</option>
                                 <!-- Se llenará dinámicamente con JavaScript -->
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Enfermedad</label>
                             <select class="form-select" id="enfermedadRegistrarAnimal" disabled>
                                 <option value="">Primero selecciona un tipo</option>
                                 <!-- Se llenará dinámicamente con JavaScript -->
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Gravedad</label>
                             <select class="form-select" id="gravedadRegistrarAnimal">
                                 <option value="">Seleccionar gravedad</option>
@@ -363,9 +366,9 @@
                     </form>
                 </div>
 
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-pink" onclick="registrarAnimal()">Registrar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink-modern px-4" onclick="registrarAnimal()">Registrar</button>
                 </div>
             </div>
         </div>
@@ -374,42 +377,42 @@
     <!-- MODAL EDITAR ANIMAL -->
     <div class="modal fade" id="modalEditarAnimal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content p-4">
-                <div class="modal-header border-0">
-                    <h3 class="modal-title w-100 text-center fw-bold">
+            <div class="modal-content modal-modern">
+                <div class="modal-header modal-header-gradient">
+                    <div class="modal-title w-100 text-center fw-bold text-white">
                         <i class="bi bi-pencil-square fs-1 d-block mb-2"></i>
                         Editar Animal
-                    </h3>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form class="row g-3" id="formEditarAnimal">
                         <input type="hidden" id="idEditarAnimal">
                         <!-- Los mismos campos que el modal de registrar -->
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Nombre del Animal *</label>
                             <input type="text" class="form-control" id="nombreEditarAnimal"
                                 placeholder="Ingresar nombre" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Especie *</label>
                             <select class="form-select" id="especieEditarAnimal" required>
                                 <option value="">Seleccionar especie</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Raza *</label>
                             <select class="form-select" id="razaEditarAnimal" required>
                                 <option value="">Seleccionar raza</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Edad (meses) *</label>
                             <input type="number" class="form-control" id="edadEditarAnimal" placeholder="Ingresar edad"
                                 min="0" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Género *</label>
                             <select class="form-select" id="generoEditarAnimal" required>
                                 <option value="">Seleccionar género</option>
@@ -417,12 +420,12 @@
                                 <option value="H">Hembra</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Peso (kg)</label>
                             <input type="number" class="form-control" id="pesoEditarAnimal" placeholder="Ingresar peso"
                                 min="0" step="0.1">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Tipo de Pelaje</label>
                             <select class="form-select" id="pelajeEditarAnimal">
                                 <option value="">Seleccionar pelaje</option>
@@ -431,7 +434,7 @@
                                 <option value="Largo">Largo</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12 col-md-6">
                             <label class="form-label">Tamaño</label>
                             <select class="form-select" id="tamanoEditarAnimal">
                                 <option value="">Seleccionar tamaño</option>
@@ -482,9 +485,9 @@
                     </form>
                 </div>
 
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-pink" onclick="actualizarAnimal()">Actualizar</button>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-pink-modern px-4" onclick="actualizarAnimal()">Actualizar</button>
                 </div>
             </div>
         </div>
@@ -512,6 +515,39 @@
     <!-- Chat Widget -->
     <link rel="stylesheet" href="/CSS/chatWidget.css">
     <script src="/JS/chatWidget.js" defer></script>
+
+    <!-- Estilos modernos para modales (consistentes con usuarios/roles/apadrinamiento) -->
+    <style id="usuarios-modal-modern-animales">
+        .modal-modern {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(239, 58, 125, 0.25);
+            overflow: hidden;
+        }
+        .modal-header-gradient {
+            background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);
+            border: none;
+            padding: 1.25rem 1.25rem;
+        }
+        .btn-pink-modern {
+            background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);
+            color: #fff;
+            border: none;
+            box-shadow: 0 6px 16px rgba(239, 58, 125, 0.35);
+        }
+        .btn-pink-modern:hover { filter: brightness(1.05); }
+        .modal-body .form-label { font-weight: 600; color: #ef3b7d; }
+        .modal-body .form-control, .modal-body .form-select {
+            border-radius: 10px;
+            border-color: #ffd0de;
+        }
+        .modal-body .form-control:focus, .modal-body .form-select:focus {
+            box-shadow: 0 0 0 .25rem rgba(239, 122, 161, .25);
+            border-color: #ef7aa1;
+        }
+    </style>
 </body>
 
 </html>
+
+
