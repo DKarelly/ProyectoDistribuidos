@@ -3,333 +3,299 @@ const { query } = require('../../config/database');
 const { authenticateToken } = require('../auth/auth.routes');
 const router = express.Router();
 
-// ==========================
-// MIS ADOPCIONES (usuario autenticado)
-// ==========================
+/* ========================================================
+   1. MIS SOLICITUDES / ADOPCIONES DEL USUARIO LOGUEADO
+======================================================== */
 router.get('/mine', authenticateToken, async (req, res) => {
   try {
     const idUsuario = req.user.idusuario;
+
     const result = await query(`
-      SELECT
-          ad.idadopcion,
-          ad.f_adopcion AS fechaAdopcion,
-          ad.estadoAdopcion AS estado,
-          an.idanimal,
-          an.nombreAnimal AS nombreAnimal
-      FROM adopcion ad
-      INNER JOIN animal an ON an.idAnimal = ad.idAnimal
-      INNER JOIN persona p_adoptante ON p_adoptante.idPersona = ad.idPersona
-      INNER JOIN usuario us_adoptante ON us_adoptante.idUsuario = p_adoptante.idUsuario
-      WHERE us_adoptante.idUsuario = $1
-      ORDER BY ad.f_adopcion DESC NULLS LAST, ad.idAdopcion DESC;
+      SELECT 
+        sa.idSolicitudAdopcion,
+        sa.f_solicitud AS fechaSolicitud,
+        sa.estadoSolicitud,
+        sa.motivoSolicitud,
+        sa.observaciones,
+
+        an.idAnimal,
+        an.nombreAnimal,
+
+        ad.idAdopcion,
+        ad.f_adopcion AS fechaAdopcion,
+        ad.contratoAdopcion,
+        ad.condiciones
+
+      FROM solicitud_adopcion sa
+      INNER JOIN animal an ON an.idAnimal = sa.idAnimal
+      LEFT JOIN adopcion ad ON ad.idSolicitudAdopcion = sa.idSolicitudAdopcion
+      WHERE sa.idUsuario = $1
+      ORDER BY sa.f_solicitud DESC, sa.idSolicitudAdopcion DESC
     `, [idUsuario]);
-    res.json({ message: 'Mis adopciones', data: result.rows });
+
+    res.json({ message: "Mis solicitudes y adopciones", data: result.rows });
+
   } catch (error) {
-    console.error('Error obteniendo mis adopciones:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error("Error obteniendo mis solicitudes:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-// ==========================
-// LISTAR ADOPCIONES
-// ==========================
-router.get('/', authenticateToken, async (req, res) => {
-  try {
-    const result = await query(`
-      SELECT
-          ad.f_adopcion AS fechaAdopcion,
-          ad.direccionAdoptante AS dirAdoptante,
-          ad.estadoAdopcion AS estadoAdop,
-          an.nombreAnimal AS animal,
-          (p_adoptante.nombres || ' ' || p_adoptante.apePaterno || ' ' || p_adoptante.apeMaterno) AS Adoptante,
-          COALESCE(
-              e.nombreEmpresa,
-              (p_entregante.nombres || ' ' || p_entregante.apePaterno || ' ' || p_entregante.apeMaterno)
-          ) AS Entregante
-      FROM adopcion ad
-      INNER JOIN animal an ON an.idAnimal = ad.idAnimal
-      INNER JOIN persona p_adoptante ON p_adoptante.idPersona = ad.idPersona
-      INNER JOIN usuario us_entregante ON us_entregante.idUsuario = ad.idEntregante
-      LEFT JOIN empresa e ON e.idUsuario = us_entregante.idUsuario 
-      LEFT JOIN persona p_entregante ON p_entregante.idUsuario = us_entregante.idUsuario
-      ORDER BY ad.f_adopcion DESC;
-    `);
-    res.json({ message: 'Adopciones obtenidas', data: result.rows });
-  } catch (error) {
-    console.error('Error obteniendo adopciones:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-});
-
-// ==========================
-// LISTAR SOLICITUDES
-// ==========================
-router.get('/solicitud', authenticateToken, async (req, res) => {
-  try {
-    const result = await query(`
-      SELECT
-          ad.f_solicitud AS fechaSolicitud,
-          ad.motivoAdopcion AS comentario,
-          ad.estadoAdopcion AS estadoSolic,
-          an.nombreAnimal AS animal,
-          (p_adoptante.nombres || ' ' || p_adoptante.apePaterno || ' ' || p_adoptante.apeMaterno) AS Solicitante,
-          COALESCE(
-              e.nombreEmpresa,
-              (p_entregante.nombres || ' ' || p_entregante.apePaterno || ' ' || p_entregante.apeMaterno)
-          ) AS Entregante
-      FROM adopcion ad
-      INNER JOIN animal an ON an.idAnimal = ad.idAnimal
-      INNER JOIN persona p_adoptante ON p_adoptante.idPersona = ad.idPersona
-      INNER JOIN usuario us_entregante ON us_entregante.idUsuario = ad.idEntregante
-      LEFT JOIN empresa e ON e.idUsuario = us_entregante.idUsuario 
-      LEFT JOIN persona p_entregante ON p_entregante.idUsuario = us_entregante.idUsuario
-      ORDER BY ad.f_solicitud DESC;
-    `);
-    res.json({ message: 'Solicitudes obtenidas', data: result.rows });
-  } catch (error) {
-    console.error('Error obteniendo solicitudes:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-});
-
-// ==========================
-// REGISTRAR SOLICITUD
-// ==========================
+/* ========================================================
+   2. REGISTRAR UNA SOLICITUD DE ADOPCIÓN
+======================================================== */
 router.post('/registrar_solicitud', authenticateToken, async (req, res) => {
   try {
-    const { motivo, idAnimal, idPersona, idEntregante } = req.body;
+    const idUsuario = req.user.idusuario;
+    const { motivoSolicitud, observaciones, idAnimal } = req.body;
 
-    if (!motivo || !idAnimal || !idPersona || !idEntregante) {
-      return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    if (!motivoSolicitud || !idAnimal) {
+      return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
     const result = await query(`
-      INSERT INTO adopcion (f_solicitud, estadoAdopcion, motivoAdopcion, idAnimal, idPersona, idEntregante)
-      VALUES (CURRENT_DATE, 'Pendiente', $1, $2, $3, $4)
+      INSERT INTO solicitud_adopcion 
+        (f_solicitud, motivoSolicitud, observaciones, idAnimal, idUsuario)
+      VALUES (CURRENT_DATE, $1, $2, $3, $4)
       RETURNING *;
-    `, [motivo, idAnimal, idPersona, idEntregante]);
+    `, [motivoSolicitud, observaciones || null, idAnimal, idUsuario]);
 
-    res.status(201).json({ message: 'Solicitud registrada', data: result.rows[0] });
+    res.status(201).json({
+      message: "Solicitud registrada",
+      data: result.rows[0]
+    });
+
   } catch (error) {
-    console.error('Error registrando solicitud:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error("Error registrando solicitud:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-// ==========================
-// REGISTRAR ADOPCIÓN
-// ==========================
-router.put('/registrar_adopcion/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { fechaAdopcion, contrato, condiciones, direccionAdoptante } = req.body;
-
-    const estadoFinal = (!fechaAdopcion || !contrato || !condiciones || !direccionAdoptante)
-      ? 'En proceso'
-      : 'Completada';
-
-    const result = await query(`
-      UPDATE adopcion
-      SET 
-        f_adopcion = COALESCE($1, f_adopcion),
-        contrato = COALESCE($2, contrato),
-        condiciones = COALESCE($3, condiciones),
-        direccionAdoptante = COALESCE($4, direccionAdoptante),
-        estadoAdopcion = $5
-      WHERE idAdopcion = $6
-      RETURNING *;
-    `, [fechaAdopcion, contrato, condiciones, direccionAdoptante, estadoFinal, id]);
-
-    if (!result.rows.length)
-      return res.status(404).json({ message: 'Adopción no encontrada' });
-
-    const mensaje = estadoFinal === 'Completada'
-      ? 'Adopción registrada y completada'
-      : 'Adopción registrada pero pendiente de completar documentos';
-
-    res.json({ message: mensaje, data: result.rows[0] });
-  } catch (error) {
-    console.error('Error registrando adopción:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-});
-
-// ==========================
-// CAMBIAR ESTADO DE SOLICITUD
-// ==========================
+/* ========================================================
+   3. CAMBIAR ESTADO DE UNA SOLICITUD
+======================================================== */
 router.put('/estado_solicitud/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { estadoAdopcion } = req.body;
+    const { estadoSolicitud } = req.body;
 
-    const estadosValidos = ['EN PROCESO', 'RECHAZADO'];
-    if (!estadoAdopcion || !estadosValidos.includes(estadoAdopcion.toUpperCase())) {
+    const estadosValidos = ["PENDIENTE", "ACEPTADA", "RECHAZADA"];
+
+    if (!estadoSolicitud || !estadosValidos.includes(estadoSolicitud)) {
       return res.status(400).json({
-        message: `Estado inválido. Valores permitidos: ${estadosValidos.join(', ')}`
+        message: `Estado inválido. Permitidos: ${estadosValidos.join(', ')}`
       });
     }
 
     const result = await query(`
-      UPDATE adopcion
-      SET estadoAdopcion = $1
-      WHERE idAdopcion = $2
+      UPDATE solicitud_adopcion
+      SET estadoSolicitud = $1
+      WHERE idSolicitudAdopcion = $2
       RETURNING *;
-    `, [estadoAdopcion.toUpperCase(), id]);
+    `, [estadoSolicitud, id]);
 
-    if (!result.rows.length)
-      return res.status(404).json({ message: 'Adopción no encontrada.' });
-
-    const mensaje = estadoAdopcion.toUpperCase() === 'EN PROCESO'
-      ? 'Adopción en proceso 🐾'
-      : 'Adopción rechazada ❌';
-
-    res.json({ message: mensaje, data: result.rows[0] });
-  } catch (error) {
-    console.error('Error al cambiar estado:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-});
-
-// ==========================
-// CANCELAR ADOPCIÓN
-// ==========================
-router.put('/cancelar_adopcion/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await query(`
-      UPDATE adopcion
-      SET estadoAdopcion = 'Cancelada'
-      WHERE idAdopcion = $1
-      RETURNING *;
-    `, [id]);
-
-    if (!result.rows.length)
-      return res.status(404).json({ message: 'Adopción no encontrada.' });
+    if (!result.rows.length) {
+      return res.status(404).json({ message: "Solicitud no encontrada" });
+    }
 
     res.json({
-      message: 'Adopción cancelada correctamente.',
+      message: `Estado actualizado a ${estadoSolicitud}`,
       data: result.rows[0]
     });
+
   } catch (error) {
-    console.error('Error cancelando adopción:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    console.error("Error cambiando estado:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-// ==========================
-// ELIMINAR SOLICITUD / ADOPCIÓN
-// ==========================
-router.delete('/eliminar/:id', authenticateToken, async (req, res) => {
+/* ========================================================
+   4. REGISTRAR UNA ADOPCIÓN (A partir de solicitud)
+======================================================== */
+router.post('/registrar_adopcion/:idSolicitud', authenticateToken, async (req, res) => {
+  try {
+    const { idSolicitud } = req.params;
+    const {contratoAdopcion, condiciones } = req.body;
+
+    const result = await query(`
+      INSERT INTO adopcion (
+        f_adopcion, contratoAdopcion, condiciones, idSolicitudAdopcion
+      )
+      VALUES (CURRENT_DATE, $1, $2, $3)
+      RETURNING *;
+    `, [
+      contratoAdopcion || null,
+      condiciones || null,
+      idSolicitud
+    ]);
+
+    res.json({
+      message: "Adopción registrada",
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Error registrando adopción:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+/* ========================================================
+   5. LISTAR TODAS LAS SOLICITUDES
+======================================================== */
+router.get('/solicitud', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        sa.*, 
+        an.nombreAnimal
+      FROM solicitud_adopcion sa
+      INNER JOIN animal an ON an.idAnimal = sa.idAnimal
+      ORDER BY sa.f_solicitud DESC;
+    `);
+
+    res.json({ message: "Solicitudes obtenidas", data: result.rows });
+
+  } catch (error) {
+    console.error("Error obteniendo solicitudes:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+/* ========================================================
+   6. LISTAR ADOPCIONES
+======================================================== */
+router.get('/', authenticateToken, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT 
+        ad.*, 
+        sa.idUsuario,
+        an.nombreAnimal
+      FROM adopcion ad
+      INNER JOIN solicitud_adopcion sa ON sa.idSolicitudAdopcion = ad.idSolicitudAdopcion
+      INNER JOIN animal an ON an.idAnimal = sa.idAnimal
+      ORDER BY ad.f_adopcion DESC;
+    `);
+
+    res.json({ message: "Adopciones obtenidas", data: result.rows });
+
+  } catch (error) {
+    console.error("Error obteniendo adopciones:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+/* ========================================================
+   7. ELIMINAR SOLICITUD (si no tiene adopción)
+======================================================== */
+router.delete('/solicitud/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
+    const tieneAdopcion = await query(`
+      SELECT * FROM adopcion WHERE idSolicitudAdopcion = $1
+    `, [id]);
+
+    if (tieneAdopcion.rows.length) {
+      return res.status(400).json({
+        message: "No se puede eliminar: ya tiene adopción."
+      });
+    }
+
     const result = await query(`
-      DELETE FROM adopcion
-      WHERE idAdopcion = $1
-      RETURNING idAdopcion;
+      DELETE FROM solicitud_adopcion 
+      WHERE idSolicitudAdopcion = $1
+      RETURNING *;
     `, [id]);
 
     if (!result.rows.length)
-      return res.status(404).json({ message: 'Registro no encontrado.' });
+      return res.status(404).json({ message: "Solicitud no encontrada." });
 
-    res.json({ message: `Registro con ID ${id} eliminado.`, data: result.rows[0] });
+    res.json({ message: "Solicitud eliminada", data: result.rows[0] });
+
   } catch (error) {
-    console.error('Error eliminando registro:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
+    console.error("Error eliminando solicitud:", error);
+    res.status(500).json({ message: "Error interno del servidor" });
   }
 });
 
-// ==========================
-// BÚSQUEDA DE ANIMAL
-// ==========================
-router.get('/busqueda_animal/:nombreAnimal', authenticateToken, async (req, res) => {
-  try {
-    const { nombreAnimal } = req.params;
+/* ========================================================
+   8. BÚSQUEDA DE ANIMAL Y PERSONA POR NOMBRE (ADMIN)
+   GET /api/adopciones/buscar?animalName=...&personName=...
+======================================================== */
+router.get('/buscar', authenticateToken, async (req, res) => {
+    try {
+        const { animalName, personName } = req.query;
 
-    const result = await query(`
-      SELECT
-        a.idanimal,
-        us.idusuario,
-        a.nombreanimal,
-        a.edadmesesanimal,
-        a.generoanimal,
-        a.pesoanimal,
-        a.pelaje,
-        a.tamano,
-        r.razaanimal,
-        e.especieanimal,
-        (
-          SELECT g.imagen
-          FROM galeria g
-          WHERE g.idanimal = a.idanimal
-          AND g.imagen IS NOT NULL
-          LIMIT 1
-        ) AS imagen,
-        CASE
-          WHEN EXISTS (
-            SELECT 1 FROM adopcion ad2
-            WHERE ad2.idanimal = a.idanimal
-            AND ad2.estadoadopcion = 'Aprobada'
-          ) THEN 'adoptado'
-          WHEN EXISTS (
-            SELECT 1 FROM adopcion ad2
-            WHERE ad2.idanimal = a.idanimal
-            AND ad2.estadoadopcion = 'En proceso'
-          ) THEN 'en_proceso'
-          ELSE 'disponible'
-        END AS estado
-      FROM animal a
-      JOIN caso_animal ca ON a.idanimal = ca.idanimal
-      JOIN usuario us ON ca.idusuario = us.idusuario
-      JOIN raza r ON a.idraza = r.idraza
-      JOIN especie e ON r.idespecie = e.idespecie
-      WHERE LOWER(a.nombreanimal) LIKE LOWER($1);
-    `, [`%${nombreAnimal}%`]);
+        if (!animalName && !personName) {
+            return res.status(400).json({
+                message: "Debe proporcionar al menos 'animalName' o 'personName' para la búsqueda."
+            });
+        }
 
-    if (!result.rows.length)
-      return res.status(404).json({ message: 'Animal no encontrado.' });
+        let animalData = [];
+        let personData = [];
 
-    res.json({ success: true, data: result.rows });
-  } catch (error) {
-    console.error('Error en búsqueda de animal:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-});
+        // 1. Búsqueda de Animal por nombre
+        if (animalName) {
+            const animalSearch = `%${animalName.toLowerCase()}%`;
+            const resultAnimal = await query(`
+                SELECT
+                    a.idAnimal,
+                    a.nombreAnimal,
+                    a.generoAnimal,
+                    a.edadMesesAnimal,
+                    r.razaAnimal,
+                    e.especieAnimal
+                FROM animal a
+                INNER JOIN raza r ON a.idRaza = r.idRaza
+                INNER JOIN especie e ON r.idEspecie = e.idEspecie
+                WHERE LOWER(a.nombreAnimal) LIKE $1
+                LIMIT 10;
+            `, [animalSearch]);
+            animalData = resultAnimal.rows;
+        }
 
-// ==========================
-// BÚSQUEDA DE PERSONA
-// ==========================
-router.get('/busqueda_persona/:nombrePersona', authenticateToken, async (req, res) => {
-  try {
-    const { nombrePersona } = req.params;
+        // 2. Búsqueda de Persona por nombre, apellido, nombre completo o DNI
+        if (personName) {
+            const personSearch = `%${personName.toLowerCase()}%`;
+            const resultPerson = await query(`
+                SELECT
+                    p.idPersona,
+                    p.nombres,
+                    p.apePaterno,
+                    p.apeMaterno,
+                    p.dni,
+                    u.idUsuario,
+                    u.correoUsuario,
+                    u.numeroUsuario,
+                    u.direccionUsuario
+                FROM persona p
+                INNER JOIN usuario u ON p.idUsuario = u.idUsuario
+                WHERE 
+                        -- Búsqueda consolidada por nombre completo (PostgreSQL || para concatenar)
+                    LOWER(p.nombres || ' ' || p.apePaterno || ' ' || p.apeMaterno) LIKE $1 OR
+                        -- Búsqueda por DNI (si el usuario ingresó un número)
+                        p.dni LIKE $1
+                LIMIT 10;
+            `, [personSearch]);
+            personData = resultPerson.rows;
+        }
 
-    const result = await query(`
-      SELECT
-        pe.idPersona,
-        (pe.nombres || ' ' || pe.apepaterno || ' ' || pe.apematerno) AS nombrecompleto,
-        pe.dni, 
-        pe.sexo, 
-        us.direccionusuario, 
-        us.numerousuario, 
-        us.correousuario
-      FROM usuario us
-      INNER JOIN persona pe ON us.idusuario = pe.idusuario
-      INNER JOIN usuario_roles ur ON us.idusuario = ur.idusuario
-      INNER JOIN rol_usuario ru ON ur.idrol = ru.idrol
-      WHERE ru.rolusuario = 'Adoptante'
-      AND LOWER(pe.nombres || ' ' || pe.apepaterno || ' ' || pe.apematerno) LIKE LOWER($1)
-      LIMIT 1;
-    `, [`%${nombrePersona}%`]);
+        // 3. Devolver resultados
+        res.json({
+            message: "Resultados de búsqueda",
+            data: {
+                animales: animalData,
+                personas: personData
+            }
+        });
 
-    if (!result.rows.length)
-      return res.status(404).json({ message: 'Adoptante no encontrado.' });
-
-    res.json({ success: true, data: result.rows[0] });
-  } catch (error) {
-    console.error('Error en búsqueda de adoptante:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
+    } catch (error) {
+        console.error("Error en la búsqueda de recursos:", error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
 });
 
 module.exports = router;
