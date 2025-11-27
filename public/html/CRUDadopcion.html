@@ -121,13 +121,13 @@
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
-                                    <input type="text" class="form-control" placeholder="Buscar por nombre de persona">
+                                    <input type="text" id="filtroPersonaAdopcion" class="form-control" placeholder="Buscar por nombre de persona">
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <input type="text" class="form-control" placeholder="Buscar por nombre del animal">
+                                    <input type="text" id="filtroAnimalAdopcion" class="form-control" placeholder="Buscar por nombre del animal">
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <input type="date" class="form-control" placeholder="Fecha de adopción">
+                                    <input type="date" id="filtroFechaAdopcion" class="form-control" placeholder="Fecha de adopción">
                                 </div>
                             </div>
                         </div>
@@ -283,20 +283,22 @@
 
     <!-- MODAL VER DETALLE SOLICITUD -->
     <div class="modal fade" id="modalVerSolicitud" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
                     <h5 class="modal-title">
-                        <i class="bi bi-eye-fill me-2"></i>
+                        <i class="bi bi-file-earmark-text me-2"></i>
                         Detalle de Solicitud
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="detalleSolicitudBody">
+                <div class="modal-body p-4" id="detalleSolicitudBody" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Contenido dinámico -->
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-top-0">
+                    <button class="btn btn-pink" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -304,20 +306,22 @@
 
     <!-- MODAL VER DETALLE ADOPCIÓN -->
     <div class="modal fade" id="modalVerAdopcion" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
                     <h5 class="modal-title">
                         <i class="bi bi-heart-fill me-2"></i>
                         Detalle de Adopción
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body" id="detalleAdopcionBody">
+                <div class="modal-body p-4" id="detalleAdopcionBody" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Contenido dinámico -->
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <div class="modal-footer border-top-0">
+                    <button class="btn btn-pink" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Cerrar
+                    </button>
                 </div>
             </div>
         </div>

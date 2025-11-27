@@ -66,32 +66,219 @@
   async function renderUserAdoptions() {
     const section = document.getElementById('adopciones');
     if (!section) return;
+    
     try {
       const resp = await apiRequest('/adoptions/mine');
-      const adoptions = resp.data || resp || [];
-      if (!adoptions || adoptions.length === 0) {
-        renderEmptyState('adopciones', 'Todavía no has realizado adopciones.');
-        return;
+      const data = resp.data || resp || [];
+      
+      // Renderizar todas las solicitudes/adopciones en una sola tabla
+      const tbodyAdopciones = document.getElementById('tbody-adopciones');
+      if (tbodyAdopciones) {
+        if (data.length === 0) {
+          tbodyAdopciones.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Aún no tienes solicitudes de adopción</td></tr>';
+        } else {
+          tbodyAdopciones.innerHTML = data.map(item => {
+            const estado = (item.estadosolicitud || 'PENDIENTE').toUpperCase();
+            let estadoClass = 'bg-warning text-dark';
+            let estadoTexto = 'Pendiente';
+            
+            if (estado === 'EN_REVISION') {
+              estadoClass = 'bg-info text-white';
+              estadoTexto = 'En Revisión';
+            } else if (estado === 'APROBADO') {
+              estadoClass = 'bg-success text-white';
+              estadoTexto = item.idadopcion ? 'Adoptado ✓' : 'Aprobado';
+            } else if (estado === 'RECHAZADO') {
+              estadoClass = 'bg-danger text-white';
+              estadoTexto = 'Rechazado';
+            }
+            
+            const fecha = item.idadopcion 
+              ? (item.fechaadopcion ? new Date(item.fechaadopcion).toLocaleDateString('es-PE') : '-')
+              : (item.fechasolicitud ? new Date(item.fechasolicitud).toLocaleDateString('es-PE') : '-');
+            
+            return `
+              <tr>
+                <td><strong>${item.nombreanimal || 'Sin nombre'}</strong></td>
+                <td>${fecha}</td>
+                <td><span class="badge ${estadoClass}">${estadoTexto}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-pink btn-ver-solicitud" data-solicitud='${JSON.stringify(item).replace(/'/g, "&#39;")}'>
+                    <i class="bi bi-eye"></i> Ver
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join('');
+          
+          // Agregar event listeners para los botones de ver
+          tbodyAdopciones.querySelectorAll('.btn-ver-solicitud').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const solicitud = JSON.parse(btn.dataset.solicitud.replace(/&#39;/g, "'"));
+              mostrarDetalleSolicitud(solicitud);
+            });
+          });
+        }
       }
-      const tbody = getSectionTbody('adopciones');
-      if (!tbody) return;
+      
+      // Quitar mensaje de estado vacío si hay datos
       const dynamic = section.querySelector('.dynamic-content');
       if (dynamic) dynamic.remove();
-      tbody.innerHTML = adoptions.map(a => cardRowHTML({
-        tipo: 'adopciones',
-        id: a.idAdopcion || a.id || a.idadopcion || Math.random(),
-        fecha: a.fechaAdopcion || a.createdAt,
-        descripcion: a.nombreAnimal || a.animal?.nombreAnimal || 'Adopción',
-        animal: a.nombreAnimal || a.animal?.nombreAnimal || '—',
-        estado: a.estado || '—',
-        detalleExtra: `Estado: ${a.estado || '—'}`
-      }, 3)).join('');
+      
     } catch (error) {
       console.error('Error cargando adopciones del usuario:', error);
-      // Evitar alerta duplicada; solo renderear estado vacío
-      renderEmptyState('adopciones', 'No se pudieron cargar tus adopciones.');
+      const tbodyAdopciones = document.getElementById('tbody-adopciones');
+      if (tbodyAdopciones) tbodyAdopciones.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error cargando</td></tr>';
     }
   }
+
+  // Función para mostrar el detalle de una solicitud
+  function mostrarDetalleSolicitud(solicitud) {
+    const estado = (solicitud.estadosolicitud || 'PENDIENTE').toUpperCase();
+    let estadoClass = 'warning';
+    let estadoTexto = 'Pendiente';
+    let estadoIcon = 'clock';
+    
+    if (estado === 'EN_REVISION') {
+      estadoClass = 'info';
+      estadoTexto = 'En Revisión';
+      estadoIcon = 'hourglass-split';
+    } else if (estado === 'APROBADO') {
+      estadoClass = 'success';
+      estadoTexto = solicitud.idadopcion ? '¡Adoptado!' : 'Aprobado';
+      estadoIcon = 'check-circle';
+    } else if (estado === 'RECHAZADO') {
+      estadoClass = 'danger';
+      estadoTexto = 'Rechazado';
+      estadoIcon = 'x-circle';
+    }
+
+    const modalBody = document.getElementById('detalleSolicitudBodyHistorial');
+    if (!modalBody) return;
+
+    modalBody.innerHTML = `
+      <!-- Estado -->
+      <div class="text-center mb-4">
+        <div class="rounded-circle bg-${estadoClass} bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-2" style="width: 70px; height: 70px;">
+          <i class="bi bi-${estadoIcon}-fill text-${estadoClass}" style="font-size: 2.5rem;"></i>
+        </div>
+        <h5 class="mb-1">
+          <span class="badge bg-${estadoClass} fs-6 px-3 py-2">${estadoTexto}</span>
+        </h5>
+        <p class="text-muted small mb-0">
+          Solicitud #${solicitud.idsolicitudadopcion || 'N/A'} • 
+          ${solicitud.fechasolicitud ? new Date(solicitud.fechasolicitud).toLocaleDateString('es-PE', {day: '2-digit', month: 'long', year: 'numeric'}) : 'Sin fecha'}
+        </p>
+      </div>
+
+      <!-- Información del Animal -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header text-white py-2" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
+          <h6 class="mb-0"><i class="bi bi-heart-fill me-2"></i>Animal que deseas adoptar</h6>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+              ${solicitud.imagenanimal 
+                ? `<img src="files/${solicitud.imagenanimal}" class="rounded-circle shadow" style="width: 120px; height: 120px; object-fit: cover;" alt="${solicitud.nombreanimal}">`
+                : `<div class="rounded-circle d-inline-flex align-items-center justify-content-center shadow" style="width: 120px; height: 120px; background: linear-gradient(135deg, #ffeef4 0%, #ffe0eb 100%);">
+                    <i class="bi bi-piggy-bank" style="font-size: 3rem; color: #ef7aa1;"></i>
+                  </div>`
+              }
+              <h4 class="fw-bold mt-3 mb-0" style="color: #ef3b7d;">${solicitud.nombreanimal || 'Sin nombre'}</h4>
+            </div>
+            <div class="col-md-8">
+              <div class="row g-2">
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">🐾 Especie</small>
+                    <strong>${solicitud.especieanimal || 'N/A'}</strong>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">🏷️ Raza</small>
+                    <strong>${solicitud.razaanimal || 'N/A'}</strong>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">📅 Edad</small>
+                    <strong>${solicitud.edadmesesanimal 
+                      ? (solicitud.edadmesesanimal >= 12 
+                          ? Math.floor(solicitud.edadmesesanimal/12) + ' año(s)' 
+                          : solicitud.edadmesesanimal + ' mes(es)') 
+                      : 'N/A'}</strong>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">⚧️ Género</small>
+                    <strong>${solicitud.generoanimal === 'M' ? 'Macho' : solicitud.generoanimal === 'H' ? 'Hembra' : 'N/A'}</strong>
+                  </div>
+                </div>
+                ${solicitud.tamano ? `
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">📏 Tamaño</small>
+                    <strong>${solicitud.tamano}</strong>
+                  </div>
+                </div>` : ''}
+                ${solicitud.pelaje ? `
+                <div class="col-6">
+                  <div class="border rounded p-2 text-center bg-light">
+                    <small class="text-muted d-block">🧶 Pelaje</small>
+                    <strong>${solicitud.pelaje}</strong>
+                  </div>
+                </div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Motivo -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light py-2">
+          <h6 class="mb-0"><i class="bi bi-chat-quote me-2"></i>Tu motivo de adopción</h6>
+        </div>
+        <div class="card-body">
+          <p class="mb-0 fst-italic text-secondary">"${solicitud.motivosolicitud || 'No especificado'}"</p>
+        </div>
+      </div>
+
+      ${solicitud.observaciones ? `
+        <div class="alert ${estado === 'RECHAZADO' ? 'alert-danger' : 'alert-info'} mb-4">
+          <h6 class="alert-heading fw-bold">
+            <i class="bi bi-${estado === 'RECHAZADO' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            Mensaje del Refugio
+          </h6>
+          <p class="mb-0">${solicitud.observaciones}</p>
+        </div>
+      ` : ''}
+      
+      ${solicitud.idadopcion ? `
+        <div class="alert alert-success text-center mb-0">
+          <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
+          <h5 class="alert-heading fw-bold mb-1">¡Felicidades! Adopción Completada</h5>
+          <p class="mb-0">
+            Fecha de adopción: <strong>${solicitud.fechaadopcion ? new Date(solicitud.fechaadopcion).toLocaleDateString('es-PE', {day: '2-digit', month: 'long', year: 'numeric'}) : 'N/A'}</strong>
+          </p>
+        </div>
+      ` : ''}
+    `;
+
+    // Mostrar el modal
+    const modalElement = document.getElementById('modalDetalleSolicitud');
+    let modal = bootstrap.Modal.getInstance(modalElement);
+    if (!modal) {
+      modal = new bootstrap.Modal(modalElement);
+    }
+    modal.show();
+  }
+
+  // Exponer función para uso global
+  window.mostrarDetalleSolicitud = mostrarDetalleSolicitud;
 
   async function renderUserGodchildren() {
     const section = document.getElementById('ahijados');
@@ -200,15 +387,26 @@
         cantidad: d.monto != null ? `S/ ${Number(d.monto).toFixed(2)}` : (d.cantidad || '—'),
         detalleExtra: `Detalle: ${(d.detalle || d.descripcion || '—')}`
       }));
-      const adoptions = (ado.data || ado || []).map(a => ({
-        tipo: 'adopciones',
-        id: a.idAdopcion || a.id || a.idadopcion || Math.random(),
-        fecha: a.fechaAdopcion || a.createdAt,
-        descripcion: a.nombreAnimal || a.animal?.nombreAnimal || 'Adopción',
-        animal: a.nombreAnimal || a.animal?.nombreAnimal || '—',
-        estado: a.estado || '—',
-        detalleExtra: `Estado: ${a.estado || '—'}`
-      }));
+      const adoptions = (ado.data || ado || []).map(a => {
+        const estado = (a.estadosolicitud || 'PENDIENTE').toUpperCase();
+        let estadoTexto = estado;
+        if (estado === 'EN_REVISION') estadoTexto = 'En Revisión';
+        else if (estado === 'APROBADO') estadoTexto = 'Aprobado';
+        else if (estado === 'RECHAZADO') estadoTexto = 'Rechazado';
+        else if (estado === 'PENDIENTE') estadoTexto = 'Pendiente';
+        
+        return {
+          tipo: 'adopciones',
+          id: a.idsolicitudadopcion || a.idadopcion || Math.random(),
+          fecha: a.fechasolicitud || a.fechaadopcion,
+          descripcion: a.nombreanimal || 'Adopción',
+          animal: a.nombreanimal || '—',
+          estado: estadoTexto,
+          detalleExtra: a.idadopcion 
+            ? `✅ Adopción completada el ${a.fechaadopcion ? new Date(a.fechaadopcion).toLocaleDateString('es-PE') : 'N/A'}`
+            : `Estado: ${estadoTexto}${a.observaciones ? ' - ' + a.observaciones : ''}`
+        };
+      });
       const godchildren = (ahi.data || ahi || []).map(g => ({
         tipo: 'ahijados',
         id: g.idApadrinamiento || g.id || g.idapadrinamiento || Math.random(),

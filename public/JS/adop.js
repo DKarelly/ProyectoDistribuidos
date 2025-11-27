@@ -173,24 +173,46 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         contenedor.innerHTML = lista.length === 0 
             ? '<p class="text-center text-gray-500">Aún no has registrado ninguna solicitud de adopción.</p>'
-            : lista.map(item => `
+            : lista.map(item => {
+                // Determinar color según estado
+                let estadoClass = 'text-warning';
+                let estadoTexto = item.estadosolicitud;
+                if (item.estadosolicitud === 'APROBADO') {
+                    estadoClass = 'text-success';
+                    estadoTexto = 'Aprobado';
+                } else if (item.estadosolicitud === 'RECHAZADO') {
+                    estadoClass = 'text-danger';
+                    estadoTexto = 'Rechazado';
+                } else if (item.estadosolicitud === 'EN_REVISION') {
+                    estadoClass = 'text-info';
+                    estadoTexto = 'En Revisión';
+                } else if (item.estadosolicitud === 'PENDIENTE') {
+                    estadoClass = 'text-warning';
+                    estadoTexto = 'Pendiente';
+                }
+
+                return `
                 <div class="card p-4 my-2 border rounded shadow-sm bg-white">
                     <h4 class="font-bold text-lg">${item.nombreanimal}</h4>
                     <p><b>ID Solicitud:</b> ${item.idsolicitudadopcion}</p>
                     <p><b>Fecha Solicitud:</b> ${item.fechasolicitud || '-'}</p>
-                    <p><b>Estado:</b> <span class="font-semibold text-blue-600">${item.estadosolicitud}</span></p>
+                    <p><b>Estado:</b> <span class="font-semibold ${estadoClass}">${estadoTexto}</span></p>
                     <p><b>Motivo:</b> ${item.motivosolicitud}</p>
                     <p><b>Observaciones:</b> ${item.observaciones || 'N/A'}</p>
 
                     ${
                         item.idadopcion
                         ? `<div class="mt-2 p-2 bg-green-100 border-l-4 border-green-500">
-                            <b>Adopción registrada el:</b> ${item.fechaadopcion}<br>
+                            <b>🎉 Adopción registrada el:</b> ${item.fechaadopcion}<br>
                             </div>`
-                        : `<i class="text-gray-500">Aún sin adopción aprobada</i>`
+                        : item.estadosolicitud === 'RECHAZADO'
+                            ? `<div class="mt-2 p-2 bg-red-100 border-l-4 border-red-500">
+                                <i class="text-danger">Solicitud rechazada</i>
+                               </div>`
+                            : `<i class="text-gray-500">Solicitud en proceso</i>`
                     }
                 </div>
-            `).join('');
+            `}).join('');
     }
 
     /* ========================================================
@@ -264,22 +286,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     /* ========================================================
      * 3. CAMBIAR ESTADO DE SOLICITUD (ADMIN)
+     * Estados: PENDIENTE → EN_REVISION → APROBADO/RECHAZADO
+     * Al APROBAR se registra la adopción automáticamente
      * ======================================================== */
     async function cambiarEstadoSolicitud(idSolicitud, nuevoEstado) {
         let observaciones = null;
         
         console.log("🔄 Iniciando cambio de estado:", idSolicitud, "→", nuevoEstado);
         
-        // Si se va a rechazar, solicitar observaciones
-        if (nuevoEstado === 'RECHAZADA') {
-            observaciones = prompt('Ingrese el motivo del rechazo:');
+        // Si se va a rechazar, solicitar observaciones (obligatorio)
+        if (nuevoEstado === 'RECHAZADO') {
+            observaciones = prompt('Ingrese el motivo del rechazo (obligatorio):');
             if (!observaciones || observaciones.trim() === '') {
                 mostrarMensaje('Debe ingresar un motivo para rechazar la solicitud.', true);
                 return;
             }
         }
         
-        if (!await confirmarAccion(`¿Seguro de cambiar el estado de la solicitud #${idSolicitud} a ${nuevoEstado}?`)) return;
+        // Mensaje de confirmación según la acción
+        let mensajeConfirmacion = `¿Seguro de cambiar el estado de la solicitud #${idSolicitud} a ${nuevoEstado}?`;
+        if (nuevoEstado === 'APROBADO') {
+            mensajeConfirmacion = `¿Confirma APROBAR la solicitud #${idSolicitud}?\n\nEsto registrará automáticamente la adopción del animal.`;
+        } else if (nuevoEstado === 'RECHAZADO') {
+            mensajeConfirmacion = `¿Confirma RECHAZAR la solicitud #${idSolicitud}?\n\nMotivo: ${observaciones}`;
+        }
+        
+        if (!await confirmarAccion(mensajeConfirmacion)) return;
         
         try {
             const body = { estadoSolicitud: nuevoEstado.toUpperCase() };
@@ -301,7 +333,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             if (!res.ok) throw new Error(data.message || "Error desconocido");
 
-            mostrarMensaje(`✅ Estado actualizado a ${nuevoEstado}`);
+            // Mensaje según el resultado
+            if (nuevoEstado === 'APROBADO' && data.adopcion) {
+                mostrarMensaje(`✅ Solicitud APROBADA\n\n🎉 Adopción registrada exitosamente (ID: ${data.adopcion.idadopcion})`);
+                // Recargar también la tabla de adopciones
+                listarAdopciones();
+            } else if (nuevoEstado === 'RECHAZADO') {
+                mostrarMensaje(`❌ Solicitud RECHAZADA\n\nMotivo: ${observaciones}`);
+            } else {
+                mostrarMensaje(`✅ Estado actualizado a ${nuevoEstado}`);
+            }
+            
             listarSolicitudes(); 
         } catch (err) {
             console.error("❌ Error al cambiar estado:", err);
@@ -395,51 +437,54 @@ document.addEventListener("DOMContentLoaded", async () => {
             const estado = (item.estadosolicitud || 'PENDIENTE').toUpperCase();
             const rowId = `solicitud-${item.idsolicitudadopcion}`;
             let estadoClass = 'badge bg-secondary';
+            let estadoTexto = estado;
             let botones = '';
             
             console.log(`Fila ${index}: Estado="${estado}", ID=${item.idsolicitudadopcion}, Persona="${item.nombreusuario}"`);
             
             // Colores y botones según estado
+            // Estados: PENDIENTE → EN_REVISION → APROBADO/RECHAZADO
             if (estado === 'PENDIENTE') {
                 estadoClass = 'badge bg-warning text-dark';
+                estadoTexto = 'Pendiente';
                 botones = `
-                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink me-1 btn-ver" data-id="${item.idsolicitudadopcion}" title="Al ver, cambiará a En Revisión">
                         <i class="bi bi-eye"></i> Ver
                     </button>
-                    <button class="btn btn-sm btn-success me-1 btn-aceptar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
-                        <i class="bi bi-check-circle"></i> Aceptar
+                    <button class="btn btn-sm btn-pink me-1 btn-aprobar" data-id="${item.idsolicitudadopcion}" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;">
+                        <i class="bi bi-check-circle"></i> Aprobar
                     </button>
-                    <button class="btn btn-sm btn-danger btn-rechazar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink btn-rechazar" data-id="${item.idsolicitudadopcion}" style="background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%) !important;">
                         <i class="bi bi-x-circle"></i> Rechazar
                     </button>
                 `;
             } else if (estado === 'EN_REVISION') {
                 estadoClass = 'badge bg-info';
+                estadoTexto = 'En Revisión';
                 botones = `
-                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink me-1 btn-ver" data-id="${item.idsolicitudadopcion}">
                         <i class="bi bi-eye"></i> Ver
                     </button>
-                    <button class="btn btn-sm btn-success me-1 btn-aceptar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
-                        <i class="bi bi-check-circle"></i> Aceptar
+                    <button class="btn btn-sm btn-pink me-1 btn-aprobar" data-id="${item.idsolicitudadopcion}" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;">
+                        <i class="bi bi-check-circle"></i> Aprobar
                     </button>
-                    <button class="btn btn-sm btn-danger btn-rechazar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink btn-rechazar" data-id="${item.idsolicitudadopcion}" style="background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%) !important;">
                         <i class="bi bi-x-circle"></i> Rechazar
                     </button>
                 `;
-            } else if (estado === 'ACEPTADA') {
+            } else if (estado === 'APROBADO') {
                 estadoClass = 'badge bg-success';
+                estadoTexto = 'Aprobado';
                 botones = `
-                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink btn-ver" data-id="${item.idsolicitudadopcion}">
                         <i class="bi bi-eye"></i> Ver
                     </button>
-                    <button class="btn btn-sm btn-primary btn-adopcion" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
-                        <i class="bi bi-heart-fill"></i> Adopción
-                    </button>
                 `;
-            } else if (estado === 'RECHAZADA') {
+            } else if (estado === 'RECHAZADO') {
                 estadoClass = 'badge bg-danger';
+                estadoTexto = 'Rechazado';
                 botones = `
-                    <button class="btn btn-sm btn-info btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                    <button class="btn btn-sm btn-pink btn-ver" data-id="${item.idsolicitudadopcion}">
                         <i class="bi bi-eye"></i> Ver
                     </button>
                 `;
@@ -451,7 +496,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <td>${item.nombreusuario || 'Sin usuario'}</td>
                     <td>${item.nombreanimal || 'Sin animal'}</td>
                     <td>${item.f_solicitud ? new Date(item.f_solicitud).toLocaleDateString('es-PE') : 'N/A'}</td>
-                    <td><span class="${estadoClass}">${estado}</span></td>
+                    <td><span class="${estadoClass}">${estadoTexto}</span></td>
                     <td class="text-nowrap" style="min-width: 200px;">${botones}</td>
                 </tr>
             `;
@@ -467,24 +512,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             });
         });
         
-        document.querySelectorAll('.btn-aceptar').forEach(btn => {
+        document.querySelectorAll('.btn-aprobar').forEach(btn => {
             btn.addEventListener('click', () => {
-                console.log("✅ Aceptar solicitud:", btn.dataset.id);
-                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'ACEPTADA');
+                console.log("✅ Aprobar solicitud:", btn.dataset.id);
+                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'APROBADO');
             });
         });
         
         document.querySelectorAll('.btn-rechazar').forEach(btn => {
             btn.addEventListener('click', () => {
                 console.log("❌ Rechazar solicitud:", btn.dataset.id);
-                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'RECHAZADA');
-            });
-        });
-        
-        document.querySelectorAll('.btn-adopcion').forEach(btn => {
-            btn.addEventListener('click', () => {
-                console.log("💚 Registrar adopción:", btn.dataset.id);
-                registrarAdopcionDirecta(parseInt(btn.dataset.id));
+                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'RECHAZADO');
             });
         });
 
@@ -502,7 +540,33 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (!res.ok) throw new Error(data.message || "Error desconocido");
             
             console.log("💚 Adopciones cargadas:", data.data);
-            renderAdopciones(data.data);
+            
+            // Aplicar filtros del lado del cliente
+            let adopcionesFiltradas = data.data || [];
+            
+            const filtroPersona = document.getElementById('filtroPersonaAdopcion')?.value?.toLowerCase() || '';
+            const filtroAnimal = document.getElementById('filtroAnimalAdopcion')?.value?.toLowerCase() || '';
+            const filtroFecha = document.getElementById('filtroFechaAdopcion')?.value || '';
+            
+            if (filtroPersona) {
+                adopcionesFiltradas = adopcionesFiltradas.filter(a => 
+                    (a.nombreusuario || '').toLowerCase().includes(filtroPersona)
+                );
+            }
+            if (filtroAnimal) {
+                adopcionesFiltradas = adopcionesFiltradas.filter(a => 
+                    (a.nombreanimal || '').toLowerCase().includes(filtroAnimal)
+                );
+            }
+            if (filtroFecha) {
+                adopcionesFiltradas = adopcionesFiltradas.filter(a => {
+                    if (!a.f_adopcion) return false;
+                    const fechaAdopcion = new Date(a.f_adopcion).toISOString().split('T')[0];
+                    return fechaAdopcion === filtroFecha;
+                });
+            }
+            
+            renderAdopciones(adopcionesFiltradas);
         } catch (err) {
             console.error("❌ Error cargando adopciones:", err);
             mostrarMensaje("Error cargando adopciones: " + err.message, true);
@@ -526,12 +590,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         tbody.innerHTML = lista.map(item => `
             <tr>
                 <td>${item.idadopcion}</td>
-                <td>${item.nombreanimal || 'N/A'}</td>
+                <td><strong>${item.nombreanimal || 'N/A'}</strong></td>
                 <td>${item.f_adopcion ? new Date(item.f_adopcion).toLocaleDateString('es-PE') : 'N/A'}</td>
                 <td>${item.nombreusuario || 'Sin datos'}</td>
                 <td>
-                    <button class="btn btn-sm btn-info btn-ver-adopcion" data-id="${item.idadopcion}">
-                        <i class="bi bi-eye"></i> Ver detalles
+                    <button class="btn btn-sm btn-pink btn-ver-adopcion" data-id="${item.idadopcion}">
+                        <i class="bi bi-eye"></i> Ver
                     </button>
                 </td>
             </tr>
@@ -564,40 +628,175 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     /* ========================================================
      * 8. VER DETALLE DE SOLICITUD
+     * Al ver, si está PENDIENTE cambia a EN_REVISION automáticamente
      * ======================================================== */
     async function verDetalleSolicitud(idSolicitud) {
         try {
-            const res = await fetch(`${API_BASE_URL}/solicitud`, { headers: headersAuth });
+            // Usar el nuevo endpoint que obtiene detalle y cambia estado si es PENDIENTE
+            const res = await fetch(`${API_BASE_URL}/solicitud/${idSolicitud}`, { headers: headersAuth });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Error desconocido");
             
-            const solicitud = data.data.find(s => s.idsolicitudadopcion === idSolicitud);
+            const solicitud = data.data;
             if (!solicitud) {
                 mostrarMensaje("No se encontró la solicitud", true);
                 return;
             }
 
+            // Si el estado cambió de PENDIENTE a EN_REVISION, mostrar mensaje
+            if (data.estadoCambiado) {
+                console.log("📋 Estado actualizado automáticamente a EN_REVISION");
+            }
+
+            // Determinar clase del badge según estado
+            let estadoClass = 'warning';
+            let estadoTexto = solicitud.estadosolicitud;
+            if (solicitud.estadosolicitud === 'APROBADO') {
+                estadoClass = 'success';
+                estadoTexto = 'Aprobado';
+            } else if (solicitud.estadosolicitud === 'RECHAZADO') {
+                estadoClass = 'danger';
+                estadoTexto = 'Rechazado';
+            } else if (solicitud.estadosolicitud === 'EN_REVISION') {
+                estadoClass = 'info';
+                estadoTexto = 'En Revisión';
+            } else if (solicitud.estadosolicitud === 'PENDIENTE') {
+                estadoClass = 'warning';
+                estadoTexto = 'Pendiente';
+            }
+
             const modalBody = document.getElementById("detalleSolicitudBody");
+            const edadTexto = solicitud.edadmesesanimal 
+                ? (solicitud.edadmesesanimal >= 12 
+                    ? `${Math.floor(solicitud.edadmesesanimal/12)} año(s) ${solicitud.edadmesesanimal % 12 > 0 ? `y ${solicitud.edadmesesanimal % 12} mes(es)` : ''}` 
+                    : `${solicitud.edadmesesanimal} mes(es)`) 
+                : 'No especificada';
+            const generoTexto = solicitud.generoanimal === 'M' ? 'Macho' : solicitud.generoanimal === 'H' ? 'Hembra' : 'No especificado';
+
             modalBody.innerHTML = `
-                <div class="row">
+                <!-- Estado de la solicitud -->
+                <div class="text-center mb-4">
+                    <span class="badge bg-${estadoClass} fs-6 px-4 py-2">
+                        <i class="bi bi-${estadoClass === 'success' ? 'check-circle' : estadoClass === 'danger' ? 'x-circle' : estadoClass === 'info' ? 'hourglass-split' : 'clock'} me-2"></i>
+                        ${estadoTexto}
+                    </span>
+                    <p class="text-muted small mt-2 mb-0">Solicitud #${solicitud.idsolicitudadopcion} • ${solicitud.f_solicitud ? new Date(solicitud.f_solicitud).toLocaleDateString('es-PE', {day: '2-digit', month: 'long', year: 'numeric'}) : 'Sin fecha'}</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- COLUMNA IZQUIERDA: Animal -->
                     <div class="col-md-6">
-                        <h6 class="text-primary"><i class="bi bi-file-text"></i> Información de Solicitud</h6>
-                        <p><strong>ID:</strong> ${solicitud.idsolicitudadopcion}</p>
-                        <p><strong>Estado:</strong> <span class="badge bg-${solicitud.estadosolicitud === 'ACEPTADA' ? 'success' : solicitud.estadosolicitud === 'RECHAZADA' ? 'danger' : solicitud.estadosolicitud === 'EN_REVISION' ? 'info' : 'warning'}">${solicitud.estadosolicitud}</span></p>
-                        <p><strong>Fecha:</strong> ${solicitud.f_solicitud ? new Date(solicitud.f_solicitud).toLocaleDateString('es-PE') : 'N/A'}</p>
-                        <p><strong>Motivo:</strong> ${solicitud.motivosolicitud || 'N/A'}</p>
-                        ${solicitud.observaciones ? `<p class="text-danger"><strong>Observaciones:</strong> ${solicitud.observaciones}</p>` : ''}
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header text-white py-2" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
+                                <h6 class="mb-0"><i class="bi bi-heart-fill me-2"></i>Animal a Adoptar</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="text-center mb-3">
+                                    <div class="rounded-circle bg-pink bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                        <i class="bi bi-piggy-bank" style="font-size: 2.5rem; color: #ef7aa1;"></i>
+                                    </div>
+                                    <h5 class="mt-2 mb-0 fw-bold" style="color: #ef3b7d;">${solicitud.nombreanimal || 'Sin nombre'}</h5>
+                                </div>
+                                
+                                <div class="row g-2 text-center">
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 bg-light">
+                                            <small class="text-muted d-block">Especie</small>
+                                            <strong>${solicitud.especieanimal || 'N/A'}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 bg-light">
+                                            <small class="text-muted d-block">Raza</small>
+                                            <strong>${solicitud.razaanimal || 'N/A'}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 bg-light">
+                                            <small class="text-muted d-block">Edad</small>
+                                            <strong>${edadTexto}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="border rounded p-2 bg-light">
+                                            <small class="text-muted d-block">Género</small>
+                                            <strong>${generoTexto}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- COLUMNA DERECHA: Solicitante -->
                     <div class="col-md-6">
-                        <h6 class="text-success"><i class="bi bi-heart"></i> Información del Animal</h6>
-                        <p><strong>Nombre:</strong> ${solicitud.nombreanimal || 'N/A'}</p>
-                        <p><strong>Usuario:</strong> ${solicitud.nombreusuario || 'N/A'}</p>
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-secondary text-white py-2">
+                                <h6 class="mb-0"><i class="bi bi-person-fill me-2"></i>Solicitante</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                                        <i class="bi bi-person" style="font-size: 1.5rem; color: #6c757d;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold">${solicitud.nombreusuario || 'Sin nombre'}</h6>
+                                        <small class="text-muted">DNI: ${solicitud.dni || 'N/A'}</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-top pt-3">
+                                    <p class="mb-2 small">
+                                        <i class="bi bi-telephone me-2 text-muted"></i>
+                                        <strong>Teléfono:</strong> ${solicitud.numerousuario || 'No registrado'}
+                                    </p>
+                                    <p class="mb-2 small">
+                                        <i class="bi bi-envelope me-2 text-muted"></i>
+                                        <strong>Correo:</strong> ${solicitud.correousuario || 'No registrado'}
+                                    </p>
+                                    <p class="mb-0 small">
+                                        <i class="bi bi-geo-alt me-2 text-muted"></i>
+                                        <strong>Dirección:</strong> ${solicitud.direccionusuario || 'No registrada'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Motivo de la solicitud -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-light py-2">
+                        <h6 class="mb-0"><i class="bi bi-chat-quote me-2"></i>Motivo de la Solicitud</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0 fst-italic">"${solicitud.motivosolicitud || 'No especificado'}"</p>
+                    </div>
+                </div>
+
+                ${solicitud.observaciones ? `
+                    <div class="alert ${estadoClass === 'danger' ? 'alert-danger' : 'alert-info'} mt-4 mb-0">
+                        <h6 class="alert-heading">
+                            <i class="bi bi-${estadoClass === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                            Observaciones
+                        </h6>
+                        <p class="mb-0">${solicitud.observaciones}</p>
+                    </div>
+                ` : ''}
             `;
 
-            const modal = new bootstrap.Modal(document.getElementById('modalVerSolicitud'));
+            // Obtener o crear instancia del modal (evitar duplicados que bloquean)
+            const modalElement = document.getElementById('modalVerSolicitud');
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement);
+            }
             modal.show();
+
+            // Recargar la tabla para reflejar el cambio de estado si ocurrió
+            if (data.estadoCambiado) {
+                setTimeout(() => listarSolicitudes(), 300);
+            }
         } catch (err) {
             console.error("Error al ver detalle:", err);
             mostrarMensaje("Error al cargar detalle: " + err.message, true);
@@ -621,24 +820,78 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const modalBody = document.getElementById("detalleAdopcionBody");
             modalBody.innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6 class="text-success"><i class="bi bi-heart-fill"></i> Información de Adopción</h6>
-                        <p><strong>ID:</strong> ${adopcion.idadopcion}</p>
-                        <p><strong>Fecha:</strong> ${adopcion.f_adopcion ? new Date(adopcion.f_adopcion).toLocaleDateString('es-PE') : 'N/A'}</p>
-                        <p><strong>Contrato:</strong> ${adopcion.contratoadopcion || 'No especificado'}</p>
-                        <p><strong>Condiciones:</strong> ${adopcion.condiciones || 'No especificadas'}</p>
+                <!-- Encabezado de éxito -->
+                <div class="text-center mb-4">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
                     </div>
+                    <h4 class="text-success fw-bold mb-1">¡Adopción Exitosa!</h4>
+                    <p class="text-muted mb-0">Adopción #${adopcion.idadopcion} • ${adopcion.f_adopcion ? new Date(adopcion.f_adopcion).toLocaleDateString('es-PE', {day: '2-digit', month: 'long', year: 'numeric'}) : 'Sin fecha'}</p>
+                </div>
+
+                <div class="row g-4">
+                    <!-- Animal adoptado -->
                     <div class="col-md-6">
-                        <h6 class="text-primary"><i class="bi bi-person"></i> Adoptante</h6>
-                        <p><strong>Nombre:</strong> ${adopcion.nombreusuario || 'N/A'}</p>
-                        <h6 class="text-info mt-3"><i class="bi bi-heart"></i> Animal Adoptado</h6>
-                        <p><strong>Nombre:</strong> ${adopcion.nombreanimal || 'N/A'}</p>
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header text-white py-2" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
+                                <h6 class="mb-0"><i class="bi bi-heart-fill me-2"></i>Animal Adoptado</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="rounded-circle bg-pink bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="bi bi-piggy-bank" style="font-size: 2rem; color: #ef7aa1;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-0" style="color: #ef3b7d;">${adopcion.nombreanimal || 'Sin nombre'}</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Adoptante -->
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-secondary text-white py-2">
+                                <h6 class="mb-0"><i class="bi bi-person-heart me-2"></i>Adoptante</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 d-inline-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                                    <i class="bi bi-person" style="font-size: 2rem; color: #6c757d;"></i>
+                                </div>
+                                <h5 class="fw-bold mb-0">${adopcion.nombreusuario || 'Sin nombre'}</h5>
+                                <small class="text-muted">DNI: ${adopcion.dni || 'N/A'}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del contrato -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-light py-2">
+                        <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Detalles del Contrato</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2 small">
+                                    <i class="bi bi-file-text me-2 text-muted"></i>
+                                    <strong>Contrato:</strong> ${adopcion.contratoadopcion || 'Contrato estándar'}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-0 small">
+                                    <i class="bi bi-list-check me-2 text-muted"></i>
+                                    <strong>Condiciones:</strong> ${adopcion.condiciones || 'Seguimiento periódico'}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
 
-            const modal = new bootstrap.Modal(document.getElementById('modalVerAdopcion'));
+            // Obtener o crear instancia del modal (evitar duplicados que bloquean)
+            const modalElement = document.getElementById('modalVerAdopcion');
+            let modal = bootstrap.Modal.getInstance(modalElement);
+            if (!modal) {
+                modal = new bootstrap.Modal(modalElement);
+            }
             modal.show();
         } catch (err) {
             console.error("Error al ver detalle:", err);
@@ -646,34 +899,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    /* ========================================================
-     * 10. REGISTRAR ADOPCIÓN DIRECTA
-     * ======================================================== */
-    async function registrarAdopcionDirecta(idSolicitud) {
-        if (!await confirmarAccion(`¿Confirmas registrar la adopción para la solicitud #${idSolicitud}?`)) return;
-
-        try {
-            const res = await fetch(`${API_BASE_URL}/registrar_adopcion/${idSolicitud}`, {
-                method: "POST",
-                headers: headersAuth,
-                body: JSON.stringify({ 
-                    contratoAdopcion: "Contrato de adopción estándar",
-                    condiciones: "Seguimiento mensual durante 6 meses"
-                })
-            });
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Error desconocido");
-
-            mostrarMensaje(`✅ Adopción registrada correctamente`);
-            listarSolicitudes();
-            listarAdopciones();
-        } catch (err) {
-            console.error("Error registrando adopción:", err);
-            mostrarMensaje("❌ Error: " + err.message, true);
-        }
-    }
-    
     // ========================================================
     // EXPONER FUNCIONES GLOBALES
     // ========================================================
@@ -682,7 +907,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.registrarSolicitud = registrarSolicitud;
     window.cambiarEstadoSolicitud = cambiarEstadoSolicitud;
     window.registrarAdopcion = registrarAdopcion;
-    window.registrarAdopcionDirecta = registrarAdopcionDirecta;
     window.eliminarSolicitud = eliminarSolicitud;
     window.listarSolicitudes = listarSolicitudes;
     window.listarAdopciones = listarAdopciones;
@@ -737,6 +961,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     if (filtroFechaSolicitud) {
         filtroFechaSolicitud.addEventListener("change", listarSolicitudes);
+    }
+
+    // Filtros de adopciones
+    const filtroPersonaAdopcion = document.getElementById("filtroPersonaAdopcion");
+    const filtroAnimalAdopcion = document.getElementById("filtroAnimalAdopcion");
+    const filtroFechaAdopcion = document.getElementById("filtroFechaAdopcion");
+    
+    if (filtroPersonaAdopcion) {
+        filtroPersonaAdopcion.addEventListener("input", () => {
+            clearTimeout(filtroPersonaAdopcion.timeout);
+            filtroPersonaAdopcion.timeout = setTimeout(listarAdopciones, 500);
+        });
+    }
+    
+    if (filtroAnimalAdopcion) {
+        filtroAnimalAdopcion.addEventListener("input", () => {
+            clearTimeout(filtroAnimalAdopcion.timeout);
+            filtroAnimalAdopcion.timeout = setTimeout(listarAdopciones, 500);
+        });
+    }
+    
+    if (filtroFechaAdopcion) {
+        filtroFechaAdopcion.addEventListener("change", listarAdopciones);
     }
 
     // Tabs de solicitudes y adopciones
