@@ -360,6 +360,14 @@ function setupAutocomplete(inputId, hiddenId) {
 
     if(!input || !hiddenInput) return;
 
+    // Determinar el campo de nombre correspondiente
+    let nombreInputId;
+    if(inputId === 'aliasUsuario') {
+        nombreInputId = 'nombreUsuario';
+    } else if(inputId === 'modAliasUsuario') {
+        nombreInputId = 'modNombreUsuario';
+    }
+
     input.addEventListener('input', async () => {
         const query = input.value;
         if(query.length < 2) {
@@ -372,7 +380,7 @@ function setupAutocomplete(inputId, hiddenId) {
             });
             const data = await response.json();
             if(response.ok && data.data.length > 0) {
-                showSuggestions(input, hiddenInput, data.data);
+                showSuggestions(input, hiddenInput, nombreInputId, data.data);
             } else {
                 hideSuggestions(input);
             }
@@ -384,7 +392,7 @@ function setupAutocomplete(inputId, hiddenId) {
 }
 
 // Mostrar sugerencias autocomplete
-function showSuggestions(input, hiddenInput, users) {
+function showSuggestions(input, hiddenInput, nombreInputId, users) {
     let list = input.parentNode.querySelector('.sugerencias-list');
     if(!list) {
         list = document.createElement('ul');
@@ -401,6 +409,15 @@ function showSuggestions(input, hiddenInput, users) {
         li.addEventListener('click', () => {
             input.value = user.aliasusuario;
             hiddenInput.value = user.idusuario;
+            
+            // Rellenar automáticamente el campo de nombre
+            if(nombreInputId) {
+                const nombreInput = document.getElementById(nombreInputId);
+                if(nombreInput) {
+                    nombreInput.value = user.nombre_completo || '';
+                }
+            }
+            
             hideSuggestions(input);
         });
         list.appendChild(li);
