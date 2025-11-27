@@ -29,13 +29,14 @@ router.get('/donaciones/categorias', authenticateToken, async (req, res) => {
         const sql = `
             SELECT
                 cd.nombcategoria as categoria,
-                SUM(dd.cantidaddonacion) as total
+                COUNT(dd.iddetalledonacion) as cantidad,
+                SUM(dd.cantidaddonacion) as total_monto
             FROM detalle_donacion dd
             JOIN donacion d ON dd.iddonacion = d.iddonacion
             JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
             ${whereClause}
             GROUP BY cd.nombcategoria
-            ORDER BY total DESC
+            ORDER BY cantidad DESC
         `;
 
         const result = await query(sql, params);
@@ -95,6 +96,81 @@ router.get('/donaciones/meses', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Error obteniendo donaciones por mes:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
+// GET /api/reporteAdmin/donaciones/cantidad-por-categoria - Nueva ruta para cantidad de donaciones
+router.get('/donaciones/cantidad-por-categoria', authenticateToken, async (req, res) => {
+    try {
+        const { mes } = req.query;
+
+        let whereClause = '';
+        let params = [];
+
+        if (mes) {
+            whereClause = `WHERE TO_CHAR(d.f_donacion, 'MM') = $1`;
+            params.push(mes);
+        }
+
+        const sql = `
+            SELECT
+                cd.nombcategoria as categoria,
+                COUNT(dd.iddetalledonacion) as cantidad
+            FROM detalle_donacion dd
+            JOIN donacion d ON dd.iddonacion = d.iddonacion
+            JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
+            ${whereClause}
+            GROUP BY cd.nombcategoria
+            ORDER BY cantidad DESC
+        `;
+
+        const result = await query(sql, params);
+
+        res.json({
+            message: 'Cantidad de donaciones por categoría obtenida exitosamente',
+            data: result.rows
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo cantidad de donaciones por categoría:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+// Serie mensual multi-categoría
+router.get('/donaciones/categorias-meses', authenticateToken, async (req, res) => {
+    try {
+        const { fechaDesde, fechaHasta } = req.query;
+        let whereClause = '';
+        let params = [];
+        let paramCount = 0;
+        if (fechaDesde && fechaHasta) {
+            paramCount += 2;
+            whereClause = `WHERE d.f_donacion BETWEEN $${paramCount - 1} AND $${paramCount}`;
+            params.push(fechaDesde, fechaHasta);
+        } else if (fechaDesde) {
+            paramCount++;
+            whereClause = `WHERE d.f_donacion >= $${paramCount}`;
+            params.push(fechaDesde);
+        } else if (fechaHasta) {
+            paramCount++;
+            whereClause = `WHERE d.f_donacion <= $${paramCount}`;
+            params.push(fechaHasta);
+        }
+        const sql = `
+            SELECT TO_CHAR(d.f_donacion,'YYYY-MM') AS mes,
+                   cd.nombcategoria AS categoria,
+                   COUNT(dd.iddetalledonacion) AS cantidad
+            FROM detalle_donacion dd
+            JOIN donacion d ON dd.iddonacion = d.iddonacion
+            JOIN categoria_donacion cd ON dd.idcategoria = cd.idcategoria
+            ${whereClause}
+            GROUP BY mes, categoria
+            ORDER BY mes ASC, categoria ASC`;
+        const result = await query(sql, params);
+        res.json({ message:'Serie mensual categorías obtenida', data: result.rows });
+    } catch (err) {
+        console.error('Error serie mensual categorías:', err);
+        res.status(500).json({ message:'Error interno del servidor' });
     }
 });
 
@@ -206,40 +282,29 @@ router.get('/ahijados/estado', authenticateToken, async (req, res) => {
     try {
         const { fechaDesde, fechaHasta } = req.query;
 
-        let whereClause = '';
-        let params = [];
-        let paramCount = 0;
-
-        if (fechaDesde && fechaHasta) {
-            paramCount += 2;
-            whereClause = `WHERE ap.f_inicio BETWEEN $${paramCount - 1} AND $${paramCount}`;
-            params.push(fechaDesde, fechaHasta);
-        } else if (fechaDesde) {
-            paramCount++;
-            whereClause = `WHERE ap.f_inicio >= $${paramCount}`;
+        const conditions = [];
+        const params = [];
+        if (fechaDesde) {
             params.push(fechaDesde);
-        } else if (fechaHasta) {
-            paramCount++;
-            whereClause = `WHERE ap.f_inicio <= $${paramCount}`;
-            params.push(fechaHasta);
+            conditions.push(`ap.f_inicio >= $${params.length}`);
         }
+        if (fechaHasta) {
+            params.push(fechaHasta);
+            conditions.push(`ap.f_inicio <= $${params.length}`);
+        }
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-        // Apadrinamientos activos (sin fecha de fin)
-        const activosResult = await query(`
-            SELECT COUNT(*) as total
+        const sql = `
+            SELECT 
+                SUM(CASE WHEN ap.f_fin IS NULL OR ap.f_fin > CURRENT_DATE THEN 1 ELSE 0 END) AS activos,
+                SUM(CASE WHEN ap.f_fin IS NOT NULL AND ap.f_fin <= CURRENT_DATE THEN 1 ELSE 0 END) AS inactivos
             FROM apadrinamiento ap
-            ${whereClause} AND (ap.f_fin IS NULL OR ap.f_fin > CURRENT_DATE)
-        `, params);
+            ${whereClause}
+        `;
+        const result = await query(sql, params);
 
-        // Apadrinamientos inactivos (con fecha de fin)
-        const inactivosResult = await query(`
-            SELECT COUNT(*) as total
-            FROM apadrinamiento ap
-            ${whereClause} AND ap.f_fin IS NOT NULL AND ap.f_fin <= CURRENT_DATE
-        `, params);
-
-        const activos = parseInt(activosResult.rows[0].total) || 0;
-        const inactivos = parseInt(inactivosResult.rows[0].total) || 0;
+        const activos = parseInt(result.rows[0].activos) || 0;
+        const inactivos = parseInt(result.rows[0].inactivos) || 0;
 
         res.json({
             message: 'Datos de ahijados obtenidos exitosamente',
