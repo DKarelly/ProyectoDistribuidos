@@ -177,23 +177,23 @@ document.addEventListener("DOMContentLoaded", async () => {
      * ======================================================== */
     async function registrarSolicitud() {
         const motivo = document.getElementById("motivo").value;
+        const observaciones = document.getElementById("observaciones")?.value || ""; 
         const idAnimal = document.getElementById("idAnimal")?.value; 
-        const idUsuario = document.getElementById("idUsuario")?.value; 
 
-        if (!motivo || !idAnimal || !idUsuario) {
-            mostrarMensaje("Por favor, completa el motivo de la solicitud y selecciona un Animal y un Solicitante.", true);
+        if (!motivo || !idAnimal) {
+            mostrarMensaje("Por favor, completa el motivo de la solicitud y selecciona un Animal.", true);
             return;
         }
 
         try {
-            // Llama a /api/adoptions/solicitud
-            const res = await fetch(`${API_BASE_URL}/solicitud`, {
+            // Llama a /api/adoptions/registrar_solicitud
+            const res = await fetch(`${API_BASE_URL}/registrar_solicitud`, {
                 method: "POST",
                 headers: headersAuth,
                 body: JSON.stringify({
                     motivoSolicitud: motivo,
-                    idAnimal,
-                    idUsuario
+                    observaciones: observaciones,
+                    idAnimal: idAnimal
                 })
             });
 
