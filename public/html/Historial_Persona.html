@@ -217,22 +217,47 @@
     <section id="adopciones" class="submodule-content py-5">
         <div class="container">
             <h2 class="fw-bold mb-4 text-center section-title">Mis adopciones</h2>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Animal</th>
-                            <th>Fecha</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-adopciones">
-                        <!-- Filas dinámicas cargadas por historial_persona.js -->
-                    </tbody>
-                </table>
+            <div class="card shadow-sm mx-auto" style="max-width: 900px;">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
+                                <tr class="text-white text-center">
+                                    <th class="py-3">🐾 Animal</th>
+                                    <th class="py-3">📅 Fecha</th>
+                                    <th class="py-3">📋 Estado</th>
+                                    <th class="py-3">⚙️ Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-adopciones" class="text-center">
+                                <!-- Filas dinámicas cargadas por historial_persona.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
+
+    <!-- MODAL VER DETALLE SOLICITUD -->
+    <div class="modal fade" id="modalDetalleSolicitud" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #ef7aa1 0%, #ff6b9d 100%);">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Detalle de mi Solicitud</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" id="detalleSolicitudBodyHistorial" style="max-height: 70vh; overflow-y: auto;">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-pink" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg me-1"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MIS AHIJADOS -->
     <section id="ahijados" class="submodule-content py-5">

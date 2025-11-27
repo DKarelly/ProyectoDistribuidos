@@ -869,7 +869,7 @@ function showAnimalModal(animal) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        ${isAuthenticated() ? `<button type="button" class="btn btn-pink" onclick="adoptAnimal(${id})">Solicitar Adopción</button>` : `<button type="button" class="btn btn-pink" onclick="showMessage('Debes iniciar sesión para adoptar', 'warning')">Iniciar Sesión para Adoptar</button>`}
+                        ${isAuthenticated() ? `<button type="button" class="btn btn-pink" onclick="adoptAnimal(${id}, '${nombre.replace(/'/g, "\\'")}')">Solicitar Adopción</button>` : `<button type="button" class="btn btn-pink" onclick="showMessage('Debes iniciar sesión para adoptar', 'warning')">Iniciar Sesión para Adoptar</button>`}
                     </div>
                 </div>
             </div>
@@ -890,29 +890,299 @@ function showAnimalModal(animal) {
     modal.show();
 }
 
-// Solicitar adopción
-async function adoptAnimal(animalId) {
+// Solicitar adopción - funciona diferente según el rol
+async function adoptAnimal(animalId, animalName = 'Animal') {
     if (!isAuthenticated()) {
         showMessage('Debes iniciar sesión para adoptar', 'warning');
         return;
     }
 
-    try {
-        const data = await apiRequest('/animals/adoptar', {
-            method: 'POST',
-            body: JSON.stringify({ idAnimal: animalId })
-        });
-
-        showMessage('Solicitud de adopción enviada exitosamente', 'success');
-
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('animalModal'));
-        if (modal) modal.hide();
-
-    } catch (error) {
-        showMessage(error.message, 'danger');
+    // Si es Administrador (idRol = 1), mostrar modal para buscar persona
+    if (hasRole([1])) {
+        showAdminAdoptionModal(animalId, animalName);
+    } else if (hasRole([2])) {
+        // Si es Adoptante (idRol = 2), mostrar modal solo con motivo
+        showUserAdoptionModal(animalId, animalName);
+    } else {
+        showMessage('Solo usuarios con rol Adoptante pueden solicitar adopciones', 'warning');
     }
 }
+
+// Modal de adopción para ADMINISTRADOR - busca persona con rol adoptante
+function showAdminAdoptionModal(animalId, animalName) {
+    const existingModal = document.getElementById('adminAdoptionModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="adminAdoptionModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-pink text-white">
+                        <h5 class="modal-title"><i class="bi bi-heart-fill me-2"></i>Registrar Solicitud de Adopción</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formAdminAdopcion">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary fw-bold mb-2"><i class="bi bi-heart me-1"></i> Animal Seleccionado</h6>
+                                    <div class="alert alert-info">
+                                        <strong>ID:</strong> ${animalId}<br>
+                                        <strong>Nombre:</strong> ${animalName}
+                                    </div>
+                                    <input type="hidden" id="adminAdoptAnimalId" value="${animalId}">
+                                    
+                                    <hr>
+                                    
+                                    <h6 class="text-secondary fw-bold mb-2"><i class="bi bi-person me-1"></i> Buscar Adoptante</h6>
+                                    <div class="input-group mb-2">
+                                        <input type="text" id="adminSearchPersona" class="form-control" placeholder="Nombre o DNI...">
+                                        <button type="button" id="btnAdminSearchPersona" class="btn btn-primary">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </div>
+                                    <input type="text" id="adminPersonaSeleccionada" class="form-control bg-light mb-2" readonly placeholder="Seleccione una persona">
+                                    <input type="hidden" id="adminIdUsuario">
+                                    
+                                    <div id="adminPersonaPreview" class="alert alert-secondary d-none">
+                                        <small id="adminPersonaInfo">Información del adoptante...</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-secondary fw-bold mb-2"><i class="bi bi-pencil me-1"></i> Motivo de Adopción</h6>
+                                    <textarea id="adminMotivoAdopcion" class="form-control" rows="6" placeholder="Ingrese el motivo de la solicitud..." required></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-pink" id="btnRegistrarAdminAdopcion">
+                            <i class="bi bi-send-fill me-1"></i> Registrar Solicitud
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Event listeners
+    document.getElementById('btnAdminSearchPersona').addEventListener('click', buscarPersonaAdoptante);
+    document.getElementById('adminSearchPersona').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); buscarPersonaAdoptante(); }
+    });
+    document.getElementById('btnRegistrarAdminAdopcion').addEventListener('click', registrarSolicitudAdmin);
+
+    // Cerrar modal de animal si existe
+    const animalModal = bootstrap.Modal.getInstance(document.getElementById('animalModal'));
+    if (animalModal) animalModal.hide();
+
+    const modal = new bootstrap.Modal(document.getElementById('adminAdoptionModal'));
+    modal.show();
+}
+
+// Buscar persona con rol adoptante (para admin)
+async function buscarPersonaAdoptante() {
+    const searchValue = document.getElementById('adminSearchPersona').value.trim();
+    if (!searchValue) {
+        showMessage('Ingrese un nombre o DNI para buscar', 'warning');
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/adoptions/buscar?personName=${encodeURIComponent(searchValue)}`);
+        const personas = response.data?.personas || [];
+
+        if (personas.length === 0) {
+            showMessage('No se encontraron personas con rol Adoptante', 'warning');
+            return;
+        }
+
+        if (personas.length === 1) {
+            seleccionarPersonaAdoptante(personas[0]);
+        } else {
+            // Mostrar lista para seleccionar
+            mostrarListaPersonas(personas);
+        }
+    } catch (error) {
+        showMessage('Error buscando personas: ' + error.message, 'danger');
+    }
+}
+
+function seleccionarPersonaAdoptante(persona) {
+    const nombreCompleto = `${persona.nombres} ${persona.apepaterno} ${persona.apematerno}`;
+    document.getElementById('adminPersonaSeleccionada').value = nombreCompleto;
+    document.getElementById('adminIdUsuario').value = persona.idusuario;
+    
+    const preview = document.getElementById('adminPersonaPreview');
+    const info = document.getElementById('adminPersonaInfo');
+    preview.classList.remove('d-none');
+    info.innerHTML = `
+        <strong>Nombre:</strong> ${nombreCompleto}<br>
+        <strong>DNI:</strong> ${persona.dni || 'N/A'}<br>
+        <strong>Teléfono:</strong> ${persona.numerousuario || 'N/A'}<br>
+        <strong>Correo:</strong> ${persona.correousuario || 'N/A'}
+    `;
+    showMessage(`Persona seleccionada: ${nombreCompleto}`, 'success');
+}
+
+function mostrarListaPersonas(personas) {
+    const existingModal = document.getElementById('listaPersonasModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="listaPersonasModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">Seleccionar Persona</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="list-group">
+                            ${personas.map(p => `
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                    onclick="seleccionarPersonaAdoptante(${JSON.stringify(p).replace(/"/g, '&quot;')}); bootstrap.Modal.getInstance(document.getElementById('listaPersonasModal')).hide();">
+                                    <strong>${p.nombres} ${p.apepaterno} ${p.apematerno}</strong><br>
+                                    <small class="text-muted">DNI: ${p.dni || 'N/A'} | Tel: ${p.numerousuario || 'N/A'}</small>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('listaPersonasModal'));
+    modal.show();
+}
+
+async function registrarSolicitudAdmin() {
+    const idAnimal = document.getElementById('adminAdoptAnimalId').value;
+    const idUsuario = document.getElementById('adminIdUsuario').value;
+    const motivo = document.getElementById('adminMotivoAdopcion').value.trim();
+
+    if (!idUsuario) {
+        showMessage('Debe buscar y seleccionar una persona adoptante', 'warning');
+        return;
+    }
+    if (!motivo) {
+        showMessage('Debe ingresar el motivo de la solicitud', 'warning');
+        return;
+    }
+
+    try {
+        const response = await apiRequest('/adoptions/registrar_solicitud', {
+            method: 'POST',
+            body: JSON.stringify({
+                idAnimal: parseInt(idAnimal),
+                idUsuario: parseInt(idUsuario),
+                motivoSolicitud: motivo
+            })
+        });
+
+        showMessage('✅ Solicitud de adopción registrada correctamente', 'success');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('adminAdoptionModal'));
+        if (modal) modal.hide();
+
+        // Recargar animales
+        if (typeof loadAvailableAnimals === 'function') loadAvailableAnimals();
+
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'danger');
+    }
+}
+
+// Modal de adopción para USUARIO ADOPTANTE - solo motivo
+function showUserAdoptionModal(animalId, animalName) {
+    const existingModal = document.getElementById('userAdoptionModal');
+    if (existingModal) existingModal.remove();
+
+    const modalHtml = `
+        <div class="modal fade" id="userAdoptionModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-pink text-white">
+                        <h5 class="modal-title"><i class="bi bi-heart-fill me-2"></i>Solicitar Adopción</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <strong><i class="bi bi-heart me-1"></i> Animal:</strong> ${animalName} (ID: ${animalId})
+                        </div>
+                        <input type="hidden" id="userAdoptAnimalId" value="${animalId}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">¿Por qué deseas adoptar a este animal?</label>
+                            <textarea id="userMotivoAdopcion" class="form-control" rows="4" 
+                                placeholder="Cuéntanos tu motivación para adoptar..." required></textarea>
+                        </div>
+                        <p class="text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Tu solicitud será revisada por nuestro equipo. Te contactaremos pronto.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-pink" id="btnRegistrarUserAdopcion">
+                            <i class="bi bi-send-fill me-1"></i> Enviar Solicitud
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.getElementById('btnRegistrarUserAdopcion').addEventListener('click', registrarSolicitudUsuario);
+
+    // Cerrar modal de animal si existe
+    const animalModal = bootstrap.Modal.getInstance(document.getElementById('animalModal'));
+    if (animalModal) animalModal.hide();
+
+    const modal = new bootstrap.Modal(document.getElementById('userAdoptionModal'));
+    modal.show();
+}
+
+async function registrarSolicitudUsuario() {
+    const idAnimal = document.getElementById('userAdoptAnimalId').value;
+    const motivo = document.getElementById('userMotivoAdopcion').value.trim();
+
+    if (!motivo) {
+        showMessage('Debe ingresar el motivo de la solicitud', 'warning');
+        return;
+    }
+
+    try {
+        // El backend usará el idUsuario del token automáticamente
+        const response = await apiRequest('/adoptions/registrar_solicitud', {
+            method: 'POST',
+            body: JSON.stringify({
+                idAnimal: parseInt(idAnimal),
+                motivoSolicitud: motivo
+            })
+        });
+
+        showMessage('✅ Solicitud enviada correctamente. ¡Pronto te contactaremos!', 'success');
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('userAdoptionModal'));
+        if (modal) modal.hide();
+
+        // Recargar animales
+        if (typeof loadAvailableAnimals === 'function') loadAvailableAnimals();
+
+    } catch (error) {
+        showMessage('Error: ' + error.message, 'danger');
+    }
+}
+
+// Exponer funciones globales para adopción
+window.seleccionarPersonaAdoptante = seleccionarPersonaAdoptante;
 
 // Cargar opciones para filtros
 async function loadFilterOptions() {
