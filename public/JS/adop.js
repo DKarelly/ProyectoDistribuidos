@@ -67,26 +67,47 @@ document.addEventListener("DOMContentLoaded", async () => {
         const previewDiv = document.getElementById("previewPersona");
         const searchValue = searchInput.value.trim();
 
+        console.log("\n🔍 === BÚSQUEDA DE PERSONA ===");
+        console.log("Buscando:", searchValue);
+
         const resultados = await buscarRecursos('personName', searchValue);
         
+        console.log("📦 Resultados completos del API:", resultados);
+        
+        // Limpiar campos
         selectedDisplay.value = "Selección Pendiente";
         idInput.value = "";
         previewDiv.textContent = "Esperando datos de contacto...";
 
         if (!resultados || resultados.personas.length === 0) {
+            console.log("❌ No se encontraron personas");
             mostrarMensaje(`No se encontraron personas para '${searchValue}'.`, true);
             return;
         }
 
+        console.log(`✅ Se encontraron ${resultados.personas.length} persona(s)`);
+        console.log("📋 Primera persona:", resultados.personas[0]);
+
         if (resultados.personas.length === 1) {
             const persona = resultados.personas[0];
-            const nombreCompleto = `${persona.nombres} ${persona.apePaterno} ${persona.apeMaterno}`;
+            const nombreCompleto = `${persona.nombres} ${persona.apepaterno} ${persona.apematerno}`;
+            
+            console.log("👤 Datos de la persona seleccionada:");
+            console.log("   - ID Usuario:", persona.idusuario);
+            console.log("   - Nombre completo:", nombreCompleto);
+            console.log("   - DNI:", persona.dni);
+            
             selectedDisplay.value = nombreCompleto;
             idInput.value = persona.idusuario;
             previewDiv.textContent = `${nombreCompleto} | DNI: ${persona.dni} | Tel: ${persona.numerousuario}`;
+            
+            console.log("✅ Campo idUsuario actualizado a:", idInput.value);
+            console.log("✅ Verificación - valor del campo:", document.getElementById("idUsuario").value);
+            
             mostrarMensaje(`Persona '${nombreCompleto}' seleccionada.`, false);
         } else {
-            console.log("Múltiples resultados de personas. Mostrar modal de selección:", resultados.personas);
+            console.log("⚠️ Múltiples resultados - necesita modal de selección");
+            console.log("Personas encontradas:", resultados.personas);
             mostrarMensaje(`Se encontraron ${resultados.personas.length} resultados para personas. Por favor, seleccione uno en el modal de resultados.`, false);
             // Aquí se debería abrir un modal para elegir entre 'resultados.personas'
         }
@@ -95,8 +116,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     /** Maneja la búsqueda y selección del Animal. */
     async function manejarBusquedaAnimal() {
         const searchInput = document.getElementById("inputAnimalSearch");
-        const selectedDisplay = document.getElementById("nombreAnimalSeleccionada");
-        const idInput = document.getElementById("idAnimal");
+        const selectedDisplay = document.getElementById("nombreAnimalSeleccionado");
+        const idInput = document.getElementById("idAnimalSeleccionado");
         const previewDiv = document.getElementById("previewAnimal");
         const searchValue = searchInput.value.trim();
 
@@ -175,36 +196,69 @@ document.addEventListener("DOMContentLoaded", async () => {
     /* ========================================================
      * 2. REGISTRAR SOLICITUD
      * ======================================================== */
-    async function registrarSolicitud() {
+    async function registrarSolicitud(event) {
+        event.preventDefault();
+        
         const motivo = document.getElementById("motivo").value;
-        const observaciones = document.getElementById("observaciones")?.value || ""; 
-        const idAnimal = document.getElementById("idAnimal")?.value; 
+        const idAnimal = document.getElementById("idAnimalSeleccionado")?.value;
+        const idUsuario = document.getElementById("idUsuario")?.value;
+
+        console.log("\n=== REGISTRO DE SOLICITUD ===");
+        console.log("📋 Motivo:", motivo);
+        console.log("🐾 ID Animal:", idAnimal);
+        console.log("👤 ID Usuario (persona):", idUsuario);
+        console.log("⚠️ Si idUsuario está vacío, se usará TU ID de administrador");
 
         if (!motivo || !idAnimal) {
             mostrarMensaje("Por favor, completa el motivo de la solicitud y selecciona un Animal.", true);
             return;
         }
 
+        if (!idUsuario) {
+            mostrarMensaje("⚠️ DEBES BUSCAR Y SELECCIONAR UNA PERSONA antes de registrar la solicitud. Usa el botón de búsqueda.", true);
+            return;
+        }
+
+        const bodyData = {
+            motivoSolicitud: motivo,
+            idAnimal: parseInt(idAnimal),
+            idUsuario: parseInt(idUsuario)
+        };
+
+        console.log("📤 Enviando al servidor:", bodyData);
+
         try {
-            // Llama a /api/adoptions/registrar_solicitud
             const res = await fetch(`${API_BASE_URL}/registrar_solicitud`, {
                 method: "POST",
                 headers: headersAuth,
-                body: JSON.stringify({
-                    motivoSolicitud: motivo,
-                    observaciones: observaciones,
-                    idAnimal: idAnimal
-                })
+                body: JSON.stringify(bodyData)
             });
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Error desconocido");
 
-            mostrarMensaje("Solicitud enviada correctamente.");
-            cargarMisAdopciones(); 
+            mostrarMensaje("✅ Solicitud registrada correctamente");
+            
+            // Cerrar modal y limpiar formulario
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalRegistrar'));
+            modal.hide();
+            document.getElementById("formRegistrar").reset();
+            
+            // Limpiar campos de persona
+            document.getElementById("nombrePersonaSeleccionada").value = "Selección Pendiente";
+            document.getElementById("idUsuario").value = "";
+            document.getElementById("previewPersona").textContent = "Esperando datos de contacto...";
+            
+            // Limpiar campos de animal
+            document.getElementById("nombreAnimalSeleccionado").value = "Selección Pendiente";
+            document.getElementById("idAnimalSeleccionado").value = "";
+            document.getElementById("previewAnimal").textContent = "Esperando datos del animal...";
+            
+            // Recargar tabla de solicitudes
+            listarSolicitudes();
         } catch (err) {
             console.error("Error registrando solicitud:", err);
-            mostrarMensaje("Error al registrar solicitud: " + err.message, true);
+            mostrarMensaje("❌ Error al registrar solicitud: " + err.message, true);
         }
     }
 
@@ -212,24 +266,46 @@ document.addEventListener("DOMContentLoaded", async () => {
      * 3. CAMBIAR ESTADO DE SOLICITUD (ADMIN)
      * ======================================================== */
     async function cambiarEstadoSolicitud(idSolicitud, nuevoEstado) {
+        let observaciones = null;
+        
+        console.log("🔄 Iniciando cambio de estado:", idSolicitud, "→", nuevoEstado);
+        
+        // Si se va a rechazar, solicitar observaciones
+        if (nuevoEstado === 'RECHAZADA') {
+            observaciones = prompt('Ingrese el motivo del rechazo:');
+            if (!observaciones || observaciones.trim() === '') {
+                mostrarMensaje('Debe ingresar un motivo para rechazar la solicitud.', true);
+                return;
+            }
+        }
+        
         if (!await confirmarAccion(`¿Seguro de cambiar el estado de la solicitud #${idSolicitud} a ${nuevoEstado}?`)) return;
         
         try {
-            // Llama a /api/adoptions/estado_solicitud/:id
+            const body = { estadoSolicitud: nuevoEstado.toUpperCase() };
+            if (observaciones) {
+                body.observaciones = observaciones.trim();
+            }
+            
+            console.log("📤 Enviando:", body);
+            
             const res = await fetch(`${API_BASE_URL}/estado_solicitud/${idSolicitud}`, {
                 method: "PUT",
                 headers: headersAuth,
-                body: JSON.stringify({ estadoSolicitud: nuevoEstado })
+                body: JSON.stringify(body)
             });
 
             const data = await res.json();
+            
+            console.log("📥 Respuesta:", data);
+            
             if (!res.ok) throw new Error(data.message || "Error desconocido");
 
-            mostrarMensaje(`Estado de la solicitud #${idSolicitud} actualizado a ${nuevoEstado}`);
+            mostrarMensaje(`✅ Estado actualizado a ${nuevoEstado}`);
             listarSolicitudes(); 
         } catch (err) {
-            console.error("Error al cambiar estado:", err);
-            mostrarMensaje("Error al cambiar estado: " + err.message, true);
+            console.error("❌ Error al cambiar estado:", err);
+            mostrarMensaje("❌ Error al cambiar estado: " + err.message, true);
         }
     }
 
@@ -271,46 +347,148 @@ document.addEventListener("DOMContentLoaded", async () => {
      * ======================================================== */
     async function listarSolicitudes() {
         try {
-            // Llama a /api/adoptions/solicitud
-            const res = await fetch(`${API_BASE_URL}/solicitud`, { headers: headersAuth });
+            // Obtener valores de filtros
+            const persona = document.getElementById('filtroPersonaSolicitud')?.value || '';
+            const animal = document.getElementById('filtroAnimalSolicitud')?.value || '';
+            const fecha = document.getElementById('filtroFechaSolicitud')?.value || '';
+            
+            // Construir query params
+            const params = new URLSearchParams();
+            if (persona) params.append('persona', persona);
+            if (animal) params.append('animal', animal);
+            if (fecha) params.append('fecha', fecha);
+            
+            const queryString = params.toString() ? `?${params.toString()}` : '';
+            
+            const res = await fetch(`${API_BASE_URL}/solicitud${queryString}`, { headers: headersAuth });
             const data = await res.json();
+            
             if (!res.ok) throw new Error(data.message || "Error desconocido");
+            
+            console.log("📋 Solicitudes cargadas:", data.data);
             renderSolicitudes(data.data);
         } catch (err) {
-            console.error("Error cargando solicitudes:", err);
+            console.error("❌ Error cargando solicitudes:", err);
             mostrarMensaje("Error cargando solicitudes: " + err.message, true);
         }
     }
 
     function renderSolicitudes(lista) {
-        const contenedor = document.getElementById("listaSolicitudes");
-        if (!contenedor) return;
+        const tbody = document.getElementById("tablaSolicitudes");
+        if (!tbody) {
+            console.error("❌ No se encontró elemento tablaSolicitudes");
+            return;
+        }
 
-        contenedor.innerHTML = lista.length === 0 
-            ? '<p class="text-center text-gray-500">No hay solicitudes pendientes de revisión.</p>'
-            : lista.map(item => `
-                <div class="card p-4 my-2 border rounded shadow-lg bg-gray-50">
-                    <p><b>Solicitud ID:</b> ${item.idsolicitudadopcion}</p>
-                    <h4 class="font-bold text-xl text-indigo-700">Animal: ${item.nombreanimal}</h4>
-                    <p><b>Fecha:</b> ${item.f_solicitud}</p>
-                    <p><b>Estado:</b> <span class="font-bold">${item.estadosolicitud}</span></p>
+        console.log("🔄 Renderizando", lista.length, "solicitudes");
+        if (lista.length > 0) {
+            console.log("📋 Ejemplo de datos:", lista[0]);
+            console.log("📋 Keys disponibles:", Object.keys(lista[0]));
+        }
 
-                    <div class="flex space-x-2 mt-3">
-                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition" 
-                                onclick="cambiarEstadoSolicitud(${item.idsolicitudadopcion}, 'ACEPTADA')">
-                            Aceptar
-                        </button>
-                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                                onclick="cambiarEstadoSolicitud(${item.idsolicitudadopcion}, 'RECHAZADA')">
-                            Rechazar
-                        </button>
-                        <button class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 transition"
-                                onclick="eliminarSolicitud(${item.idsolicitudadopcion})">
-                            Eliminar
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No hay solicitudes registradas</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = lista.map((item, index) => {
+            const estado = (item.estadosolicitud || 'PENDIENTE').toUpperCase();
+            const rowId = `solicitud-${item.idsolicitudadopcion}`;
+            let estadoClass = 'badge bg-secondary';
+            let botones = '';
+            
+            console.log(`Fila ${index}: Estado="${estado}", ID=${item.idsolicitudadopcion}, Persona="${item.nombreusuario}"`);
+            
+            // Colores y botones según estado
+            if (estado === 'PENDIENTE') {
+                estadoClass = 'badge bg-warning text-dark';
+                botones = `
+                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-eye"></i> Ver
+                    </button>
+                    <button class="btn btn-sm btn-success me-1 btn-aceptar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-check-circle"></i> Aceptar
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-rechazar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-x-circle"></i> Rechazar
+                    </button>
+                `;
+            } else if (estado === 'EN_REVISION') {
+                estadoClass = 'badge bg-info';
+                botones = `
+                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-eye"></i> Ver
+                    </button>
+                    <button class="btn btn-sm btn-success me-1 btn-aceptar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-check-circle"></i> Aceptar
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-rechazar" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-x-circle"></i> Rechazar
+                    </button>
+                `;
+            } else if (estado === 'ACEPTADA') {
+                estadoClass = 'badge bg-success';
+                botones = `
+                    <button class="btn btn-sm btn-info me-1 btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-eye"></i> Ver
+                    </button>
+                    <button class="btn btn-sm btn-primary btn-adopcion" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-heart-fill"></i> Adopción
+                    </button>
+                `;
+            } else if (estado === 'RECHAZADA') {
+                estadoClass = 'badge bg-danger';
+                botones = `
+                    <button class="btn btn-sm btn-info btn-ver" data-id="${item.idsolicitudadopcion}" style="display: inline-block;">
+                        <i class="bi bi-eye"></i> Ver
+                    </button>
+                `;
+            }
+            
+            return `
+                <tr id="${rowId}">
+                    <td>${item.idsolicitudadopcion}</td>
+                    <td>${item.nombreusuario || 'Sin usuario'}</td>
+                    <td>${item.nombreanimal || 'Sin animal'}</td>
+                    <td>${item.f_solicitud ? new Date(item.f_solicitud).toLocaleDateString('es-PE') : 'N/A'}</td>
+                    <td><span class="${estadoClass}">${estado}</span></td>
+                    <td class="text-nowrap" style="min-width: 200px;">${botones}</td>
+                </tr>
+            `;
+        }).join('');
+
+        console.log("✅ HTML generado, agregando event listeners...");
+
+        // Agregar event listeners a los botones
+        document.querySelectorAll('.btn-ver').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log("👁️ Ver solicitud:", btn.dataset.id);
+                verDetalleSolicitud(parseInt(btn.dataset.id));
+            });
+        });
+        
+        document.querySelectorAll('.btn-aceptar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log("✅ Aceptar solicitud:", btn.dataset.id);
+                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'ACEPTADA');
+            });
+        });
+        
+        document.querySelectorAll('.btn-rechazar').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log("❌ Rechazar solicitud:", btn.dataset.id);
+                cambiarEstadoSolicitud(parseInt(btn.dataset.id), 'RECHAZADA');
+            });
+        });
+        
+        document.querySelectorAll('.btn-adopcion').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log("💚 Registrar adopción:", btn.dataset.id);
+                registrarAdopcionDirecta(parseInt(btn.dataset.id));
+            });
+        });
+
+        console.log("✅ Event listeners agregados correctamente");
     }
 
     /* ========================================================
@@ -318,31 +496,51 @@ document.addEventListener("DOMContentLoaded", async () => {
      * ======================================================== */
     async function listarAdopciones() {
         try {
-            // Llama a /api/adoptions/ (endpoint raíz del router)
             const res = await fetch(`${API_BASE_URL}/`, { headers: headersAuth });
             const data = await res.json();
+            
             if (!res.ok) throw new Error(data.message || "Error desconocido");
+            
+            console.log("💚 Adopciones cargadas:", data.data);
             renderAdopciones(data.data);
         } catch (err) {
-            console.error("Error cargando adopciones:", err);
+            console.error("❌ Error cargando adopciones:", err);
             mostrarMensaje("Error cargando adopciones: " + err.message, true);
         }
     }
 
     function renderAdopciones(lista) {
-        const contenedor = document.getElementById("listaAdopciones");
-        if (!contenedor) return;
+        const tbody = document.getElementById("tablaAdopciones");
+        if (!tbody) {
+            console.error("❌ No se encontró elemento tablaAdopciones");
+            return;
+        }
 
-        contenedor.innerHTML = lista.length === 0
-            ? '<p class="text-center text-gray-500">Aún no hay adopciones registradas.</p>'
-            : lista.map(item => `
-                <div class="card p-4 my-2 border rounded shadow-sm bg-blue-50">
-                    <p><b>ID Adopción:</b> ${item.idadopcion}</p>
-                    <h4 class="font-bold text-lg">Animal: ${item.nombreanimal}</h4>
-                    <p><b>Adoptante ID:</b> ${item.idusuario}</p>
-                    <p><b>Fecha:</b> ${item.f_adopcion}</p>
-                </div>
-            `).join('');
+        console.log("🔄 Renderizando", lista.length, "adopciones");
+
+        if (lista.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No hay adopciones registradas</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = lista.map(item => `
+            <tr>
+                <td>${item.idadopcion}</td>
+                <td>${item.nombreanimal || 'N/A'}</td>
+                <td>${item.f_adopcion ? new Date(item.f_adopcion).toLocaleDateString('es-PE') : 'N/A'}</td>
+                <td>${item.nombreusuario || 'Sin datos'}</td>
+                <td>
+                    <button class="btn btn-sm btn-info btn-ver-adopcion" data-id="${item.idadopcion}">
+                        <i class="bi bi-eye"></i> Ver detalles
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Agregar event listeners a los botones de adopción
+        document.querySelectorAll('.btn-ver-adopcion').forEach(btn => {
+            btn.addEventListener('click', () => verDetalleAdopcion(parseInt(btn.dataset.id)));
+        });
     }
 
     /* ========================================================
@@ -352,7 +550,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!await confirmarAccion(`¿Seguro de eliminar la solicitud #${idSolicitud}?`)) return;
 
         try {
-            // Llama a /api/adoptions/solicitud/:id
             const res = await fetch(`${API_BASE_URL}/solicitud/${idSolicitud}`, { method: "DELETE", headers: headersAuth });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Error desconocido");
@@ -361,7 +558,119 @@ document.addEventListener("DOMContentLoaded", async () => {
             listarSolicitudes();
         } catch (err) {
             console.error("Error al eliminar solicitud:", err);
-            mostrarMensaje("Error al eliminar solicitud: " + (data?.message || err.message), true);
+            mostrarMensaje("Error al eliminar solicitud: " + err.message, true);
+        }
+    }
+
+    /* ========================================================
+     * 8. VER DETALLE DE SOLICITUD
+     * ======================================================== */
+    async function verDetalleSolicitud(idSolicitud) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/solicitud`, { headers: headersAuth });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Error desconocido");
+            
+            const solicitud = data.data.find(s => s.idsolicitudadopcion === idSolicitud);
+            if (!solicitud) {
+                mostrarMensaje("No se encontró la solicitud", true);
+                return;
+            }
+
+            const modalBody = document.getElementById("detalleSolicitudBody");
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary"><i class="bi bi-file-text"></i> Información de Solicitud</h6>
+                        <p><strong>ID:</strong> ${solicitud.idsolicitudadopcion}</p>
+                        <p><strong>Estado:</strong> <span class="badge bg-${solicitud.estadosolicitud === 'ACEPTADA' ? 'success' : solicitud.estadosolicitud === 'RECHAZADA' ? 'danger' : solicitud.estadosolicitud === 'EN_REVISION' ? 'info' : 'warning'}">${solicitud.estadosolicitud}</span></p>
+                        <p><strong>Fecha:</strong> ${solicitud.f_solicitud ? new Date(solicitud.f_solicitud).toLocaleDateString('es-PE') : 'N/A'}</p>
+                        <p><strong>Motivo:</strong> ${solicitud.motivosolicitud || 'N/A'}</p>
+                        ${solicitud.observaciones ? `<p class="text-danger"><strong>Observaciones:</strong> ${solicitud.observaciones}</p>` : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="bi bi-heart"></i> Información del Animal</h6>
+                        <p><strong>Nombre:</strong> ${solicitud.nombreanimal || 'N/A'}</p>
+                        <p><strong>Usuario:</strong> ${solicitud.nombreusuario || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalVerSolicitud'));
+            modal.show();
+        } catch (err) {
+            console.error("Error al ver detalle:", err);
+            mostrarMensaje("Error al cargar detalle: " + err.message, true);
+        }
+    }
+
+    /* ========================================================
+     * 9. VER DETALLE DE ADOPCIÓN
+     * ======================================================== */
+    async function verDetalleAdopcion(idAdopcion) {
+        try {
+            const res = await fetch(`${API_BASE_URL}/`, { headers: headersAuth });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Error desconocido");
+            
+            const adopcion = data.data.find(a => a.idadopcion === idAdopcion);
+            if (!adopcion) {
+                mostrarMensaje("No se encontró la adopción", true);
+                return;
+            }
+
+            const modalBody = document.getElementById("detalleAdopcionBody");
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="bi bi-heart-fill"></i> Información de Adopción</h6>
+                        <p><strong>ID:</strong> ${adopcion.idadopcion}</p>
+                        <p><strong>Fecha:</strong> ${adopcion.f_adopcion ? new Date(adopcion.f_adopcion).toLocaleDateString('es-PE') : 'N/A'}</p>
+                        <p><strong>Contrato:</strong> ${adopcion.contratoadopcion || 'No especificado'}</p>
+                        <p><strong>Condiciones:</strong> ${adopcion.condiciones || 'No especificadas'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary"><i class="bi bi-person"></i> Adoptante</h6>
+                        <p><strong>Nombre:</strong> ${adopcion.nombreusuario || 'N/A'}</p>
+                        <h6 class="text-info mt-3"><i class="bi bi-heart"></i> Animal Adoptado</h6>
+                        <p><strong>Nombre:</strong> ${adopcion.nombreanimal || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+
+            const modal = new bootstrap.Modal(document.getElementById('modalVerAdopcion'));
+            modal.show();
+        } catch (err) {
+            console.error("Error al ver detalle:", err);
+            mostrarMensaje("Error al cargar detalle: " + err.message, true);
+        }
+    }
+
+    /* ========================================================
+     * 10. REGISTRAR ADOPCIÓN DIRECTA
+     * ======================================================== */
+    async function registrarAdopcionDirecta(idSolicitud) {
+        if (!await confirmarAccion(`¿Confirmas registrar la adopción para la solicitud #${idSolicitud}?`)) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/registrar_adopcion/${idSolicitud}`, {
+                method: "POST",
+                headers: headersAuth,
+                body: JSON.stringify({ 
+                    contratoAdopcion: "Contrato de adopción estándar",
+                    condiciones: "Seguimiento mensual durante 6 meses"
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Error desconocido");
+
+            mostrarMensaje(`✅ Adopción registrada correctamente`);
+            listarSolicitudes();
+            listarAdopciones();
+        } catch (err) {
+            console.error("Error registrando adopción:", err);
+            mostrarMensaje("❌ Error: " + err.message, true);
         }
     }
     
@@ -373,9 +682,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.registrarSolicitud = registrarSolicitud;
     window.cambiarEstadoSolicitud = cambiarEstadoSolicitud;
     window.registrarAdopcion = registrarAdopcion;
+    window.registrarAdopcionDirecta = registrarAdopcionDirecta;
     window.eliminarSolicitud = eliminarSolicitud;
     window.listarSolicitudes = listarSolicitudes;
     window.listarAdopciones = listarAdopciones;
+    window.verDetalleSolicitud = verDetalleSolicitud;
+    window.verDetalleAdopcion = verDetalleAdopcion;
     
     // EXPONER FUNCIONES DE BÚSQUEDA
     window.manejarBusquedaPersona = manejarBusquedaPersona;
@@ -383,26 +695,77 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     // ========================================================
-    // EVENT LISTENERS DE BÚSQUEDA
+    // EVENT LISTENERS
     // ========================================================
+    
+    // Botón buscar persona
     const btnBuscarPersona = document.getElementById("btnBuscarPersona");
     if (btnBuscarPersona) {
         btnBuscarPersona.addEventListener("click", manejarBusquedaPersona);
     }
 
+    // Botón buscar animal
     const btnBuscarAnimal = document.getElementById("btnBuscarAnimal");
     if (btnBuscarAnimal) {
         btnBuscarAnimal.addEventListener("click", manejarBusquedaAnimal);
     }
-    
-    // Lógica de inicio
-    if (document.getElementById("misSolicitudes")) {
-        cargarMisAdopciones();
+
+    // Formulario de registro
+    const formRegistrar = document.getElementById("formRegistrar");
+    if (formRegistrar) {
+        formRegistrar.addEventListener("submit", registrarSolicitud);
     }
-    if (document.getElementById("listaSolicitudes")) {
+
+    // Filtros de solicitudes
+    const filtroPersonaSolicitud = document.getElementById("filtroPersonaSolicitud");
+    const filtroAnimalSolicitud = document.getElementById("filtroAnimalSolicitud");
+    const filtroFechaSolicitud = document.getElementById("filtroFechaSolicitud");
+    
+    if (filtroPersonaSolicitud) {
+        filtroPersonaSolicitud.addEventListener("input", () => {
+            clearTimeout(filtroPersonaSolicitud.timeout);
+            filtroPersonaSolicitud.timeout = setTimeout(listarSolicitudes, 500);
+        });
+    }
+    
+    if (filtroAnimalSolicitud) {
+        filtroAnimalSolicitud.addEventListener("input", () => {
+            clearTimeout(filtroAnimalSolicitud.timeout);
+            filtroAnimalSolicitud.timeout = setTimeout(listarSolicitudes, 500);
+        });
+    }
+    
+    if (filtroFechaSolicitud) {
+        filtroFechaSolicitud.addEventListener("change", listarSolicitudes);
+    }
+
+    // Tabs de solicitudes y adopciones
+    const solicitudesTab = document.getElementById("solicitudes-tab");
+    if (solicitudesTab) {
+        solicitudesTab.addEventListener("shown.bs.tab", () => {
+            listarSolicitudes();
+        });
+    }
+
+    const adopcionesTab = document.getElementById("adopciones-tab");
+    if (adopcionesTab) {
+        adopcionesTab.addEventListener("shown.bs.tab", () => {
+            listarAdopciones();
+        });
+    }
+
+    /* ========================================================
+     *  CARGAR DATOS INICIALES
+     * ======================================================== */
+
+    // Cargar solicitudes si estamos en la pestaña de solicitudes
+    if (document.getElementById("tablaSolicitudes")) {
         listarSolicitudes();
     }
-    if (document.getElementById("listaAdopciones")) {
+
+    // Cargar adopciones si estamos en la pestaña de adopciones
+    if (document.getElementById("tablaAdopciones")) {
         listarAdopciones();
     }
-});
+
+}); // <-- CIERRE DE DOMContentLoaded

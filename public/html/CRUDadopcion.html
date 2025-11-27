@@ -84,13 +84,13 @@
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12 col-md-4">
-                                    <input type="text" class="form-control" placeholder="Buscar por nombre de persona">
+                                    <input type="text" id="filtroPersonaSolicitud" class="form-control" placeholder="Buscar por nombre de persona">
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <input type="text" class="form-control" placeholder="Buscar por nombre del animal">
+                                    <input type="text" id="filtroAnimalSolicitud" class="form-control" placeholder="Buscar por nombre del animal">
                                 </div>
                                 <div class="col-12 col-md-4">
-                                    <input type="date" class="form-control" placeholder="Fecha de solicitud">
+                                    <input type="date" id="filtroFechaSolicitud" class="form-control" placeholder="Fecha de solicitud">
                                 </div>
                             </div>
                         </div>
@@ -100,14 +100,15 @@
                         <div class="table-responsive"><table class="table table-hover align-middle">
                             <thead class="table-pink text-center">
                                 <tr>
-                                    <th>ID Solicitud</th>
-                                    <th>Nombre de persona</th>
-                                    <th>Fecha solicitud</th>
-                                    <th>Estado solicitud</th>
+                                    <th>ID</th>
+                                    <th>Persona</th>
+                                    <th>Animal</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-center">
+                            <tbody class="text-center" id="tablaSolicitudes">
                                 <!-- Filas dinámicas -->
                             </tbody>
                         </table></div>
@@ -139,12 +140,11 @@
                                     <th>ID Adopción</th>
                                     <th>Nombre del animal</th>
                                     <th>Fecha adopción</th>
-                                    <th>Estado adopción</th>
-                                    <th>Dirección adoptante</th>
+                                    <th>Nombre adoptante</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-center">
+                            <tbody class="text-center" id="tablaAdopciones">
                                 <!-- Filas dinámicas -->
                             </tbody>
                         </table></div>
@@ -152,109 +152,172 @@
                 </div>
 
                 <!-- MODAL REGISTRAR SOLICITUD -->
+<!-- MODAL REGISTRAR SOLICITUD -->
 <div class="modal fade" id="modalRegistrar" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered"> 
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content modal-modern">
-            
+
+            <!-- HEADER -->
             <div class="modal-header modal-header-gradient text-white bg-primary-subtle border-0 p-2">
                 <h6 class="modal-title m-0 small">
                     <i class="bi bi-plus-circle-fill me-2"></i> Registrar Solicitud de Adopción
                 </h6>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
+            <!-- BODY -->
             <div class="modal-body p-3">
                 <form id="formRegistrar">
                     <div class="row">
-                        
+
+                        <!-- ===================================================
+                             COLUMNA IZQUIERDA
+                        =================================================== -->
                         <div class="col-md-6 border-end pe-3">
-                            
-                            <h6 class="text-secondary fw-bold mb-1 mt-0 small"><i class="bi bi-person me-1"></i> 1. Solicitante</h6>
-                            <label for="inputPersonaSearch" class="form-label small mb-1">Buscar (Nombre o DNI)</label>
-                            
+
+                            <!-- ==================== 1. SOLICITANTE ==================== -->
+                            <h6 class="text-secondary fw-bold mb-1 small">
+                                <i class="bi bi-person me-1"></i> 1. Solicitante
+                            </h6>
+
+                            <label class="form-label small mb-1">Buscar (Nombre o DNI)</label>
                             <div class="input-group input-group-sm mb-1">
-                                <input type="text" class="form-control" id="inputPersonaSearch" placeholder="Escriba aquí...">
-                                <button class="btn btn-primary" type="button" id="btnBuscarPersona">
+                                <input type="text" id="inputPersonaSearch" class="form-control" placeholder="Escriba aquí...">
+                                <button type="button" id="btnBuscarPersona" class="btn btn-primary">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </div>
-                            <input type="text" class="form-control form-control-sm mb-3 bg-white" id="nombrePersonaSeleccionada" readonly 
+
+                            <!-- NOMBRE DEL SOLICITANTE -->
+                            <input type="text" class="form-control form-control-sm mb-3 bg-white"
+                                   id="nombrePersonaSeleccionada" readonly
                                    placeholder="Selección Pendiente" required>
-                            <input type="hidden" id="idUsuario" name="idUsuario"> 
+
+                            <!-- ID OCULTO -->
+                            <input type="hidden" id="idUsuario" name="idUsuario">
 
                             <hr class="my-2">
-                            
-                            <h6 class="text-secondary fw-bold mb-1"><i class="bi bi-heart me-1"></i> 2. Animal</h6>
-                            <label for="inputAnimalSearch" class="form-label small mb-1">Buscar (Nombre del Animal)</label>
+
+                            <!-- ==================== 2. ANIMAL ==================== -->
+                            <h6 class="text-secondary fw-bold mb-1 small">
+                                <i class="bi bi-heart me-1"></i> 2. Animal
+                            </h6>
+
+                            <label class="form-label small mb-1">Buscar (Nombre del Animal)</label>
                             <div class="input-group input-group-sm mb-1">
-                                <input type="text" class="form-control" id="inputAnimalSearch" placeholder="Escriba aquí...">
-                                <button class="btn btn-primary" type="button" id="btnBuscarAnimal">
+                                <input type="text" id="inputAnimalSearch" class="form-control" placeholder="Escriba aquí...">
+                                <button type="button" id="btnBuscarAnimal" class="btn btn-primary">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </div>
-                            <input type="text" class="form-control form-control-sm mb-3 bg-white" id="nombreAnimalSeleccionado" readonly 
+
+                            <!-- NOMBRE DEL ANIMAL -->
+                            <input type="text" class="form-control form-control-sm mb-3 bg-white"
+                                   id="nombreAnimalSeleccionado" readonly
                                    placeholder="Selección Pendiente" required>
-                            <input type="hidden" id="idAnimal" name="idAnimal">
+
+                            <!-- ID ANIMAL (corregido) -->
+                            <input type="hidden" id="idAnimalSeleccionado" name="idAnimal">
 
                             <hr class="my-2">
 
-                            <h6 class="text-secondary fw-bold mb-1"><i class="bi bi-pencil-square me-1"></i> 3. Motivo</h6>
-                            <label for="motivo" class="form-label small mb-1">Motivo de la Solicitud</label>
-                            <textarea class="form-control form-control-sm" id="motivo" name="motivo" rows="4" placeholder="Explique por qué..." required></textarea>
-                            
+                            <!-- ==================== 3. MOTIVO ==================== -->
+                            <h6 class="text-secondary fw-bold mb-1 small">
+                                <i class="bi bi-pencil-square me-1"></i> 3. Motivo
+                            </h6>
+
+                            <label class="form-label small mb-1">Motivo de la Solicitud</label>
+                            <textarea id="motivo" name="motivo" class="form-control form-control-sm"
+                                      rows="4" placeholder="Explique por qué..." required></textarea>
                         </div>
 
+                        <!-- ===================================================
+                             COLUMNA DERECHA
+                        =================================================== -->
                         <div class="col-md-6 ps-3 d-flex flex-column">
-                            
-                            <h6 class="text-primary fw-bold mb-2 mt-0 small"><i class="bi bi-info-circle me-1"></i> Vistas Previas</h6>
-                            
-                            <div class="p-2 border rounded bg-light mb-2 flex-grow-0">
+
+                            <h6 class="text-primary fw-bold mb-2 small">
+                                <i class="bi bi-info-circle me-1"></i> Vistas Previas
+                            </h6>
+
+                            <!-- PREVIEW PERSONA -->
+                            <div class="p-2 border rounded bg-light mb-2">
                                 <span class="fw-bold small text-pink">S.: </span>
-                                <span id="previewPersona" class="small text-muted">Esperando datos de contacto...</span>
+                                <span id="previewPersona" class="small text-muted">
+                                    Esperando datos de contacto...
+                                </span>
                             </div>
 
+                            <!-- PREVIEW ANIMAL -->
                             <div class="p-2 border rounded bg-light mb-2 flex-grow-1">
                                 <span class="fw-bold small text-pink">A.: </span>
-                                <span id="previewAnimal" class="small text-muted">Esperando datos del animal...</span>
+                                <span id="previewAnimal" class="small text-muted">
+                                    Esperando datos del animal...
+                                </span>
                             </div>
 
+                            <!-- BOTONES -->
                             <div class="d-flex justify-content-end pt-3 mt-auto" style="gap: 0.5rem;">
-                                <button type="button" class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">
-                                    Cancelar
-                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm px-3"
+                                        data-bs-dismiss="modal">Cancelar</button>
+
                                 <button type="submit" class="btn btn-success btn-sm px-3" id="btnRegistrarSolicitud">
                                     <i class="bi bi-send-fill me-1"></i> Registrar
                                 </button>
                             </div>
+
                         </div>
 
                     </div>
                 </form>
             </div>
+
         </div>
     </div>
 </div>
+
+
             </div>
         </div>
     </section>
 
-    <!-- MODAL CONFIRMAR ADOPCIÓN -->
-    <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <!-- MODAL VER DETALLE SOLICITUD -->
+    <div class="modal fade" id="modalVerSolicitud" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-info text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        Confirmar Adopción
+                        <i class="bi bi-eye-fill me-2"></i>
+                        Detalle de Solicitud
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <p class="mb-0">¿Estás seguro de confirmar esta adopción?</p>
+                <div class="modal-body" id="detalleSolicitudBody">
+                    <!-- Contenido dinámico -->
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-success">Confirmar</button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL VER DETALLE ADOPCIÓN -->
+    <div class="modal fade" id="modalVerAdopcion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-heart-fill me-2"></i>
+                        Detalle de Adopción
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detalleAdopcionBody">
+                    <!-- Contenido dinámico -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
