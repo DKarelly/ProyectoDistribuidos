@@ -386,15 +386,24 @@ router.get('/', authenticateToken, async (req, res) => {
                    a.tamano,
                    a.idraza, e.especieanimal, r.razaanimal,
                    CASE 
-                       WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
-                       WHEN ad.estadoadopcion = 'En proceso' THEN 'en_proceso'
-                       WHEN ad.estadoadopcion = 'Pendiente' THEN 'pendiente'
+                       WHEN EXISTS (
+                           SELECT 1 FROM adopcion ad 
+                           JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion 
+                           WHERE sa.idanimal = a.idanimal
+                       ) THEN 'adoptado'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'ACEPTADA'
+                       ) THEN 'en_proceso'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'PENDIENTE'
+                       ) THEN 'pendiente'
                        ELSE 'disponible'
                    END as estadoanimal
             FROM animal a
             LEFT JOIN raza r ON a.idraza = r.idraza
             LEFT JOIN especie e ON r.idespecie = e.idespecie
-            LEFT JOIN adopcion ad ON a.idanimal = ad.idanimal
             ORDER BY a.idanimal DESC
         `);
         res.json({ message: 'Animales obtenidos exitosamente', data: result.rows });
@@ -418,8 +427,19 @@ router.get('/perfil/:id', async (req, res) => {
               en.nombenfermedad, te.tipoenfermedad, de.gravedadenfermedad, de.medicinas,
               COALESCE((CURRENT_DATE - ca.f_entrada), (CURRENT_DATE - h.f_historial)) AS dias_en_refugio,
               CASE
-                WHEN EXISTS (SELECT 1 FROM adopcion ad2 WHERE ad2.idanimal = a.idanimal AND ad2.estadoadopcion = 'Aprobada') THEN 'adoptado'
-                WHEN EXISTS (SELECT 1 FROM adopcion ad2 WHERE ad2.idanimal = a.idanimal AND ad2.estadoadopcion IN ('Pendiente','En proceso')) THEN 'en_proceso'
+                WHEN EXISTS (
+                    SELECT 1 FROM adopcion ad2 
+                    JOIN solicitud_adopcion sa2 ON ad2.idsolicitudadopcion = sa2.idsolicitudadopcion 
+                    WHERE sa2.idanimal = a.idanimal
+                ) THEN 'adoptado'
+                WHEN EXISTS (
+                    SELECT 1 FROM solicitud_adopcion sa2 
+                    WHERE sa2.idanimal = a.idanimal AND sa2.estadosolicitud = 'ACEPTADA'
+                ) THEN 'en_proceso'
+                WHEN EXISTS (
+                    SELECT 1 FROM solicitud_adopcion sa2 
+                    WHERE sa2.idanimal = a.idanimal AND sa2.estadosolicitud = 'PENDIENTE'
+                ) THEN 'pendiente'
                 ELSE 'disponible'
               END AS estado
             FROM animal a
@@ -520,8 +540,12 @@ router.get('/disponibles', async (req, res) => {
             }
         }
 
-        // Excluir animales ya adoptados
-        whereConditions.push(`a.idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')`);
+        // Excluir animales ya adoptados (que tienen una adopción registrada)
+        whereConditions.push(`a.idanimal NOT IN (
+            SELECT sa.idanimal 
+            FROM adopcion ad 
+            JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+        )`);
         const whereClause = whereConditions.length ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
         const sql = `
@@ -529,15 +553,24 @@ router.get('/disponibles', async (req, res) => {
                    a.pesoanimal, a.pelaje, a.tamano, r.razaanimal, e.especieanimal,
                    (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) as imagenAnimal,
                    CASE 
-                       WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
-                       WHEN ad.estadoadopcion = 'En proceso' THEN 'en_proceso'
-                       WHEN ad.estadoadopcion = 'Pendiente' THEN 'pendiente'
+                       WHEN EXISTS (
+                           SELECT 1 FROM adopcion ad 
+                           JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion 
+                           WHERE sa.idanimal = a.idanimal
+                       ) THEN 'adoptado'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'ACEPTADA'
+                       ) THEN 'en_proceso'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'PENDIENTE'
+                       ) THEN 'pendiente'
                        ELSE 'disponible'
                    END as estadoanimal
             FROM animal a
             JOIN raza r ON a.idraza = r.idraza
             JOIN especie e ON r.idespecie = e.idespecie
-            LEFT JOIN adopcion ad ON a.idanimal = ad.idanimal
             ${whereClause}
             ORDER BY a.idanimal DESC
         `;
@@ -582,6 +615,110 @@ router.get('/enfermedades-por-tipo/:tipoId', async (req, res) => {
     }
 });
 
+// GET /api/animals/filtros/opciones - DEBE IR ANTES DE /:id
+router.get('/filtros/opciones', async (req, res) => {
+    try {
+        // Obtener especies únicas (solo de animales disponibles)
+        const especiesResult = await query(`
+            SELECT DISTINCT e.especieanimal
+            FROM especie e
+            JOIN raza r ON e.idespecie = r.idespecie
+            JOIN animal a ON r.idraza = a.idraza
+            WHERE a.idanimal NOT IN (
+                SELECT sa.idanimal 
+                FROM adopcion ad 
+                JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+            )
+            ORDER BY e.especieanimal
+        `);
+
+        // Obtener pelajes únicos
+        const pelajesResult = await query(`
+            SELECT DISTINCT pelaje
+            FROM animal
+            WHERE pelaje IS NOT NULL AND pelaje != ''
+            AND idanimal NOT IN (
+                SELECT sa.idanimal 
+                FROM adopcion ad 
+                JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+            )
+            ORDER BY pelaje
+        `);
+
+        // Obtener tamaños únicos
+        const tamañosResult = await query(`
+            SELECT DISTINCT tamano
+            FROM animal
+            WHERE tamano IS NOT NULL AND tamano != ''
+            AND idanimal NOT IN (
+                SELECT sa.idanimal 
+                FROM adopcion ad 
+                JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+            )
+            ORDER BY tamano
+        `);
+
+        // Obtener géneros únicos
+        const generosResult = await query(`
+            SELECT DISTINCT
+                CASE 
+                    WHEN generoanimal = 'M' THEN 'Macho'
+                    WHEN generoanimal = 'H' THEN 'Hembra'
+                    ELSE generoanimal
+                END as genero_display,
+                generoanimal
+            FROM animal
+            WHERE generoanimal IS NOT NULL AND generoanimal != ''
+            AND idanimal NOT IN (
+                SELECT sa.idanimal 
+                FROM adopcion ad 
+                JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+            )
+            ORDER BY generoanimal
+        `);
+
+        // Obtener edades únicas (agrupadas por rangos)
+        const edadesResult = await query(`
+            SELECT DISTINCT
+                CASE
+                    WHEN edadmesesanimal <= 6 THEN '0-6 meses'
+                    WHEN edadmesesanimal <= 12 THEN '7-12 meses'
+                    WHEN edadmesesanimal <= 24 THEN '1-2 años'
+                    WHEN edadmesesanimal <= 60 THEN '3-5 años'
+                    ELSE '5+ años'
+                END as rango_edad
+            FROM animal
+            WHERE edadmesesanimal IS NOT NULL
+            AND idanimal NOT IN (
+                SELECT sa.idanimal 
+                FROM adopcion ad 
+                JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+            )
+            ORDER BY rango_edad
+        `);
+
+        const opciones = {
+            especies: especiesResult.rows.map(row => row.especieanimal),
+            pelajes: pelajesResult.rows.map(row => row.pelaje),
+            tamaños: tamañosResult.rows.map(row => row.tamano),
+            generos: generosResult.rows.map(row => ({
+                valor: row.generoanimal,
+                display: row.genero_display
+            })),
+            edades: edadesResult.rows.map(row => row.rango_edad)
+        };
+
+        res.json({
+            message: 'Opciones de filtros obtenidas exitosamente',
+            data: opciones
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo opciones de filtros:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+});
+
 // GET /api/animals/:id
 router.get('/:id', async (req, res) => {
     try {
@@ -593,15 +730,24 @@ router.get('/:id', async (req, res) => {
                    r.razaanimal, e.especieanimal,
                    (SELECT g.imagen FROM galeria g WHERE g.idanimal = a.idanimal AND g.imagen IS NOT NULL LIMIT 1) as imagenAnimal,
                    CASE 
-                       WHEN ad.estadoadopcion = 'Aprobada' THEN 'adoptado'
-                       WHEN ad.estadoadopcion = 'En proceso' THEN 'en_proceso'
-                       WHEN ad.estadoadopcion = 'Pendiente' THEN 'pendiente'
+                       WHEN EXISTS (
+                           SELECT 1 FROM adopcion ad 
+                           JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion 
+                           WHERE sa.idanimal = a.idanimal
+                       ) THEN 'adoptado'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'ACEPTADA'
+                       ) THEN 'en_proceso'
+                       WHEN EXISTS (
+                           SELECT 1 FROM solicitud_adopcion sa 
+                           WHERE sa.idanimal = a.idanimal AND sa.estadosolicitud = 'PENDIENTE'
+                       ) THEN 'pendiente'
                        ELSE 'disponible'
                    END as estadoanimal
             FROM animal a
             JOIN raza r ON a.idraza = r.idraza
             JOIN especie e ON r.idespecie = e.idespecie
-            LEFT JOIN adopcion ad ON a.idanimal = ad.idanimal
             WHERE a.idanimal = $1
             LIMIT 1
         `, [id]);
@@ -655,28 +801,32 @@ router.post('/adoptar', authenticateToken, async (req, res) => {
             SELECT idanimal, nombreanimal
             FROM animal
             WHERE idanimal = $1
-              AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
+              AND idanimal NOT IN (
+                  SELECT sa.idanimal 
+                  FROM adopcion ad 
+                  JOIN solicitud_adopcion sa ON ad.idsolicitudadopcion = sa.idsolicitudadopcion
+              )
         `, [idAnimal]);
 
         if (!animalResult.rows.length) return res.status(400).json({ message: 'Animal no disponible para adopción' });
 
         const existingAdoption = await query(`
-            SELECT idadopcion FROM adopcion
-            WHERE idpersona = $1 AND idanimal = $2 AND estadoadopcion = 'Pendiente'
+            SELECT idsolicitudadopcion FROM solicitud_adopcion
+            WHERE idusuario = $1 AND idanimal = $2 AND estadosolicitud = 'PENDIENTE'
         `, [idUsuario, idAnimal]);
 
         if (existingAdoption.rows.length) return res.status(400).json({ message: 'Ya tienes una solicitud pendiente para este animal' });
 
         const result = await query(`
-            INSERT INTO adopcion (idpersona, idanimal, f_adopcion, estadoadopcion)
-            VALUES ($1, $2, CURRENT_DATE, 'Pendiente')
-            RETURNING idadopcion
+            INSERT INTO solicitud_adopcion (idusuario, idanimal, f_solicitud, estadosolicitud, motivosolicitud)
+            VALUES ($1, $2, CURRENT_DATE, 'PENDIENTE', 'Solicitud desde la página')
+            RETURNING idsolicitudadopcion
         `, [idUsuario, idAnimal]);
 
         res.status(201).json({
             message: 'Solicitud de adopción creada exitosamente',
             data: {
-                idAdopcion: result.rows[0].idadopcion,
+                idSolicitud: result.rows[0].idsolicitudadopcion,
                 animal: animalResult.rows[0].nombreanimal,
                 estado: 'Pendiente'
             }
@@ -1031,16 +1181,21 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
         console.log('Verificando eliminación del animal ID:', id);
 
-        // Verificar si el animal está en proceso de adopción
+        // Verificar si el animal está en proceso de adopción o adoptado
         const adopcionResult = await query(`
-            SELECT estadoadopcion FROM adopcion 
-            WHERE idanimal = $1 AND estadoadopcion IN ('Pendiente', 'En proceso', 'Aprobada')
+            SELECT sa.estadosolicitud 
+            FROM solicitud_adopcion sa
+            WHERE sa.idanimal = $1 
+              AND (sa.estadosolicitud IN ('PENDIENTE', 'ACEPTADA')
+                   OR EXISTS (
+                       SELECT 1 FROM adopcion ad 
+                       WHERE ad.idsolicitudadopcion = sa.idsolicitudadopcion
+                   ))
         `, [id]);
 
         if (adopcionResult.rows.length > 0) {
-            const estado = adopcionResult.rows[0].estadoadopcion;
             return res.status(400).json({
-                message: `No se puede eliminar el animal porque está en proceso de adopción (${estado})`
+                message: `No se puede eliminar el animal porque tiene solicitudes de adopción activas o está adoptado`
             });
         }
 
@@ -1088,8 +1243,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         // 3. Eliminar historial_animal
         await query('DELETE FROM historial_animal WHERE idanimal = $1', [id]);
 
-        // 4. Eliminar adopcion (si existe)
-        await query('DELETE FROM adopcion WHERE idanimal = $1', [id]);
+        // 4. Eliminar adopciones y solicitudes
+        await query(`
+            DELETE FROM adopcion WHERE idsolicitudadopcion IN (
+                SELECT idsolicitudadopcion FROM solicitud_adopcion WHERE idanimal = $1
+            )
+        `, [id]);
+        await query('DELETE FROM solicitud_adopcion WHERE idanimal = $1', [id]);
 
         // 5. Finalmente eliminar el animal
         await query('DELETE FROM animal WHERE idanimal = $1', [id]);
@@ -1099,90 +1259,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
     } catch (error) {
         console.error('Error eliminando animal:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
-    }
-});
-
-// GET /api/animals/filtros/opciones
-router.get('/filtros/opciones', async (req, res) => {
-    try {
-        // Obtener especies únicas
-        const especiesResult = await query(`
-            SELECT DISTINCT e.especieanimal
-            FROM especie e
-            JOIN raza r ON e.idespecie = r.idespecie
-            JOIN animal a ON r.idraza = a.idraza
-            WHERE a.idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY e.especieanimal
-        `);
-
-        // Obtener pelajes únicos
-        const pelajesResult = await query(`
-            SELECT DISTINCT pelaje
-            FROM animal
-            WHERE pelaje IS NOT NULL AND pelaje != ''
-            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY pelaje
-        `);
-
-        // Obtener tamaños únicos
-        const tamañosResult = await query(`
-            SELECT DISTINCT tamano
-            FROM animal
-            WHERE tamano IS NOT NULL AND tamano != ''
-            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY tamano
-        `);
-
-        // Obtener géneros únicos
-        const generosResult = await query(`
-            SELECT DISTINCT
-                CASE 
-                    WHEN generoanimal = 'M' THEN 'Macho'
-                    WHEN generoanimal = 'H' THEN 'Hembra'
-                    ELSE generoanimal
-                END as genero_display,
-                generoanimal
-            FROM animal
-            WHERE generoanimal IS NOT NULL AND generoanimal != ''
-            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY generoanimal
-        `);
-
-        // Obtener edades únicas (agrupadas por rangos)
-        const edadesResult = await query(`
-            SELECT DISTINCT
-                CASE
-                    WHEN edadmesesanimal <= 6 THEN '0-6 meses'
-                    WHEN edadmesesanimal <= 12 THEN '7-12 meses'
-                    WHEN edadmesesanimal <= 24 THEN '1-2 años'
-                    WHEN edadmesesanimal <= 60 THEN '3-5 años'
-                    ELSE '5+ años'
-                END as rango_edad
-            FROM animal
-            WHERE edadmesesanimal IS NOT NULL
-            AND idanimal NOT IN (SELECT idanimal FROM adopcion WHERE estadoadopcion = 'Aprobada')
-            ORDER BY rango_edad
-        `);
-
-        const opciones = {
-            especies: especiesResult.rows.map(row => row.especieanimal),
-            pelajes: pelajesResult.rows.map(row => row.pelaje),
-            tamaños: tamañosResult.rows.map(row => row.tamano),
-            generos: generosResult.rows.map(row => ({
-                valor: row.generoanimal,
-                display: row.genero_display
-            })),
-            edades: edadesResult.rows.map(row => row.rango_edad)
-        };
-
-        res.json({
-            message: 'Opciones de filtros obtenidas exitosamente',
-            data: opciones
-        });
-
-    } catch (error) {
-        console.error('Error obteniendo opciones de filtros:', error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
