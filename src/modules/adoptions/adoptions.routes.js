@@ -140,6 +140,21 @@ router.put('/estado_solicitud/:id', authenticateToken, async (req, res) => {
     }
 
     console.log("✅ Estado actualizado correctamente");
+    // Si la solicitud fue ACEPTADA, inactivar apadrinamientos activos del animal
+    if (estadoSolicitud === "ACEPTADA") {
+      const idAnimal = result.rows[0].idanimal;
+      
+      const updateApadrinamientos = await query(`
+        UPDATE apadrinamiento
+        SET estado = 'Inactivo'
+        WHERE idanimal = $1 AND estado = 'Activo'
+        RETURNING idapadrinamiento;
+      `, [idAnimal]);
+
+      if (updateApadrinamientos.rows.length > 0) {
+        console.log(`Se inactivaron ${updateApadrinamientos.rows.length} apadrinamiento(s) del animal ${idAnimal}`);
+      }
+    }
 
     res.json({
       message: `Estado actualizado a ${estadoNormalizado}`,
