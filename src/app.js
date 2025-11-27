@@ -93,6 +93,10 @@ app.get('/Historial_Persona.html', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'html', 'Historial_Persona.html'));
 });
 
+app.get('/reportes.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'html', 'reportes.html'));
+});
+
 // Rutas base
 app.use('/api/auth', require('./modules/auth/auth.routes').router);
 app.use('/api/animals', require('./modules/animals/animals.routes'));
@@ -101,6 +105,7 @@ app.use('/api/apadrinamiento', require('./modules/apadrinamiento/apadrinamiento.
 app.use('/api/solicitudes-apadrinamiento', require('./modules/apadrinamiento/solicitudes.routes'));
 app.use('/api/donations', require('./modules/donations/donations.routes'));
 app.use('/api/reports', require('./modules/reports/reports.routes'));
+app.use('/api/reporteAdmin', require('./modules/reports/reporteAdmin.routes'));
 app.use('/api/blog', require('./modules/blog/blog.routes'));
 app.use('/api/users', require('./modules/users/users.routes'));
 app.use('/api/roles', require('./modules/roles/roles.routes'));
